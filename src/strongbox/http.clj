@@ -17,7 +17,7 @@
   (:import
    [org.apache.commons.io.input CountingInputStream]))
 
-(def expiry-offset-hours 1) ;; hours
+(def ^:dynamic *expiry-offset-minutes* 60)
 (def ^:dynamic *cache* nil)
 (def ^:dynamic *default-pause* 1000)
 (def ^:dynamic *default-attempts* 3)
@@ -89,7 +89,7 @@
   "returns `true` if the last modification time on given file is before the expiry date of +N hours"
   [output-file]
   (when (and output-file (fs/exists? output-file))
-    (not (utils/file-older-than output-file expiry-offset-hours))))
+    (not (utils/file-older-than output-file *expiry-offset-minutes* :minutes))))
 
 (defn-spec url-to-filename ::sp/file
   "safely encode a URI to something that can live cached on the filesystem"
@@ -402,12 +402,12 @@
 ;;
 
 (defn-spec prune-cache-dir nil?
-  "deletes files in the given `cache-dir` that are older than the `expiry-offset-hours`"
+  "deletes files in the given `cache-dir` that are older than the `expiry-offset-minutes`"
   [cache-dir ::sp/extant-dir]
-  (let [expiry-date (* 2 expiry-offset-hours)]
+  (let [expiry (+ *expiry-offset-minutes* 1)]
     (doseq [cache-file (fs/list-dir cache-dir)
             :when (and (fs/file? cache-file)
-                       (utils/file-older-than (str cache-file) expiry-date))]
+                       (utils/file-older-than (str cache-file) expiry :minutes))]
       (fs/delete cache-file)
       (debug "deleted expired cache file:" cache-file))))
 

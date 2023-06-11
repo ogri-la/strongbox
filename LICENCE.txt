@@ -688,3 +688,4 @@ Program grant you additional permission to convey the resulting work.
 * cljfxcss
 * clj-http-fake
 * tolitius/lasync
+* clj-commons/humanize

@@ -17,10 +17,13 @@
    [java-time :as jt]
    [java-time.format])
   (:import
+   [java.util List Calendar Locale]
+   [java.lang Math]
    [java.util Base64]
    [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]
    [org.ocpsoft.prettytime.units Decade]
-   [org.ocpsoft.prettytime PrettyTime]))
+   [org.ocpsoft.prettytime PrettyTime]
+   [java.text NumberFormat]))
 
 (defn repl-stack-element?
   [stack-element]
@@ -103,18 +106,6 @@
             (warn (format "deleting %s %s files" (count file-list) file-type))
             (dorun (map (juxt alert fs/delete) file-list))))))))
 
-(defn-spec file-older-than boolean?
-  [file ::sp/extant-file, hours pos-int?]
-  (let [modtime (jt/instant (fs/mod-time file))
-        now (java-time/instant)
-        expiry-offset (jt/hours hours)
-        expiry-date (jt/plus modtime expiry-offset)
-        expired? (jt/before? expiry-date now)]
-    (when expired?
-      ;; too noisy even for :debug when nothing has expired
-      (debug (format "path %s; modtime %s; expiry-offset %s; expiry-date %s; now %s; expired? %s" file modtime expiry-offset expiry-date now expired?)))
-    expired?))
-
 #_(defn-spec days-between-then-and-now int?
     [datestamp ::sp/inst]
     (let [then (java-time/local-date datestamp)
@@ -126,15 +117,33 @@
   (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
 
 (defn-spec todt ::sp/zoned-dt-obj
-  "takes an ISO8901 string and returns a java.time.ZonedDateTime object. 
-  these are needed to calculate durations"
+  "takes an ISO8601 string and returns a java.time.ZonedDateTime object.
+  if the date is missing it's time portion, it's assumed to be `T00:00:00Z`."
   [dt ::sp/inst]
-  (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt))
+  (let [dt (if (-> dt count (= 10)) (str dt "T00:00:00Z") dt)]
+    (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt)))
 
 (defn-spec dt-before? boolean?
   "returns `true` if `date-1` happened before `date-2`"
   [date-1 ::sp/inst, date-2 ::sp/inst]
   (jt/before? (todt date-1) (todt date-2)))
+
+(defn-spec older-than? boolean?
+  "returns `true` if the `period` (hours, days) between *now* and `then` is greater than `threshold`."
+  [then ::sp/inst, threshold ::sp/gte-zero, period keyword?]
+  (let [expiry-offset
+        (case period
+          :minutes (jt/minutes threshold)
+          :hours (jt/hours threshold)
+          :days (jt/days threshold))
+        now (java-time/instant)
+        expiry-date (jt/plus (jt/instant (todt then)) expiry-offset)]
+    (jt/before? expiry-date now)))
+
+(defn-spec file-older-than boolean?
+  "returns `true` if given `file` has a modification date older than given `hours`."
+  [file ::sp/extant-file, threshold ::sp/gte-zero, period keyword?]
+  (-> file fs/mod-time jt/instant str (older-than? threshold period)))
 
 (defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)
   [dt-string (s/nilable ::sp/inst)]
@@ -749,39 +758,40 @@
 
 (def -with-lock-lock (Object.))
 
+(def -with-lock-wait-retry-time 10) ;; ms
+
 (defmacro with-lock
   "executes `form` once all items in given `user-set` are available in `lock-set-atom`."
   [lock-set-atom user-set & form]
-  `(let [wait-time# 10] ;; ms
-     (loop [waited# 0]
+  `(loop [waited# 0]
 
        ;; ensure reading the atom is single threaded (locking) and that when we read it and test the result,
        ;; we update it in the same operation (dosync).
-       (let [lock-set#
-             (locking -with-lock-lock
-               (dosync
-                (debug "current locks:" (deref ~lock-set-atom))
-                (when (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
+     (let [lock-set#
+           (locking -with-lock-lock
+             (dosync
+              (debug "current locks:" (deref ~lock-set-atom))
+              (when (empty? (clojure.set/intersection (deref ~lock-set-atom) ~user-set))
                   ;; there is no overlap between the locks we have and what the user wants.
                   ;; add the user locks to the working set and execute body
-                  (swap! ~lock-set-atom into ~user-set))))]
+                (swap! ~lock-set-atom into ~user-set))))]
 
-         (debug "acquiring locks:" ~user-set)
-         (if (not (nil? lock-set#))
-           (try
-             (debug "locks acquired:" ~user-set)
-             ~@form
-             (finally
+       (debug "acquiring locks:" ~user-set)
+       (if (not (nil? lock-set#))
+         (try
+           (debug "locks acquired:" ~user-set)
+           ~@form
+           (finally
                ;; when body is complete, release the locks
                ;; synchronised access not required ?
-               (debug "releasing locks:" ~user-set)
-               (swap! ~lock-set-atom clojure.set/difference ~user-set)))
+             (debug "releasing locks:" ~user-set)
+             (swap! ~lock-set-atom clojure.set/difference ~user-set)))
 
            ;; something else holds one or more of the desired locks! wait a duration and try again
-           (do (debug "blocked!")
-               (Thread/sleep wait-time#)
-               (debug (format "recurring in %s ms, have waited %s ms" wait-time# waited#))
-               (recur (+ waited# wait-time#))))))))
+         (do (debug "blocked!")
+             (Thread/sleep -with-lock-wait-retry-time)
+             (debug (format "recurring in %s ms, have waited %s ms" -with-lock-wait-retry-time waited#))
+             (recur (+ waited# -with-lock-wait-retry-time)))))))
 
 (defn-spec patch-name (s/or :ok string?, :not-found nil?)
   "returns the 'patch' name for the given `game-version`, considering only the major and minor values.
@@ -794,27 +804,119 @@
     (or (get constants/releases major-minor)
         (get constants/releases major))))
 
-(defn-spec compressed-slurp (s/or :ok bytes?, :no-resource nil?)
-  "returns the bz2 compressed bytes of the given resource file `resource`.
-  returns `nil` if the file can't be found."
-  [resource string?]
-  (let [input-file (clojure.java.io/resource resource)]
-    (when input-file
-      (with-open [out (java.io.ByteArrayOutputStream.)]
-        (with-open [cos (.createCompressorOutputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, out)]
-          (clojure.java.io/copy (clojure.java.io/input-stream input-file) cos))
-        ;; compressed output stream (cos) needs to be closed to flush any remaining bytes
-        (.toByteArray out)))))
+(defmacro compile-time-slurp
+  "slurps given `resource` file at macro-expansion (compile) time."
+  [resource]
+  `(slurp (clojure.java.io/resource ~resource)))
 
-(defn-spec decompress-bytes (s/or :ok string?, :nil-or-empty-bytes nil?)
-  "decompresses the given `bz2-bytes` as bz2, returning a string.
-  if bytes are empty or `nil`, returns `nil`.
-  if bytes are not bz2 compressed, throws an `IOException`."
-  [bz2-bytes (s/nilable bytes?)]
-  (when-not (empty? bz2-bytes)
-    (with-open [is (clojure.java.io/input-stream bz2-bytes)]
-      (try
-        (with-open [cin (.createCompressorInputStream (CompressorStreamFactory.) CompressorStreamFactory/BZIP2, is)]
-          (slurp cin))
-        (catch CompressorException ce
-          (throw (.getCause ce)))))))
+(defn-spec folder-size-bytes int?
+  "returns the size of a directory and it's contents in bytes"
+  [path ::sp/extant-dir]
+  (let [count-subdirs (fn [root dir-set]
+                        (map #(-> root (fs/file %) .length) dir-set))
+        count-files (fn [root file-list]
+                      (map #(.length (fs/file root %)) file-list))
+        count-subdirs+files (fn [root dir-set file-list]
+                              (into (count-subdirs root dir-set)
+                                    (count-files root file-list)))]
+    (+ (-> path fs/file .length)
+       (reduce + (flatten (fs/walk count-subdirs+files path))))))
+
+;; ---
+;; copied from: https://github.com/clj-commons/humanize/blob/master/src/clj_commons/humanize.cljc
+;; on: 2023-04-08
+;; with licence: EPL v1.0
+;; added to GPL exclusion list, see LICENCE.md.
+
+(defn logn [num base]
+  (/ (Math/round (Math/log num))
+     (Math/round (Math/log base))))
+
+(defn filesize
+  "Format a number of bytes as a human readable filesize (eg. 10 kB).
+  decimal suffixes (kB, MB) are used."
+  [bytes]
+  (cond
+    (not (number? bytes)) ""
+    (zero? bytes) "0" ;; special case for zero
+
+    :else
+    (let [format-string "%.1f "
+          decimal-sizes  [:B, :KB, :MB, :GB, :TB,
+                          :PB, :EB, :ZB, :YB]
+
+          units decimal-sizes
+          base  1000
+
+          base-pow  (int (Math/floor (logn bytes base)))
+          ;; if base power shouldn't be larger than biggest unit
+          base-pow  (if (< base-pow (count units))
+                      base-pow
+                      (dec (count units)))
+          suffix (name (get units base-pow))
+          ;; TODO: Math/pow isn't a drop-in for `expt`:
+          ;; https://github.com/clojure/math.numeric-tower/blob/97827be66f35feebc3c89ba81c546fef4adc7947/src/main/clojure/clojure/math/numeric_tower.clj#L89-L103
+          value (float (/ bytes (Math/pow base base-pow)))]
+
+      (str (format format-string value) suffix))))
+
+(defn-spec now ::sp/inst
+  "returns the date and time right now as a datetime string"
+  []
+  (str (java-time/instant)))
+
+(defn-spec unix-time-to-datetime ::sp/inst
+  "converts a number in the unix time format '1685623484' to milliseconds, then a `java.time.Instant` then a string"
+  [unix-time-seconds number?]
+  (-> unix-time-seconds (* 1000) java-time/instant str))
+
+(defn-spec minutes-from-now number?
+  "returns the number of minutes between `(now)` and the given `instant`"
+  [instant ::sp/inst]
+  (let [duration (->> instant java-time/instant (java-time/duration (java-time/instant (now))))]
+    (java-time/as duration :minutes)))
+
+(defn user-locale
+  []
+  (Locale/getDefault))
+
+(defn-spec format-number string?
+  "locale-aware number formatting."
+  [^Integer n number?]
+  (.format ^java.text.NumberFormat (NumberFormat/getNumberInstance (user-locale)) n))
+
+(defn-spec pretty-print-keyword (s/nilable string?)
+  "converts a keyword into a string.
+  hyphens are removed: :foo-bar => 'foo bar'
+  namespaces are handled: :foo/bar-baz => 'foo / bar baz'
+  non-keywords return nil.
+  nil returns nil."
+  [kw (s/nilable keyword?)]
+  (when (keyword? kw) ;; :foo, :foo/bar-baz
+    (let [ns-str (namespace kw) ;; nil, :foo
+          rest-str (some-> kw name (clojure.string/replace "-" " ")) ;; "bar baz"
+          ]
+      (if ns-str
+        (format "%s / %s" ns-str rest-str) ;; "foo / bar baz"
+        rest-str)))) ;; "bar baz"
+
+(defn-spec pretty-print-value string?
+  "converts any value into a friendly string.
+  strings are returned as-is.
+  integers are formatted according to locale.
+  lists and maps are recursively formatted.
+  empty lists and maps return '(empty)'
+  `nil` becomes the string '(none)'.
+  "
+  [v any?]
+  (cond
+    (nil? v) "(none)"
+    (number? v) (format-number v)
+    (sequential? v) (if (empty? v) "(empty)" (clojure.string/join ", " (mapv pretty-print-value v)))
+    (map? v) (if (empty? v)
+               "(empty)"
+               (clojure.string/join ", " (mapv (fn [[key val]]
+                                                 (format "%s: %s" (pretty-print-value key) (pretty-print-value val))) (sort-by first v))))
+    (boolean? v) (-> v str clojure.string/capitalize)
+    (keyword? v) (name v)
+    :else (str v)))

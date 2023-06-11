@@ -7,7 +7,6 @@
    [me.raynes.fs :as fs]
    [strongbox
     [zip :as zip]
-    [constants :as constants]
     [joblib :as joblib]
     [github-api :as github-api]
     [tukui-api :as tukui-api]
@@ -17,7 +16,6 @@
     [logging :as logging]
     [addon :as addon]
     [specs :as sp]
-    [catalogue :as catalogue]
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
     [core :as core :refer [get-state paths]]]))
@@ -29,6 +27,18 @@
 (defn-spec toggle-split-pane nil?
   []
   (swap! core/state update-in [:gui-split-pane] not)
+  nil)
+
+(defn-spec set-split-pane nil?
+  "set `selected?` to `true` to split the main pane horizontally."
+  [selected? boolean?]
+  (swap! core/state assoc :gui-split-pane selected?)
+  nil)
+
+(defn-spec set-sub-pane nil?
+  "sets the content of the bottom (sub) pane. either `:notice-logger` (default) or `:stats`"
+  [sub-pane :gui/sub-pane-content]
+  (swap! core/state assoc :gui-sub-pane sub-pane)
   nil)
 
 ;; selecting addons
@@ -70,44 +80,23 @@
 
 ;; ui refreshing
 
-(defn-spec hard-refresh nil?
-  "unlike `core/refresh`, `cli/hard-refresh` clears the http cache before checking for addon updates."
-  []
-  ;; why can't we be more specific, like just the addons for the current addon-dir?
-  ;; the url used to 'expand' an addon from the catalogue isn't preserved.
-  ;; it may also change with the game track (tukui, historically) or not even exist (tukui, currently).
-  ;; a thorough inspection would be too much code.
-  ;; this also removes the etag cache. the etag db only applies to catalogues and downloaded zip files.
-  (core/delete-http-cache!)
-  (core/refresh))
-
-(defn-spec half-refresh nil?
-  "like `core/refresh` but excludes reloading catalogues, focusing on re-reading installed addons,
-  matching them to the catalogue and reapplying host updates."
-  []
-  (report "refresh")
-  (core/load-all-installed-addons)
-  (core/match-all-installed-addons-with-catalogue)
-  (core/check-for-updates)
-  (core/save-settings!))
-
 (defn-spec set-addon-dir! nil?
   "adds and sets the given `addon-dir`, then reloads addons."
   [addon-dir ::sp/addon-dir]
   (core/set-addon-dir! addon-dir)
-  (half-refresh))
+  (core/half-refresh))
 
 (defn-spec set-game-track-strictness! nil?
   "changes the the 'strict' flag for the current addon directory, then reloads addons."
   [new-strictness-level ::sp/strict?]
   (core/set-game-track-strictness! new-strictness-level)
-  (half-refresh))
+  (core/half-refresh))
 
 (defn-spec remove-addon-dir! nil?
   "deletes an addon-dir, selects first available addon dir, partial refresh of application state"
   []
   (core/remove-addon-dir!) ;; the next addon dir is selected, if any
-  (half-refresh))
+  (core/half-refresh))
 
 ;; search
 
@@ -199,16 +188,10 @@
     (doseq [path path-list]
       (core/state-bind path listener))))
 
-(defn-spec reset-search-navigation nil?
-  "returns the search results to page 1"
-  []
-  (swap! core/state assoc-in [:search :page] 0)
-  nil)
-
 (defn-spec search-add-filter nil?
   "adds a new filter to the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
-  (reset-search-navigation)
+  (core/reset-search-navigation)
   (case filter-by
     :source (swap! core/state assoc-in [:search :filter-by filter-by] (utils/nilable val))
     :tag (swap! core/state update-in [:search :filter-by filter-by] conj val)
@@ -218,16 +201,22 @@
 (defn-spec search-rm-filter nil?
   "removes a filter from the search `filter-by` state."
   [filter-by :search/filter-by, val any?]
-  (reset-search-navigation)
+  (core/reset-search-navigation)
   (swap! core/state update-in [:search :filter-by filter-by] clojure.set/difference #{val})
   nil)
 
 (defn-spec search-toggle-filter nil?
   "toggles boolean filters on and off"
   [filter-by :search/filter-by]
-  (reset-search-navigation)
+  (core/reset-search-navigation)
   (swap! core/state update-in [:search :filter-by filter-by] not)
   nil)
+
+(defn-spec clear-search! nil?
+  "resets the search state to defaults and jogs the search results"
+  []
+  (core/reset-search-state!)
+  (bump-search))
 
 ;;
 
@@ -271,7 +260,7 @@
              (info (format "pinning to \"%s\"" (:installed-version addon)))
              (addon/pin! (core/selected-addon-dir) addon)))
          addon-list)
-   (half-refresh)))
+   (core/half-refresh)))
 
 (defn-spec unpin nil?
   "unpins the addons in given `addon-list` regardless of whether they are pinned or not.
@@ -628,72 +617,12 @@
 
 ;; importing addons
 
-;; todo: logic might be better off in core.clj
-(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
-  "given a URL of a supported addon host, parses it, looks for it in the catalogue, expands addon and attempts to install a dry run installation.
-  if successful, returns the addon-summary.
-  dry-run installation attempt can be skipped by setting `attempt-dry-run` to false."
-  [addon-url string?, attempt-dry-run? boolean?]
-  (binding [http/*cache* (core/cache)]
-    (if-let* [addon-summary-stub (catalogue/parse-user-string addon-url)
-              source (:source addon-summary-stub)
-              match-on-list [[[:source :url] [:source :url]]
-                             [[:source :source-id] [:source :source-id]]]
-              addon-summary (cond
-                              (= source "github")
-                              (or (github-api/find-addon (:source-id addon-summary-stub))
-                                  (error (message-list
-                                          "Failed. URL must be:"
-                                          ["valid"
-                                           "originate from github.com"
-                                           "addon uses 'releases'"
-                                           "latest release has a packaged 'asset'"
-                                           "asset must be a .zip file"
-                                           "zip file must be structured like an addon"])))
-
-                              (= source "gitlab")
-                              (or (gitlab-api/find-addon (:source-id addon-summary-stub))
-                                  (error (message-list
-                                          "Failed. URL must be:"
-                                          ["valid"
-                                           "originate from gitlab.com"
-                                           "addon uses releases"
-                                           "latest release has a custom asset with a 'link'"
-                                           "link type must be either a 'package' or 'other'"])))
-
-                              (= source "curseforge")
-                              (error (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label "."))
-
-                              :else
-                              ;; look in the current catalogue. emit an error if we fail
-                              (or (:catalogue-match (core/-find-first-in-db (or (core/get-state :db) []) addon-summary-stub match-on-list))
-                                  (error (format "couldn't find addon in catalogue '%s'"
-                                                 (name (core/get-state :cfg :selected-catalogue))))))
-
-              ;; game track doesn't matter when adding it to the user catalogue.
-              ;; prefer retail though (it's the most common) and `strict` here is `false`
-              addon (or (catalogue/expand-summary addon-summary :retail false)
-                        (error "failed to fetch details of addon"))
-
-              ;; a dry-run is good when importing an addon for the first time but
-              ;; not necessary when updating the user-catalogue.
-              _ (if-not attempt-dry-run?
-                  true
-                  (or (core/install-addon-guard addon (core/selected-addon-dir) true)
-                      (error "failed dry-run installation")))]
-
-             ;; if-let* was successful!
-             addon-summary
-
-             ;; failed if-let* :(
-             nil)))
-
 (defn-spec import-addon nil?
   "goes looking for given `addon-url` and, if found, adds it to the user catalogue and then installs it."
   [addon-url string?]
   (binding [http/*cache* (core/cache)]
     (if-let* [dry-run? true
-              addon-summary (find-addon addon-url dry-run?)
+              addon-summary (core/find-addon addon-url dry-run?)
               addon (core/expand-summary-wrapper addon-summary)]
              ;; success! add to user-catalogue and proceed to install
              (do (core/add-user-addon! addon-summary)
@@ -706,38 +635,9 @@
              ;; failed to find or expand summary, probably because of selected game track.
              nil)))
 
-(defn-spec refresh-user-catalogue-item nil?
-  "refresh the details of an individual `addon` in the user catalogue, optionally writing the updated catalogue to file."
-  ([addon :addon/summary]
-   (refresh-user-catalogue-item addon true))
-  ([addon :addon/summary, write? boolean?]
-   (logging/with-addon addon
-     (info "refreshing details")
-     (try
-       (let [attempt-dry-run? false
-             refreshed-addon (find-addon (:url addon) attempt-dry-run?)]
-         (if refreshed-addon
-           (do (core/add-user-addon! refreshed-addon)
-               (when write?
-                 (core/write-user-catalogue!))
-               (info "... done!"))
-           (warn "failed to refresh catalogue entry")))
-       (catch Exception e
-         (error (format "an unexpected error happened while updating the details for '%s' in the user-catalogue: %s"
-                        (:name addon) (.getMessage e))))))))
-
-(defn-spec refresh-user-catalogue nil?
-  "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
+(defn refresh-user-catalogue
   []
-  (binding [http/*cache* (core/cache)]
-    (info (format "refreshing \"%s\", this may take a minute ..." (-> (core/paths :user-catalogue-file) fs/base-name)))
-    (let [write? false]
-      (doseq [user-addon (core/get-state :user-catalogue :addon-summary-list)]
-        (refresh-user-catalogue-item user-addon write?)))
-    (core/write-user-catalogue!))
-  nil)
-
-;;
+  (core/refresh-user-catalogue))
 
 ;; todo: shift to core.clj or addon.clj
 (defn-spec addon-source-map-to-url (s/or :ok ::sp/url, :error nil?)
@@ -776,50 +676,6 @@
     :else (or (:version row)
               (:installed-version row))))
 
-;; todo: do we really need this separate to jfx/gui-column-map ?
-(def column-map
-  "common column names mapped to labels and value-generating functions.
-  jfx.clj takes this and merges/augments it with jfx-specific stuff."
-  {:browse-local {:label "browse" :value-fn :addon-dir}
-   :source {:label "source" :value-fn :source}
-   :source-id {:label "ID" :value-fn :source-id}
-   :source-map-list {:label "other sources" :value-fn (fn [row]
-                                                        (->> row
-                                                             :source-map-list
-                                                             (map :source)
-                                                             (remove #(= % (:source row)))
-                                                             utils/nilable
-                                                             (clojure.string/join ", ")))}
-   :name {:label "name" :value-fn (comp utils/no-new-lines :label)}
-   :description {:label "description" :value-fn (comp utils/no-new-lines :description)}
-   :tag-list {:label "tags" :value-fn (fn [row]
-                                        (when-not (empty? (:tag-list row))
-                                          (str (:tag-list row))))}
-   :updated-date {:label "updated" :value-fn (comp utils/format-dt :updated-date)}
-   :created-date {:label "created" :value-fn (comp utils/format-dt :created-date)}
-   :installed-version {:label "installed" :value-fn :installed-version}
-   :available-version {:label "available" :value-fn available-versions-v1}
-   :combined-version {:label "version" :value-fn available-versions-v2}
-   :game-version {:label "WoW"
-                  :value-fn (fn [row]
-                              (some-> row :interface-version str utils/interface-version-to-game-version))}
-
-   :uber-button {:label nil ;; the gui will use the column-id (`:uber-button`) for the column menu when label is `nil`
-                 :value-fn (fn [row]
-                             (let [queue (core/get-state :job-queue)
-                                   job-id (joblib/addon-id row)]
-                               (if (and (core/unsteady? (:name row))
-                                        (joblib/has-job? queue job-id))
-                                 ;; parallel job in progress, show a ticker.
-                                 "*"
-                                 (cond
-                                   (:ignore? row) (:ignored constants/glyph-map)
-                                   (:pinned-version row) (:pinned constants/glyph-map)
-                                   (core/unsteady? (:name row)) (:unsteady constants/glyph-map)
-                                   (addon-has-errors? row) (:errors constants/glyph-map)
-                                   (addon-has-warnings? row) (:warnings constants/glyph-map)
-                                   :else (:tick constants/glyph-map)))))}})
-
 (defn-spec toggle-ui-column nil?
   "toggles the display of the given `column-id` in the user preferences."
   [column-id keyword?, selected? boolean?]
@@ -853,7 +709,7 @@
   [addon :addon/toc+nfo, new-source-map :addon/source-map]
   (when-not (= (:source addon) (:source new-source-map))
     (addon/switch-source! (core/selected-addon-dir) addon new-source-map)
-    (half-refresh)))
+    (core/half-refresh)))
 
 ;;
 
@@ -862,6 +718,20 @@
   [addon-summary :addon/summary]
   (core/add-user-addon! addon-summary)
   (core/write-user-catalogue!))
+
+(defn-spec add-addon-to-user-catalogue nil?
+  "given an `addon` with only a `:source` and `:source-id`, find it in the catalogue and add it to the user-catalogue.
+  fails if addon cannot be found in catalogue."
+  [addon map?]
+  (logging/with-addon addon
+    (if-not (s/valid? :addon/source-map addon)
+      (error "failed to star addon, it is missing some basic information ('source' and 'source-id').")
+      (let [catalogue-addon (core/db-addon-by-source-and-source-id
+                             (core/get-state :db) (:source addon) (:source-id addon))]
+        (if-not (s/valid? :addon/summary catalogue-addon)
+          (error "failed to star addon, it is not matched to the catalogue.")
+          (add-summary-to-user-catalogue catalogue-addon)))))
+  nil)
 
 (defn-spec remove-summary-from-user-catalogue nil?
   "removes an `addon-summary` (catalogue entry) from the user-catalogue, but only if it's present."

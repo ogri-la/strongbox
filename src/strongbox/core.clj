@@ -15,9 +15,11 @@
     [zip :as zip]
     [http :as http]
     [logging :as logging]
-    [utils :as utils :refer [join nav-map delete-many-files! expand-path if-let*]]
+    [utils :as utils :refer [join nav-map delete-many-files! expand-path if-let* message-list]]
     [catalogue :as catalogue]
     [specs :as sp]
+    [github-api :as github-api]
+    [gitlab-api :as gitlab-api]
     [joblib :as joblib]])
   (:import
    [org.apache.commons.compress.compressors CompressorStreamFactory CompressorException]
@@ -32,7 +34,7 @@
 (def static-catalogue
   "a bz2 compressed copy of the full catalogue used when the remote catalogue is unavailable or corrupt.
   from this we can do per-host filtering as well as shortening to generate the other catalogues."
-  (utils/compressed-slurp "full-catalogue.json"))
+  (utils/compile-time-slurp "full-catalogue.json"))
 
 (defn generate-path-map
   "filesystem paths whose location may vary based on the current working directory, environment variables, etc.
@@ -118,7 +120,7 @@
    :db nil
 
    ;; some generated stats about the db that are updated just once at load time.
-   :db-stats {:known-host-list []}
+   :db-stats nil
 
    ;; the list of addons from the user-catalogue
    :user-catalogue nil
@@ -146,8 +148,11 @@
    ;; per-tab log levels are attached to each tab in the `:tab-list`
    :gui-log-level :info
 
-   ;; split the gui in two horizontally with the notice logger on the bottom.
+   ;; split the gui in two horizontally with the sub-pane on the bottom.
    :gui-split-pane false
+
+   ;; default widget for the sub-pane
+   :gui-sub-pane :notice-logger
 
    ;; addons in an 'unsteady' state (data being updated, addon being installed, etc)
    ;; allows a UI to watch and update the gui with progress.
@@ -674,7 +679,7 @@
   "derives the requested catalogue from the static catalogue."
   [catalogue-location :catalogue/location]
   (let [opts {}
-        catalogue (catalogue/read-catalogue (.getBytes (utils/decompress-bytes static-catalogue)) opts)
+        catalogue (catalogue/read-catalogue (.getBytes static-catalogue) opts)
         catalogue (assoc catalogue :emergency? true)]
 
     (warn (utils/message-list (format "the remote catalogue is unreachable or corrupt: %s" (:source catalogue-location))
@@ -685,7 +690,7 @@
       :short (catalogue/shorten-catalogue catalogue)
       ;;:curseforge (catalogue/filter-catalogue catalogue "curseforge")
       :wowinterface (catalogue/filter-catalogue catalogue "wowinterface")
-      :tukui (catalogue/filter-catalogue catalogue "tukui")
+      ;;:tukui (catalogue/filter-catalogue catalogue "tukui")
       :github (catalogue/filter-catalogue catalogue "github") ;; todo: add a test for this. I expect all derivable catalogues to be available
       nil)))
 
@@ -728,9 +733,7 @@
   "returns the contents of the user catalogue or `nil` if it doesn't exist."
   []
   (let [catalogue (catalogue/read-catalogue (paths :user-catalogue-file) {:bad-data? nil})
-        curse? (fn [addon]
-                 (-> addon :source (= "curseforge")))
-        new-summary-list (->> catalogue :addon-summary-list (remove curse?) vec)]
+        new-summary-list (->> catalogue :addon-summary-list (remove addon/host-disabled?) vec)]
     (when catalogue
       (catalogue/new-catalogue new-summary-list))))
 
@@ -838,15 +841,23 @@
       (or (-find-first-in-db db installed-addon match-on-list)
           installed-addon))))
 
+(defn-spec db-addon-by-source-and-source-id (s/nilable :addon/summary)
+  "returns the first addon summary from `db` whose source and source-id exactly match the given `source` and `source-id`.
+  there should only ever be one or zero such addons."
+  [db :addon/summary-list, source :addon/source, source-id :addon/source-id]
+  (let [xf (filter #(and (= source (:source %))
+                         (= source-id (:source-id %))))]
+    (first (into [] xf db))))
+
 (defn-spec db-addon-by-source-and-name :addon/summary-list
-  "returns a list of addon summaries from `db` whose source and name match (exactly) the given `source` and `name`"
+  "returns a list of addon summaries from `db` whose source and name exactly match the given `source` and `name`."
   [db :addon/summary-list, source :addon/source, name ::sp/name]
   (let [xf (filter #(and (= source (:source %))
                          (= name (:name %))))]
     (into [] xf db)))
 
 (defn-spec db-addon-by-name :addon/summary-list
-  "returns a list of addon summaries from `db` whose name matches (exactly) the given `name`"
+  "returns a list of addon summaries from `db` whose name exactly matches the given `name`."
   [db :addon/summary-list, name ::sp/name]
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
@@ -915,10 +926,22 @@
          (partition-all cap (seque 100 (filter match-fn db))))))))
 
 (defn-spec empty-search-results nil?
-  "empties app state of search results.
-  this is to clear out anything between catalogue reloads."
+  "empties app state of search *results* but not filters.
+  this handles catalogue reloads but preserves user filtering."
   []
   (swap! state update-in [:search] merge (select-keys -search-state-template [:page :results :selected-results-list]))
+  nil)
+
+(defn-spec reset-search-navigation nil?
+  "resets the search results to page 1"
+  []
+  (swap! state assoc-in [:search :page] 0)
+  nil)
+
+(defn-spec reset-search-state! nil?
+  "replaces search state with default settings."
+  []
+  (swap! state update-in [:search] merge -search-state-template)
   nil)
 
 (defn-spec db-load-user-catalogue nil?
@@ -986,14 +1009,7 @@
 
     (let [final-catalogue (load-current-catalogue)]
       (when-not (empty? final-catalogue)
-        (swap! state merge {:db (:addon-summary-list final-catalogue)
-                            :db-stats {:num-addons (count (:addon-summary-list final-catalogue))
-                                       :known-host-list (->> final-catalogue
-                                                             :addon-summary-list
-                                                             (map :source)
-                                                             distinct
-                                                             sort
-                                                             vec)}}))))
+        (swap! state assoc :db (:addon-summary-list final-catalogue)))))
   nil)
 
 (defn-spec -match-installed-addon-list-with-catalogue :addon/installed-list
@@ -1168,6 +1184,119 @@
 
 ;;
 
+(defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  "given a URL of a supported addon host, parses it, looks for it in the catalogue, expands addon and attempts to install a dry run installation.
+  if successful, returns the addon-summary.
+  dry-run installation attempt can be skipped by setting `attempt-dry-run` to false."
+  [addon-url string?, attempt-dry-run? boolean?]
+  (binding [http/*cache* (cache)]
+    (if-let* [addon-summary-stub (catalogue/parse-user-string addon-url)
+              source (:source addon-summary-stub)
+              match-on-list [[[:source :url] [:source :url]]
+                             [[:source :source-id] [:source :source-id]]]
+              addon-summary (cond
+                              (= source "github")
+                              (or (github-api/find-addon (:source-id addon-summary-stub))
+                                  (error (message-list
+                                          "Failed. URL must be:"
+                                          ["valid"
+                                           "originate from github.com"
+                                           "addon uses 'releases'"
+                                           "latest release has a packaged 'asset'"
+                                           "asset must be a .zip file"
+                                           "zip file must be structured like an addon"])))
+
+                              (= source "gitlab")
+                              (or (gitlab-api/find-addon (:source-id addon-summary-stub))
+                                  (error (message-list
+                                          "Failed. URL must be:"
+                                          ["valid"
+                                           "originate from gitlab.com"
+                                           "addon uses releases"
+                                           "latest release has a custom asset with a 'link'"
+                                           "link type must be either a 'package' or 'other'"])))
+
+                              (= source "curseforge")
+                              (error (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label "."))
+
+                              (utils/in? source sp/tukui-source-list)
+                              (error (str "addon host 'tukui' was disabled " constants/tukui-cutoff-label "."))
+
+                              :else
+                              ;; look in the current catalogue. emit an error if we fail
+                              (or (:catalogue-match (-find-first-in-db (or (get-state :db) []) addon-summary-stub match-on-list))
+                                  (error (format "couldn't find addon in catalogue '%s'"
+                                                 (name (get-state :cfg :selected-catalogue))))))
+
+              ;; game track doesn't matter when adding it to the user catalogue.
+              ;; prefer retail though (it's the most common) and `strict` here is `false`
+              addon (or (catalogue/expand-summary addon-summary :retail false)
+                        (error "failed to fetch details of addon"))
+
+              ;; a dry-run is good when importing an addon for the first time but
+              ;; not necessary when updating the user-catalogue.
+              _ (if-not attempt-dry-run?
+                  true
+                  (or (install-addon-guard addon (selected-addon-dir) true)
+                      (error "failed dry-run installation")))]
+
+             ;; if-let* was successful!
+             addon-summary
+
+             ;; failed if-let* :(
+             nil)))
+
+(defn-spec refresh-user-catalogue-item nil?
+  "refresh the details of an individual `addon` in the user catalogue, optionally writing the updated catalogue to file."
+  [addon :addon/summary, db :addon/summary-list]
+  (logging/with-addon addon
+    (info "refreshing user-catalogue entry")
+    (try
+      (let [{:keys [source source-id url]} addon
+            refreshed-addon (db-addon-by-source-and-source-id db source source-id)
+            attempt-dry-run? false
+            refreshed-addon (or refreshed-addon
+                                (find-addon url attempt-dry-run?))]
+        (if-not refreshed-addon
+          (warn "failed to refresh user-catalogue entry as the addon was not found in the catalogue or online")
+          (add-user-addon! refreshed-addon)))
+
+      (catch Exception e
+        (error (format "an unexpected error happened while refreshing the user-catalogue entry: %s" (.getMessage e)))))))
+
+(defn-spec refresh-user-catalogue nil?
+  "refresh the details of all addons in the user catalogue, writing the updated catalogue to file once."
+  []
+  (binding [http/*cache* (cache)]
+    (let [path (fs/base-name (paths :user-catalogue-file)) ;; "user-catalogue.json"
+          ;; we can't assume the full-catalogue is available.
+          _ (download-catalogue (get-catalogue-location :full))
+          db (catalogue/read-catalogue (catalogue-local-path :full))
+          full-catalogue (or (:addon-summary-list db) [])]
+      (info (format "refreshing \"%s\", this may take a minute ..." path))
+      (doseq [user-addon (get-state :user-catalogue :addon-summary-list)]
+        (refresh-user-catalogue-item user-addon full-catalogue))
+      (write-user-catalogue!)
+      (info (format "\"%s\" has been refreshed" path))))
+  nil)
+
+(defn-spec refresh-user-catalogue? boolean?
+  "predicate, returns `true` if the user-catalogue needs a refresh."
+  [keep-user-catalogue-updated? boolean?, catalogue-datestamp (s/nilable ::sp/inst)]
+  (and keep-user-catalogue-updated?
+       catalogue-datestamp
+       (utils/older-than? catalogue-datestamp constants/max-user-catalogue-age :days)))
+
+(defn-spec scheduled-user-catalogue-refresh nil?
+  "checks the loaded database and calls `refresh-user-catalogue` if it's considered too old."
+  []
+  (when (refresh-user-catalogue? (get-state :cfg :preferences :keep-user-catalogue-updated)
+                                 (get-state :user-catalogue :datestamp))
+    (info (format "user-catalogue not updated in the last %s days, automatic refresh triggered." constants/max-user-catalogue-age))
+    (refresh-user-catalogue)))
+
+;;
+
 (defn-spec init-dirs nil?
   "ensure all directories in `generate-path-map` exist and are writable, creating them if necessary.
   this logic depends on paths that are not generated until the application has been started."
@@ -1254,35 +1383,113 @@
   []
   (versioneer/get-version "ogri-la" "strongbox"))
 
-(defn-spec -latest-strongbox-release (s/or :ok string?, :failed? keyword)
+(def download-version-lock (Object.))
+
+(defn-spec -download-strongbox-release (s/or :ok string?, :failed? keyword)
   "returns the most recently released version of strongbox on github.
   returns `:failed` if an error occurred while downloading/decoding/extracting the version name, rather than `nil`.
   `nil` is used to mean 'not set (yet)' in the app state."
   []
-  (binding [http/*cache* (cache)]
-    (let [message "downloading strongbox version data"
-          url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
-      (or (some-> url (http/download message) http/sink-error utils/from-json :tag_name)
-          :failed))))
+  (locking download-version-lock
+    (binding [http/*cache* (cache)]
+      (let [message "downloading strongbox version data"
+            url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
+        (or (some-> url (http/download message) http/sink-error utils/from-json :tag_name)
+            :failed)))))
 
-(defn-spec latest-strongbox-release (s/nilable string?)
-  "returns the most recently released version of strongbox on github or `nil` if it can't."
+(defn-spec latest-strongbox-version? boolean?
+  "returns `true` if the given `latest-release` is the *most recent known* version of strongbox.
+  when called with no parameters the `latest-release` is pulled from application state."
+  ([]
+   (latest-strongbox-version? (get-state :latest-strongbox-release)))
+  ([latest-release ::sp/latest-strongbox-release]
+   (case latest-release
+     nil true ;; we haven't looked yet, so yes, we're the latest :)
+     :failed true ;; we've already looked and failed, so as far as we know we're the latest.
+     (let [version-running (strongbox-version)
+           sorted-asc (utils/sort-semver-strings [latest-release version-running])]
+       (= version-running (last sorted-asc))))))
+
+(defn-spec latest-strongbox-release! ::sp/latest-strongbox-release
+  "downloads and sets the most recently released version of strongbox on github, returning the found version or `:failed` on error."
   []
   (let [lsr (get-state :latest-strongbox-release)]
     (case lsr
-      nil (let [lsr (-latest-strongbox-release)]
+      ;; we haven't looked yet, so look.
+      nil (let [lsr (-download-strongbox-release)]
             (swap! state assoc :latest-strongbox-release lsr)
-            (latest-strongbox-release)) ;; recurse
+            lsr)
+      ;; we've already looked and failed, don't try again this session.
       :failed nil
+      ;; we've already looked, return what we found
       lsr)))
 
-(defn-spec latest-strongbox-version? boolean?
-  "returns true if the *running instance* of strongbox is the *most recent known* version of strongbox."
+;; stats
+
+(defn-spec github-stats! (s/nilable :github/requests-stats)
+  "returns a map of github request rate limiting stats by querying the `/rate_limit` API endpoint.
+  doesn't make a Github `/rate_limit` request more often than once a minute."
   []
-  (let [version-running (strongbox-version)
-        latest-release (or (latest-strongbox-release) version-running)
-        sorted-asc (utils/sort-semver-strings [latest-release version-running])]
-    (= version-running (last sorted-asc))))
+  (when (and (started?)
+             (not *testing?*))
+    (binding [http/*cache* (cache)
+              http/*expiry-offset-minutes* 1]
+      (when-let [resp (some-> "https://api.github.com/rate_limit" http/download http/sink-error utils/from-json :resources :core)]
+        {:github/token-set? (not (nil? (System/getenv "GITHUB_TOKEN")))
+         :github/requests-limit (:limit resp)
+         :github/requests-limit-reset-minutes (-> resp :reset utils/unix-time-to-datetime utils/minutes-from-now)
+         :github/requests-remaining (:remaining resp)
+         :github/requests-used (:used resp)}))))
+
+(defn-spec app-stats map?
+  "summarises application state and returns a map of stats"
+  [state map?]
+  (let [num-addons (-> state :db count)
+        known-host-list (->> state :db (map :source) distinct sort vec)
+        num-addons-starred (-> state :user-catalogue-idx count)
+
+        num-addons-installed (-> state :installed-addon-list count)
+        num-addons-installed-matched (->> state :installed-addon-list (filter :matched?) count)
+        num-addons-installed-ignored (->> state :installed-addon-list (filter addon/ignored?) count)
+        num-addons-installed-bytes (->> state :installed-addon-list (map :dirsize) (remove nil?) (reduce +))
+
+        num-addons-reducer (fn [acc addon]
+                             (update acc (-> addon :source (or "none")) (fnil inc 0)))
+        num-addons-per-host (reduce num-addons-reducer {} (-> state :db))
+        num-addons-installed-per-host (reduce num-addons-reducer {} (-> state :installed-addon-list))]
+
+    (merge
+     {:addons/total num-addons
+      :addons/known-host-list known-host-list
+      :addons/num-by-host num-addons-per-host
+      :addons/total-starred num-addons-starred
+
+      :installed-addons/total num-addons-installed
+      :installed-addons/num-matched num-addons-installed-matched
+      :installed-addons/num-by-host num-addons-installed-per-host
+      :installed-addons/num-ignored num-addons-installed-ignored
+      :installed-addons/total-bytes num-addons-installed-bytes}
+
+     (github-stats!))))
+
+(defn-spec update-stats! nil?
+  "summarises application state and updates a map of stats"
+  []
+  (swap! state assoc :db-stats (app-stats (get-state)))
+  nil)
+
+(defn-spec watch-stats! nil?
+  "attaches a listener to sections of the state so stats are updated as they happen"
+  []
+  (let [watch-these-paths [[:db]
+                           [:installed-addon-list]
+                           [:user-catalogue-idx]]]
+    (doseq [path watch-these-paths]
+      (state-bind path (fn [_]
+                         (try
+                           (update-stats!)
+                           (catch Exception e
+                             (error e "uncaught exception updating stats"))))))))
 
 ;; import/export
 
@@ -1409,9 +1616,7 @@
                                                  :invalid-data? nil-me
                                                  :transform-map {:game-track keyword}})
 
-        curse? (fn [addon]
-                 (some-> addon :source (= "curseforge")))
-        addon-list (remove curse? addon-list)
+        addon-list (remove addon/host-disabled? addon-list)
 
         full-data? (fn [addon]
                      (utils/all (mapv #(contains? addon %) [:source :source-id :name])))
@@ -1476,7 +1681,31 @@
    ;; seems like a good place to preserve the etag-db
   (save-settings!)
 
+  (scheduled-user-catalogue-refresh)
+
   nil)
+
+(defn-spec hard-refresh nil?
+  "unlike `refresh`, `hard-refresh` clears the http cache before checking for addon updates."
+  []
+  ;; why can't we be more specific, like just the addons for the current addon-dir?
+  ;; the url used to 'expand' an addon from the catalogue isn't preserved.
+  ;; it may also change with the game track (tukui, historically) or not even exist (tukui, currently).
+  ;; a thorough inspection would be too much code.
+  ;; this also removes the etag cache. the etag db only applies to catalogues and downloaded zip files.
+  (delete-http-cache!)
+  (refresh))
+
+;; move to core.clj?
+(defn-spec half-refresh nil?
+  "like `refresh` but excludes reloading catalogues, focusing on re-reading installed addons,
+  matching them to the catalogue and reapplying host updates."
+  []
+  (report "refresh")
+  (load-all-installed-addons)
+  (match-all-installed-addons-with-catalogue)
+  (check-for-updates)
+  (save-settings!))
 
 (defn refresh-check
   "given a set of directories, presumably new ones introduced during an update, checks to see if any are
@@ -1491,7 +1720,7 @@
         diff (clojure.set/difference new-dirs existing-dirs)]
     (when-not (empty? diff)
       (debug "diff found between new and old, full refresh required:" diff)
-      ;; todo: could this be a half-refresh? should half-refresh live in core.clj ?
+      ;; todo: could this be a half-refresh instead?
       (refresh))))
 
 ;; todo: move to ui.cli
@@ -1577,6 +1806,7 @@
   (init-dirs)
   (prune-http-cache!)
   (load-settings! cli-opts)
+  (watch-stats!)
 
   state)
 

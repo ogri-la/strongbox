@@ -87,6 +87,7 @@ SomeAddon.lua")
           toc-file-path (join addon-path "SomeAddon.toc")
           expected [{:name "addon-name"
                      :dirname "SomeAddon"
+                     :dirsize 0
                      :label "Addon Name"
                      :description "Description of the addon here"
                      :interface-version 80205

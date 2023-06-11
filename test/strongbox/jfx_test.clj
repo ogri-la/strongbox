@@ -78,6 +78,7 @@
                   {:fx/type :menu-item, :text "skinny"}
                   {:fx/type :menu-item, :text "fat"}
                   jfx/separator
+                  {:fx/type :check-menu-item, :text "starred", :selected false}
                   {:fx/type :check-menu-item, :text "browse", :selected false}
                   {:fx/type :check-menu-item, :text "source", :selected true}
                   {:fx/type :check-menu-item, :text "ID", :selected true}
@@ -87,11 +88,12 @@
                   {:fx/type :check-menu-item, :text "tags", :selected false}
                   {:fx/type :check-menu-item, :text "created", :selected false}
                   {:fx/type :check-menu-item, :text "updated", :selected false}
-                  {:fx/type :check-menu-item, :text "installed", :selected false}
-                  {:fx/type :check-menu-item, :text "available", :selected false}
-                  {:fx/type :check-menu-item, :text "version", :selected false}
-                  {:fx/type :check-menu-item, :text "WoW", :selected false}
-                  {:fx/type :check-menu-item, :text "uber-button", :selected false}]
+                  {:fx/type :check-menu-item, :text "size", :selected false}
+                  {:fx/type :check-menu-item, :text "installed version", :selected false}
+                  {:fx/type :check-menu-item, :text "available version", :selected false}
+                  {:fx/type :check-menu-item, :text "installed+available version", :selected false}
+                  {:fx/type :check-menu-item, :text "game version (WoW)", :selected false}
+                  {:fx/type :check-menu-item, :text "über button", :selected false}]
 
         selected-columns [:foo :bar :baz :source :source-id]
 

@@ -42,6 +42,8 @@
 
 (s/def ::atom #(instance? clojure.lang.Atom %))
 
+(s/def ::gte-zero #(and (number? %) (>= % 0)))
+
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -108,6 +110,7 @@
 (s/def ::ignore-flag (s/keys :req-un [::ignore?]))
 (s/def ::download-url ::url)
 (s/def ::dirname (s/and string? #(not (empty? %)))) ;; and doesn't contain any '/' characters
+(s/def ::dirsize (s/and int? #(>= % 0)))
 (s/def ::description (s/nilable string?))
 (s/def ::matched? boolean?)
 (s/def ::group-id string?)
@@ -121,6 +124,8 @@
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::release-label ::label)
 
+(s/def ::latest-strongbox-release (s/or :set string? :not-set nil? :failed keyword?))
+
 ;; dates and times
 
 (s/def ::inst (s/and string? #(try
@@ -133,6 +138,7 @@
                                     false))))
 
 (s/def ::zoned-dt-obj #(instance? java.time.ZonedDateTime %))
+(s/def ::local-dt-obj #(instance? java.time.LocalDateTime %))
 
 ;; javafx, cljfx, gui
 ;; no references to cljfx or javafx please!
@@ -140,6 +146,7 @@
 (s/def :javafx/node #(instance? javafx.scene.Node %))
 
 (s/def :gui/column-data (s/keys :opt-un [:gui/text :gui/cell-value-factory :gui/style-class]))
+(s/def :gui/sub-pane-content #{:notice-logger :stats})
 
 (s/def :addon/id (s/or :regular (s/keys :req-un [:addon/source :addon/source-id]) ;; installed addons and catalogue addons
                        :edge (s/keys :req-in [::dirname]))) ;; unmatched and ignored addons
@@ -155,15 +162,40 @@
 ;; defined here to prevent coupling between cli.clj and config.clj (I guess?)
 
 ;; all known columns. also constitutes the column order.
-(def known-column-list [:browse-local :source :source-id :source-map-list :name :description :tag-list :created-date :updated-date :installed-version :available-version :combined-version :game-version :uber-button])
+;; arrow column/group expander always comes first
+(def known-column-list
+  [:starred :browse-local
+   :source :source-id :source-map-list
+   :name :description :tag-list
+   :created-date :updated-date :dirsize
+   :installed-version :available-version :combined-version :game-version
+   :uber-button])
 
 ;; default set of columns
-(def default-column-list--v1 [:source :name :description :installed-version :available-version :game-version :uber-button])
-(def default-column-list--v2 [:source :name :description :combined-version :game-version :uber-button])
+(def default-column-list--v1
+  [:source
+   :name :description
+   :installed-version :available-version :game-version
+   :uber-button])
+(def default-column-list--v2
+  [:source
+   :name :description
+   :combined-version :game-version
+   :uber-button])
 (def default-column-list default-column-list--v2)
 
-(def skinny-column-list [:name :version :combined-version :game-version :uber-button])
-(def fat-column-list [:browse-local :source :source-id :name :description :tag-list :created-date :updated-date :combined-version :game-version :uber-button])
+(def skinny-column-list
+  [:name
+   :version :combined-version :game-version
+   :uber-button])
+
+(def fat-column-list
+  [:starred :browse-local
+   :source :source-id
+   :name :description :tag-list
+   :created-date :updated-date :dirsize
+   :installed-version :available-version :game-version
+   :uber-button])
 
 (def column-preset-list [[:default default-column-list]
                          [:skinny skinny-column-list]
@@ -178,11 +210,13 @@
 (s/def ::addon-dir-map (s/keys :req-un [::addon-dir :addon-dir/game-track ::strict?]))
 (s/def ::addon-dir-list (s/coll-of ::addon-dir-map))
 (s/def ::selected-catalogue keyword?)
+(s/def ::keep-user-catalogue-updated boolean?)
 
 (s/def :config/addon-zips-to-keep (s/nilable int?))
 (s/def :config/ui-selected-columns :ui/column-list)
 (s/def :config/preferences (s/keys :req-un [:config/addon-zips-to-keep
-                                            (s/nilable :config/ui-selected-columns)]))
+                                            (s/nilable :config/ui-selected-columns)
+                                            :config/keep-user-catalogue-updated]))
 
 (s/def ::user-config (s/keys :req-un [::addon-dir-list ::selected-addon-dir
                                       ::catalogue-location-list ::selected-catalogue
@@ -236,6 +270,7 @@
 (s/def :addon/category string?)
 (s/def :addon/category-list (s/coll-of :addon/category))
 
+(def tukui-source-list #{"tukui" "tukui-classic" "tukui-classic-tbc" "tukui-classic-wotlk"})
 (s/def :addon/source (s/or :known #{"curseforge" "wowinterface" "github" "gitlab" "tukui" "tukui-classic" "tukui-classic-tbc" "tukui-classic-wotlk"}
                            :unknown string?))
 (s/def :addon/source-id (s/or ::integer-id? int? ;; tukui has negative ids
@@ -257,7 +292,8 @@
                    ::interface-version
                    ::installed-version
                    :addon/supported-game-tracks]
-          :opt-un [;; toc file may contain addon host information but it's not guaranteed.
+          :opt-un [::dirsize ;; not present on error during calculation. zero during testing.
+                   ;; toc file may contain addon host information but it's not guaranteed.
                    :addon/source
                    :addon/source-id
                    :addon/source-map-list]))
@@ -453,3 +489,16 @@
 ;; search
 
 (s/def :search/filter-by #{:source :tag :tag-membership :user-catalogue})
+
+;; github
+
+(s/def :github/requests-used ::gte-zero)
+(s/def :github/remaining ::gte-zero)
+(s/def :github/requests-limit-reset-minutes number?)
+(s/def :github/requests-limit ::gte-zero)
+(s/def :github/token-set? boolean?)
+(s/def :github/requests-stats (s/keys :req [:github/token-set?
+                                            :github/requests-limit
+                                            :github/requests-limit-reset-minutes
+                                            :github/requests-remaining
+                                            :github/requests-used]))

@@ -1,30 +1,42 @@
 # strongbox, a World of Warcraft addon manager
 
-`strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon manager for World of Warcraft.
+`strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon
+manager for World of Warcraft.
 
 It runs on Linux and macOS.
 
-It supports addons hosted by ~Curseforge,~ wowinterface.com, Tukui, Github and Gitlab.
+It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and Gitlab.
+
+---
+
+***Notice***: tukui.org no longer hosts addons except `elvui` and `tukui` as of **2023-06-01**.
+
+Unfortunately the location of these two addons has changed as well as details around their access.
+
+I've dropped support for tukui.org in **7.0.0** and instead mirror [tukui](https://github.com/ogri-la/tukui) and
+[elvui](https://github.com/ogri-la/elvui) releases on Github. This automatically includes them in the
+[Github catalogue](https://github.com/ogri-la/strongbox-catalogue/blob/master/github-catalogue.json).
 
 ---
 
 ***Notice***: Curseforge addons no longer receive updates as of version **5.0.0**, released Feb 1st, 2022.
 
-Use the *"Source"* and *"Find similar"* actions from the addon context menu ([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
+Use the *"Source"* and *"Find similar"* actions from the addon context menu
+([added **4.9.0**](https://github.com/ogri-la/strongbox/releases)) to help migrate addons away from Curseforge.
 
 I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-addon-managers/).
 
 ---
 
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-skinny.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-fat.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-detail.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-7.0.0-installed-skinny.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-7.0.0-installed.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-7.0.0-installed-fat.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-7.0.0-detail.png?raw=true)
 
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-skinny.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-fat.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-detail.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-installed.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-installed-fat.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-detail.png?raw=true)
 
 ## Installation
 
@@ -32,14 +44,14 @@ Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.or
 
 For other Linux users:
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/6.1.2/strongbox)
+1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/7.0.0/strongbox)
 2. make executable: `chmod +x strongbox`
 3. run: `./strongbox`
 
 If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
 
-1. download: [./releases/strongbox-6.1.2-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/6.1.2/strongbox-6.1.2-standalone.jar)
-2. run: `java -jar strongbox-6.1.2-standalone.jar`
+1. download: [./releases/strongbox-7.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/7.0.0/strongbox-7.0.0-standalone.jar)
+2. run: `java -jar strongbox-7.0.0-standalone.jar`
 
 ## Usage
 
@@ -68,7 +80,7 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 * [install addons from multiple sources](#install-addons-from-multiple-sources):
     - ~Curseforge~
     - wowinterface.com
-    - Tukui
+    - ~Tukui~
     - Github (using *releases*)
     - Gitlab (using *releases*)
 * [import and export lists of addons](#import-and-export-lists-of-addons)
@@ -107,9 +119,7 @@ that it's my privilege to offer this small piece back.
 
 This software interacts with the following remote hosts:
 
-* ~Overwolf/Twitch/Curseforge [Addons API](https://addons-ecs.forgesvc.net/) and its [CDN](https://edge.forgecdn.net/)~
 * [wowinterface.com](https://wowinterface.com)
-* [www.tukui.org](https://www.tukui.org/api.php)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
     - to download repository and release data for addons hosted on Github
     - to download the latest `strongbox` release information
@@ -148,7 +158,8 @@ bug. *Some* of the details it contains are:
 
 ### classic and retail addon support
 
-"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)" and "Retail" versions of WoW are all distinct addon systems.
+"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)" and "Retail" versions of WoW are all
+distinct addon systems.
 
 Some addons support all systems in a single download, some support classic as an alternate build of the same addon, 
 some addons support classic only, some addons have been split up into multiple addons. There is a lot of variation.
@@ -182,9 +193,7 @@ Click `File` from the top menu and select `Import addon` and paste the URL of th
 
 Strongbox supports searching for addons from the following addon hosts:
 
-* ~[Curseforge](https://www.curseforge.com/wow/addons)~
 * [wowinterface.com](https://wowinterface.com/addons.php)
-* [Tukui](https://www.tukui.org)
 * [Github](https://github.com)
 
 Click the `search` tab and start typing.
@@ -224,9 +233,7 @@ Click the `Update all` button next to your addon directory.
 
 Strongbox supports installing addons from the following addon hosts:
 
-* ~[Curseforge](https://www.curseforge.com/wow/addons)~
 * [wowinterface.com](https://wowinterface.com/addons.php)
-* [Tukui](https://www.tukui.org)
 * [Github](https://www.github.com)
 * [Gitlab](https://gitlab.com)
 
@@ -313,7 +320,6 @@ Right-click an addon and select `Release`.
 
 Strongbox currently supports installing previous releases for:
 
-* ~Curseforge~
 * Github
 * Gitlab
 
@@ -394,6 +400,6 @@ Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://a
 
 ## License
 
-Copyright © 2018-2022 Torkus
+Copyright © 2018-2023 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)

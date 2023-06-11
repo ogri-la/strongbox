@@ -64,6 +64,7 @@
 (def glyph-map glyph-map--fontawesome)
 
 (def curseforge-cutoff-label "Feb 1st, 2022")
+(def tukui-cutoff-label "June 1st, 2023")
 
 (def releases
   "https://wowpedia.fandom.com/wiki/Patch"
@@ -122,3 +123,5 @@
    "1.3" "World of Warcraft: Ruins of the Dire Maul"
    "1.2" "World of Warcraft: Mysteries of Maraudon"
    "1" "World of Warcraft"})
+
+(def max-user-catalogue-age 28)

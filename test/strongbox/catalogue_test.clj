@@ -3,6 +3,7 @@
    [clojure.test :refer [deftest testing is use-fixtures]]
    ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
+    [utils :as utils]
     [constants :as constants]
     [logging :as logging]
     [catalogue :as catalogue]
@@ -280,9 +281,7 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 502 :reason-phrase "Gateway Time-out (HTTP 502)"})}}
-          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 502) (HTTP 502)"
-                    "Curseforge: the API is having problems right now. Try again later."
-                    "no 'Retail' release found on curseforge."]]
+          expected ["addon host 'curseforge' was disabled Feb 1st, 2022.\n • use 'Source' and 'Find similar' from the addon context menu for alternatives."]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
@@ -293,211 +292,244 @@
           strict? true
           fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/281321"
                        {:get (fn [req] {:status 504 :reason-phrase "Gateway Time-out (HTTP 504)"})}}
-          expected ["failed to fetch 'https://addons-ecs.forgesvc.net/api/v2/addon/281321': Gateway Time-out (HTTP 504) (HTTP 504)"
-                    "Curseforge: the API is having problems right now. Try again later."
-                    "no 'Retail' release found on curseforge."]]
+          expected ["addon host 'curseforge' was disabled Feb 1st, 2022.\n • use 'Source' and 'Find similar' from the addon context menu for alternatives."]]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))))))))
 
 ;; retail
 
-(deftest expand-summary--retail-strict
+(deftest expand-summary--retail-strict--just-retail
   (testing "when just retail is available, use it"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:retail]}
           game-track :retail
           strict? true
-          response (slurp (fixture-path "curseforge-api-addon--retail.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
-          expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
-                    :interface-version 90000,
+          response [{:game-track :retail
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
+          expected {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
                     :version "2.4.5"
                     :game-track :retail
-                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
                                     :game-track :retail,
-                                    :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
+(deftest expand-summary--retail-strict--just-classic
   (testing "when just classic is available, use nothing"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646"
+                 ;; 2023-06-11: test switched from curseforge to wowinterface.
+                 ;; wowinterface doesn't expand to different game tracks, so what we're testing here is refusing to expand,
+                 ;; rather than filtering out a classic release.
+                 :game-track-list [:classic]}
           game-track :retail
           strict? true
-          response (slurp (fixture-path "curseforge-api-addon--classic.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
+          response [{:game-track :classic
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
           expected nil]
       (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
+(deftest expand-summary--retail-strict--retail-and-classic
   (testing "when both retail and classic are available, use retail"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:retail :classic]}
           game-track :retail
           strict? true
-          response (slurp (fixture-path "curseforge-api-addon--retail-AND-classic.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
-          expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
-                    :interface-version 90000,
+          response [{:game-track :retail
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
+          expected {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646",
                     :version "2.4.5"
                     :game-track :retail
-                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646",
                                     :game-track :retail,
-                                    :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 (deftest expand-summary--retail-then-classic
-  (testing "when just classic is available, use it"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+  (testing "when both retail and classic are available, game track is set to retail and and strict-mode is off, use retail."
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:retail :classic]}
           game-track :retail
           strict? false
-          response (slurp (fixture-path "curseforge-api-addon--classic.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
-          expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
-                    :interface-version 11300,
-                    :version "2.4.5 (Classic)"
-                    :game-track :classic
-                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
-                                    :game-track :classic,
-                                    :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
-                                    :version "2.4.5 (Classic)"}]}
+          response [{:game-track :retail
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
+          expected {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                    :version "2.4.5"
+                    :game-track :retail
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :retail
+                                    :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 ;; classic
 
-(deftest expand-summary--classic-strict
+(deftest expand-summary--classic-strict--just-classic
   (testing "when just classic is available, use it"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:classic]}
           game-track :classic
           strict? true
-          response (slurp (fixture-path "curseforge-api-addon--classic.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
-          expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
-                    :interface-version 11300,
-                    :version "2.4.5 (Classic)"
-                    :game-track :classic
-                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
-                                    :game-track :classic,
-                                    :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
-                                    :version "2.4.5 (Classic)"}]}
-          expected (merge addon expected)]
-      (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
-
-  (testing "when just retail is available, use nothing"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
-          game-track :classic
-          strict? true
-          response (slurp (fixture-path "curseforge-api-addon--retail.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
-          expected nil]
-      (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track strict?))))))
-
-  (testing "when both retail and classic are available, use classic"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
-          game-track :classic
-          strict? true
-          response (slurp (fixture-path "curseforge-api-addon--retail-AND-classic.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
-          expected {:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
-                    :interface-version 11300,
-                    :version "2.4.5 (Classic)"
-                    :game-track :classic
-                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/60/Pawn-2.4.5-Classic.zip",
-                                    :game-track :classic,
-                                    :interface-version 11300,
-                                    :release-label "[WoW 1.13.5] Pawn-2.4.5-Classic",
-                                    :version "2.4.5 (Classic)"}]}
-          expected (merge addon expected)]
-      (with-fake-routes-in-isolation fake-routes
-        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
-
-(deftest expand-summary--classic-then-retail
-  (testing "when just retail is available, use it"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"}
-          game-track :classic
-          strict? false
-          response (slurp (fixture-path "curseforge-api-addon--retail.json"))
-          fake-routes {"https://addons-ecs.forgesvc.net/api/v2/addon/4646"
-                       {:get (fn [req] {:status 200 :body response})}}
-          expected {:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
-                    :interface-version 90000,
+          response [{:game-track :classic
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
+          expected {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
                     :version "2.4.5"
-                    :game-track :retail
-                    :release-list [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
-                                    :game-track :retail,
-                                    :interface-version 90000,
-                                    :release-label "[WoW 9.0.1] Pawn-2.4.5",
+                    :game-track :classic
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :classic,
                                     :version "2.4.5"}]}
           expected (merge addon expected)]
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
+(deftest expand-summary--classic-strict--just-retail
+  (testing "when just retail is available, use nothing"
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:retail]}
+          game-track :classic
+          strict? true
+          response [{:game-track :retail
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
+          expected nil]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
+
+(deftest expand-summary--classic-strict--retail-and-classic
+  (testing "when both retail and classic are available, use classic"
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:retail :classic]}
+          game-track :classic
+          strict? true
+          response [{:game-track :retail ;; 2023-06-09: this is interesting behaviour. retail response, classic returned
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
+          expected {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                    :version "2.4.5"
+                    :game-track :classic
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :classic,
+                                    :version "2.4.5"}]}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
+
+(deftest expand-summary--classic-then-retail
+  (testing "when both retail and classic are available, game track is set to classic and and strict-mode is off, use classic."
+    (let [addon {:name "foo" :label "Foo" :source "wowinterface" :source-id "4646" :game-track-list [:retail :classic]}
+          game-track :classic
+          strict? false
+          response [{:game-track :retail
+                     :UIVersion "2.4.5"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}
+          expected {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                    :version "2.4.5"
+                    :game-track :classic
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :classic
+                                    :version "2.4.5"}]}
+          expected (merge addon expected)]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
+
+;; ---
+
 (deftest expand-summary--pinned--use-pinned
   (testing "when an addon is pinned, look for it's release in the list of releases returned from the host"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
-                 :installed-version "1.2.3" :pinned-version "1.2.0"}
+    (let [addon {:name "foo"
+                 :label "Foo"
+                 :source "wowinterface"
+                 :source-id "4646"
+                 :installed-version "1.2.3"
+                 :pinned-version "1.2.0"
+                 :game-track-list [:retail]}
           game-track :retail
           strict? true
-          fixture [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+          expected {:name "foo"
+                    :label "Foo"
+                    :source "wowinterface"
+                    :source-id "4646"
+                    :installed-version "1.2.3"
+                    :pinned-version "1.2.0"
+                    :game-track-list [:retail]
+
+                    ;; pinned release merged in
+                    :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
                     :game-track :retail,
-                    :interface-version 90000,
-                    :release-label "[WoW 9.0.1] Pawn-1.2.3.zip",
-                    :version "1.2.3"}
-                   ;; pinned release
-                   {:download-url "https://edge.forgecdn.net/files/3104/062/Addon-2.4.5.zip",
-                    :game-track :retail,
-                    :interface-version 90000,
-                    :release-label "[WoW 9.0.1] Addon-1.2.0",
-                    :version "1.2.0"}]
-          expected (-> addon
-                       (merge {:release-list fixture}
-                              (second fixture))
-                       (dissoc :release-label))]
-      (with-fake-routes-in-isolation {}
-        ;; omg, with-redefs is fantastic
-        (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
-          (is (= expected (catalogue/expand-summary addon game-track strict?))))))))
+                    :version "1.2.0"
+
+                    ;; pinned + new versions available in release list
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :retail,
+                                    :version "1.2.3"}
+                                   {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :retail,
+                                    :version "1.2.0"}]}
+          response [{:game-track :retail
+                     :UIVersion "1.2.3"}
+                    ;; pinned release
+                    {:game-track :retail
+                     :UIVersion "1.2.0"}]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 (deftest expand-summary--pinned--use-latest
   (testing "when a pinned addon cannot find it's pinned release, use the latest release available"
-    (let [addon {:name "foo" :label "Foo" :source "curseforge" :source-id "4646"
-                 :installed-version "0.9.9" :pinned-version "0.9.9"}
+    (let [addon {:name "foo"
+                 :label "Foo"
+                 :source "wowinterface"
+                 :source-id "4646"
+                 :installed-version "0.9.9"
+                 :pinned-version "0.9.9"
+                 :game-track-list [:retail]}
           game-track :retail
           strict? true
-          fixture [{:download-url "https://edge.forgecdn.net/files/3104/62/Pawn-2.4.5.zip",
+          expected {:name "foo"
+                    :label "Foo"
+                    :source "wowinterface"
+                    :source-id "4646"
+                    :installed-version "0.9.9"
+                    :pinned-version "0.9.9"
+                    :game-track-list [:retail]
+
+                    ;; latest release merged in
+                    :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
                     :game-track :retail,
-                    :interface-version 90000,
-                    :release-label "[WoW 9.0.1] Pawn-1.2.3",
-                    :version "1.2.3"}
-                   {:download-url "https://edge.forgecdn.net/files/3104/062/Addon-2.4.5.zip",
-                    :game-track :retail,
-                    :interface-version 90000,
-                    :release-label "[WoW 9.0.1] Addon-1.2.0",
-                    :version "1.2.0"}]
-          expected (-> addon
-                       (merge {:release-list fixture}
-                              (first fixture))
-                       (dissoc :release-label))]
-      (with-fake-routes-in-isolation {}
-        (with-redefs [strongbox.curseforge-api/expand-summary (constantly fixture)]
-          (is (= expected (catalogue/expand-summary addon game-track strict?))))))))
+                    :version "1.2.3"
+
+                    ;; pinned + new versions available in release list
+                    :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :retail,
+                                    :version "1.2.3"}
+                                   {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=4646"
+                                    :game-track :retail,
+                                    :version "1.2.0"}]}
+          response [{:game-track :retail
+                     :UIVersion "1.2.3"}
+                    {:game-track :retail
+                     :UIVersion "1.2.0"}
+                    ;; pinned release missing from response
+                    ;;{:game-track :retail
+                    ;; :UIVersion "1.2.0"}
+                    ]
+          fake-routes {"https://api.mmoui.com/v3/game/WOW/filedetails/4646.json"
+                       {:get (fn [req] {:status 200 :body (utils/to-json response)})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (catalogue/expand-summary addon game-track strict?)))))))
 
 ;;
 

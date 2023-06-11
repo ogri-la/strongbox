@@ -28,7 +28,11 @@
   (let [curse-idx 3]
     (utils/drop-idx -default-catalogue-list--v2 curse-idx)))
 
-(def -default-catalogue-list -default-catalogue-list--v3)
+(def -default-catalogue-list--v4
+  (let [tukui-idx 2]
+    (utils/drop-idx -default-catalogue-list--v3 tukui-idx)))
+
+(def -default-catalogue-list -default-catalogue-list--v4)
 
 (def default-cfg
   {:addon-dir-list []
@@ -44,7 +48,10 @@
 
                  ;; see `specs/column-preset-list` for selectable presets
                  ;; see `cli/column-map` for all known columns
-                 :ui-selected-columns sp/default-column-list}})
+                 :ui-selected-columns sp/default-column-list
+
+                 ;; refresh the user-catalogue every N days
+                 :keep-user-catalogue-updated false}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.
@@ -121,6 +128,12 @@
   (let [new-catalogue-list (vec (remove #(= :curseforge (:name %)) (:catalogue-location-list cfg)))]
     (assoc cfg :catalogue-location-list new-catalogue-list)))
 
+(defn-spec remove-tukui-catalogue map?
+  "removes the tukui catalogue from the user config."
+  [cfg map?]
+  (let [new-catalogue-list (vec (remove #(= :tukui (:name %)) (:catalogue-location-list cfg)))]
+    (assoc cfg :catalogue-location-list new-catalogue-list)))
+
 (defn-spec handle-column-preferences map?
   "handles upgrading of the default column list.
   if the config is using the v1 defaults, upgrade to v2 defaults."
@@ -171,6 +184,7 @@
                 remove-invalid-catalogue-location-entries
                 add-github-catalogue
                 remove-curseforge-catalogue
+                remove-tukui-catalogue
                 handle-column-preferences
                 strip-unspecced-keys)
         message (format "configuration from %s is invalid and will be ignored: %s"

@@ -83,17 +83,56 @@
       (java-time/with-clock (java-time/fixed-clock "2001-01-02T00:00:00Z")
         (is (= (utils/days-between-then-and-now "2001-01-01") 1)))))
 
+(deftest older-than?
+  (java-time/with-clock (java-time/fixed-clock "2023-01-01T00:00:00Z")
+    (let [cases [[["2001-01-01" 0 :days] true]
+                 [["2001-01-01" 0 :hours] true]
+
+                 [["2001-01-01" 1 :days] true]
+                 [["2001-01-01" 1 :hours] true]
+
+                 [["2079-12-31" 1 :days] false]
+                 [["2079-12-31" 1 :hours] false]
+
+                 [["2079-12-31" 0 :days] false]
+                 [["2079-12-31" 0 :hours] false]
+
+                 ;; right now is 2023-01-01T00:00:00Z
+
+                 [["2023-01-01T00:00:00Z" 0 :minutes] false]
+
+                 [["2022-12-31T23:58:59Z" 1 :minutes] true]
+                 [["2023-01-01T00:00:00Z" 1 :minutes] false]]]
+
+      (doseq [[[then threshold period] expected] cases]
+        (is (= expected (utils/older-than? then threshold period)), (format "case %s %s %s" then threshold period))))))
+
+(deftest older-than?--bad-period
+  (is (thrown? java.lang.IllegalArgumentException (utils/older-than? "2001-01-01" 12 :parsecs))))
+
 (deftest file-older-than
   (testing "files whose modification times are older than N hours"
-    (java-time/with-clock (java-time/fixed-clock "1970-01-01T02:00:00Z") ;; jan 1st 1970, 2 am
-      (let [path (utils/join *temp-dir-path* "foo")]
-        (try
-          (fs/touch path 0) ;; created Jan 1st 1970
-          (.setLastModified (fs/file path) 0) ;; modified Jan 1st 1970
-          (is (utils/file-older-than path 1))
-          (is (not (utils/file-older-than path 3)))
-          (finally
-            (fs/delete path)))))))
+    (let [path (utils/join *temp-dir-path* "foo")]
+      (fs/touch path 0) ;; created Jan 1st 1970
+      (.setLastModified (fs/file path) 0) ;; modified Jan 1st 1970
+      (try
+        ;; 2 minutes past the epoch
+        (java-time/with-clock (java-time/fixed-clock "1970-01-01T00:02:00Z")
+          (is (utils/file-older-than path 1 :minutes))
+          (is (not (utils/file-older-than path 3 :minutes))))
+
+        ;; 2 hours past the epoch
+        (java-time/with-clock (java-time/fixed-clock "1970-01-01T02:00:00Z")
+          (is (utils/file-older-than path 1 :hours))
+          (is (not (utils/file-older-than path 3 :hours))))
+
+        ;; 1 day, 1 second past the epoch
+        (java-time/with-clock (java-time/fixed-clock "1970-01-02T00:00:01Z")
+          (is (utils/file-older-than path 1 :days))
+          (is (not (utils/file-older-than path 2 :days))))
+
+        (finally
+          (fs/delete path))))))
 
 (deftest nilable
   (let [cases [[nil nil]
@@ -467,14 +506,15 @@
 
 (deftest published-before-classic?
   (let [cases [["2001" nil]
-               ["2001-01-01" nil]
+               ;;["2001-01-01" nil]
+               ["2001-01-01" true] ;; 2023-05-12: utc timezone now appended to y-m-d strings
                ["2001-01-01T01:00" nil]
                ["2001-01-01T01:00:00Z" true]
                ["2019-08-25T23:59:59Z" true]
                [constants/release-of-wow-classic false]
                ["2019-08-26T00:00:01Z" false]]]
     (doseq [[given expected] cases]
-      (is (= expected (utils/published-before-classic? given))))))
+      (is (= expected (utils/published-before-classic? given)) (str "case: " given)))))
 
 (deftest source-map
   (let [cases [[nil {}]
@@ -534,7 +574,7 @@
                         :debug
                         (let [fn1-ref (fn1)
                               ;; ensure fn1 is always executed first. it will always finish last.
-                              _ (Thread/sleep 7)
+                              _ (Thread/sleep 5)
                               fn2-ref (fn2)]
                           @fn1-ref
                           @fn2-ref))
@@ -564,21 +604,94 @@
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
 
-(deftest compressed-slurp
-  (let [expected "foo!"]
-    (is (= expected (utils/decompress-bytes (utils/compressed-slurp "foo.txt"))))))
+(deftest filesize
+  (let [cases [[0 "0"] ;; special case
+               [1 "1.0 B"]
+               [1000 "1.0 KB"]
+               [1024 "1.0 KB"]
+               [10000 "10.0 KB"]
+               [100000 "100.0 KB"]
+               [1000000 "1.0 MB"]
+               [1500000 "1.5 MB"]
 
-(deftest compressed-slurp--not-found
-  (is (nil? (utils/compressed-slurp "file-that-definitely-does-not-exist.txt"))))
+               [-1 "-1.0 B"]
 
-(deftest decompress-bytes--empty
-  (is (nil? (utils/decompress-bytes (.getBytes ""))))
-  (is (nil? (utils/decompress-bytes nil))))
+               [nil ""]
+               ["foo" ""]
+               [:foo ""]
+               [{:foo "bar"} ""]]]
 
-(deftest decompress-bytes--not-compressed
-  (let [result (try
-                 (utils/decompress-bytes (.getBytes "!"))
-                 (catch java.io.IOException ioe
-                   ioe))]
-    (is (instance? java.io.IOException result))
-    (is (= "Stream is not in the BZip2 format" (.getMessage result)))))
+    (doseq [[given expected] cases]
+      (is (= expected (utils/filesize given))))))
+
+(deftest format-number
+  (with-redefs [utils/user-locale (constantly java.util.Locale/GERMAN)]
+    (let [cases [[1 "1"]
+                 [10 "10"]
+                 [1000 "1.000"]]]
+      (doseq [[given expected] cases]
+        (is (= expected (utils/format-number given))))))
+
+  (with-redefs [utils/user-locale (constantly java.util.Locale/UK)]
+    (let [cases [[1 "1"]
+                 [10 "10"]
+                 [1000 "1,000"]]]
+      (doseq [[given expected] cases]
+        (is (= expected (utils/format-number given)))))))
+
+(deftest unix-time-to-datetime
+  (let [cases [[0 "1970-01-01T00:00:00Z"]
+               [1 "1970-01-01T00:00:01Z"]
+               [61 "1970-01-01T00:01:01Z"]
+               [1685623484 "2023-06-01T12:44:44Z"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/unix-time-to-datetime given))))))
+
+(deftest minutes-from-now
+  (let [cases [["2023-06-01T00:00:00Z" 0]
+               ["2023-06-01T00:00:01Z" 0]
+               ["2023-06-01T00:00:10Z" 0]
+               ["2023-06-01T00:01:00Z" 1]
+               ["2023-06-01T00:10:00Z" 10]
+               ["2023-06-01T01:00:00Z" 60]
+
+               ["2023-05-31T23:59:59Z" 0]
+               ["2023-05-31T23:59:00Z" -1]
+               ["2023-05-31T23:50:00Z" -10]
+               ["2023-05-31T23:00:00Z" -60]]]
+    (with-redefs [utils/now (constantly "2023-06-01T00:00:00Z")]
+      (doseq [[given expected] cases]
+        (is (= expected (utils/minutes-from-now given)))))))
+
+(deftest pretty-print-keyword
+  (let [cases [[nil nil]
+               [:foo "foo"]
+               [:foo-bar "foo bar"]
+               [:foo/bar "foo / bar"]
+               [:foo/bar-baz "foo / bar baz"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/pretty-print-keyword given))))))
+
+(deftest pretty-print-value
+  (let [cases [[nil "(none)"]
+
+               [:foo "foo"]
+               [:foo/bar "bar"]
+
+               [1 "1"]
+               [100 "100"]
+
+               [{} "(empty)"]
+               [{:foo []} "foo: (empty)"]
+               [{:foo :bar} "foo: bar"]
+               [{:foo {:bar :baz}} "foo: bar: baz"]
+               [{:foo {:bar :baz} :bup :boo} "bup: boo, foo: bar: baz"] ;; non-deterministic ...
+
+               [[] "(empty)"]
+               [[1,2,3] "1, 2, 3"]
+               [[{}, 1] "(empty), 1"]
+
+               [true "True"]
+               [false "False"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/pretty-print-value given))))))

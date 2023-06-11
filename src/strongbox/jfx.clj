@@ -2,7 +2,6 @@
   (:require
    [me.raynes.fs :as fs]
    [clojure.pprint]
-   [clojure.set]
    [clojure.java.io :as io]
    ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
@@ -30,15 +29,14 @@
     [core :as core]])
   (:import
    [javafx.scene.text Font]
-   [java.util List Calendar Locale]
+   [java.util List Calendar]
    [javafx.util Callback]
    [javafx.scene.control TreeTableRow TableRow TextInputDialog Alert Alert$AlertType ButtonType]
    [javafx.scene.input MouseButton MouseEvent KeyEvent KeyCode]
    [javafx.stage Stage FileChooser FileChooser$ExtensionFilter DirectoryChooser Window WindowEvent]
    [javafx.application Platform]
    [javafx.scene Node]
-   [javafx.event Event]
-   [java.text NumberFormat]))
+   [javafx.event Event]))
 
 (defn load-font-from-resources
   [resource]
@@ -66,13 +64,6 @@
             (fx.lifecycle/create this this-desc opts))))
     (delete [_ component opts]
       (fx.lifecycle/delete fx.lifecycle/dynamic (:child component) opts))))
-
-(def user-locale (Locale/getDefault))
-(def ^java.text.NumberFormat number-formatter (NumberFormat/getNumberInstance user-locale))
-
-(defn format-number
-  [^Integer n]
-  (.format number-formatter n))
 
 (def major-theme-map
   {:light
@@ -307,7 +298,7 @@
                 {:-fx-opacity "1" ;; a disabled button already has a greying effect applied
                  :-fx-font-style "normal"}
 
-                [".version-column" ".installed-column" ".available-version-column"]
+                [".version-column" ".installed-column" ".available-version-column" ".size-column"]
                 {:-fx-alignment "center-right"
                  :-fx-text-overrun "leading-ellipsis"}
 
@@ -360,7 +351,18 @@
                              :-fx-border-width "0 1 0 0"
                              :-fx-border-color (colour :table-border)
                              :-fx-text-overrun "word-ellipsis"
-                             ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}}
+                             ":hover" {:-fx-background-color (colour :row-updateable-selected)}}}
+
+                ".star-column:hover > .button"
+                {:-fx-text-fill (colour :star-hover)}
+
+                ".star-column > .button"
+                {:-fx-padding "1 0"
+                 :-fx-font-size "1.3em"
+                 :-fx-text-fill (colour :star-unstarred)
+
+                 ".starred"
+                 {:-fx-text-fill (colour :star-starred)}}}
 
                ;;
                ;; installed-addons tab
@@ -499,19 +501,15 @@
                ;;
 
                "#search-addons "
-               {".star-column:hover > .button"
-                {:-fx-text-fill (colour :star-hover)}
+               {"#search-install-button"
+                {:-fx-min-width "90px"
+                 :-fx-padding ".4em 1em"}
 
-                ".star-column > .button"
-                {:-fx-padding "1 0"
-                 :-fx-font-size "1.3em"
-                 :-fx-text-fill (colour :star-unstarred)
-
-                 ".starred"
-                 {:-fx-text-fill (colour :star-starred)}}
-
-                "#search-install-button"
-                {:-fx-min-width "90px"}
+                "#search-text-field "
+                {:-fx-min-width "100px"
+                 :-fx-padding ".4em .5em"
+                 :-fx-background-radius "0"
+                 :-fx-text-fill (colour :table-font-colour)}
 
                 "#search-random-button"
                 {:-fx-min-width "80px"}
@@ -519,7 +517,7 @@
                 "#search-user-catalogue-button"
                 {:-fx-font-weight "bold"
                  :-fx-font-size "1.2em"
-                 :-fx-padding "2 7 "
+                 :-fx-padding "3 7 "
 
                  ".starred" {:-fx-text-fill (colour :star-starred)
                              ;; the yellow of the star doesn't stand out from the gray gradient behind it.
@@ -528,15 +526,14 @@
                                        :-fx-stroke-width ".2"
                                        :-fx-effect (str "dropshadow( gaussian , " (colour :star-starred) " , 10, 0.0 , 0 , 0 )")}}}
 
+                "#search-addon-hosts-list"
+                {:-fx-pref-height "2em"}
+
                 "#search-prev-button"
                 {:-fx-min-width "80px"}
 
                 "#search-next-button"
                 {:-fx-min-width "70px"}
-
-                "#search-text-field "
-                {:-fx-min-width "100px"
-                 :-fx-text-fill (colour :table-font-colour)}
 
                 "#search-selected-tag-bar"
                 {:-fx-padding "0 0 10 10"
@@ -558,22 +555,21 @@
                 :-fx-alignment "center-left"
 
                 "#status-bar-left"
-                {:-fx-padding "0 10"
+                {:-fx-padding "0 0 0 10px"
                  :-fx-alignment "center-left"
                  :-fx-pref-width 9999.0
-                 " > .text" {;; omg, wtf does 'fx-fill' work and not 'fx-text-fill' ???
-                             :-fx-fill (colour :table-font-colour)}}
+                 " > .text" {:-fx-text-fill (colour :table-font-colour)
+                             :-fx-padding "0 0 0 10"}
+
+                 " #more-stats" {:-fx-min-width 79}}
 
                 "#status-bar-right"
                 {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
-                 :-fx-padding "5px 12px 5px 0"
+                 :-fx-padding "5px 10px 5px 0"
                  :-fx-alignment "center-right"}
 
-                "#status-bar-right .button"
-                {:-fx-padding "4 10"
-                 ;; doesn't look right when button is coloured.
-                 ;;:-fx-background-radius "4"
-                 :-fx-font-size "11px"
+                "#status-bar-right .toggle-button"
+                {:-fx-background-radius "4"
 
                  ;; this isn't great but it's better than nothing. revisit when it makes more sense.
                  ":armed"
@@ -586,6 +582,24 @@
                 ".toggle-button.with-error"
                 {:-fx-text-fill (colour :row-error-text)
                  :-fx-base (colour :row-error)}}
+
+               ;;
+               ;; widgets
+               ;;
+
+               ".table-view#key-vals .column-header .label"
+               {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
+
+               ".table-view#key-vals .key-column"
+               {:-fx-alignment "center-right"
+                :-fx-padding "0 1em 0 0"
+                :-fx-font-style "italic"}
+
+               ".table-view#key-vals .key-column.column-header .label"
+               {:-fx-alignment "center-right"}
+
+               ".table-view#key-vals .val-column.column-header .label"
+               {:-fx-alignment "center-left"}
 
                ;;
                ;; addon-detail
@@ -661,20 +675,6 @@
                 {:-fx-padding ".6em 0 .7em 0"
                  :-fx-alignment "bottom-right"
                  :-fx-pref-width 9999.0}
-
-                ".table-view#key-vals .column-header .label"
-                {:-fx-font-style "normal"} ;; column *values*, not the column *header* should be italic
-
-                ".table-view#key-vals .key-column"
-                {:-fx-alignment "center-right"
-                 :-fx-padding "0 1em 0 0"
-                 :-fx-font-style "italic"}
-
-                ".table-view#key-vals .key-column.column-header .label"
-                {:-fx-alignment "center-right"}
-
-                ".table-view#key-vals .val-column.column-header .label"
-                {:-fx-alignment "center-left"}
 
                 "#addon-detail-big-buttons"
                 {:-fx-padding "2em 0"
@@ -1091,7 +1091,7 @@
               {:fx/type :text
                :text (format "version %s" (core/strongbox-version))}
               {:fx/type :text
-               :text (format "version %s is now available to download!" (core/latest-strongbox-release))
+               :text (format "version %s is now available to download!" (core/latest-strongbox-release!))
                :managed (not (core/latest-strongbox-version?))
                :visible (not (core/latest-strongbox-version?))}
               {:fx/type :hyperlink
@@ -1128,7 +1128,7 @@
       (when-not (empty? error-messages)
         (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
           (alert :warning msg {:wait? false}))))
-    (cli/half-refresh)))
+    (core/half-refresh)))
 
 ;;
 
@@ -1199,101 +1199,162 @@
      :text "↪ browse local files"}))
 
 (defn gui-column-map
-  "overrides and additional column information for the GUI. see `cli/column-map`."
-  [queue]
-  (let [-gui-column-map
-        {:expand-group {:label "" :min-width 25 :pref-width 25 :max-width 25 :cell-value-factory (constantly "")}
-         :browse-local {:min-width 135 :pref-width 143 :max-width 150
+  "list of columns for the installed-addons-table that needs to be separately defined so a menu can be built.
+  called with no arguments, the various attached functions will probably fail."
+  ([]
+   (gui-column-map nil))
+  ([context]
+   (let [queue (when context
+                 (fx/sub-val context get-in [:app-state :job-queue]))
+         user-catalogue-idx (when context
+                              (mapv utils/source-map (fx/sub-val context get-in [:app-state, :user-catalogue :addon-summary-list])))
+         starred? (fn [row]
+                    (if (or (not context)
+                            (not (map? row)))
+                      false
+                      (utils/in? (utils/source-map row) user-catalogue-idx)))]
+     {:browse-local {:text "browse"
+                     :min-width 135 :pref-width 143 :max-width 150
+                     :cell-value-factory identity
+                     :cell-factory {:fx/cell-type :tree-table-cell
+                                    :describe (fn [row]
+                                                {:graphic (or (addon-fs-link (:dirname row))
+                                                              {:fx/type :label
+                                                               :text (get row :dirname "")})})}}
+
+      :source {:text "source"
+               :min-width 130 :pref-width 135 :max-width 145
+               :cell-value-factory identity
+               :cell-factory {:fx/cell-type :tree-table-cell
+                              :describe (fn [row]
+                                          (when (map? row)
+                                            {:graphic (href-to-hyperlink row)}))}}
+
+      :source-id {:text "ID"
+                  :min-width 60 :pref-width 150
+                  :cell-value-factory :source-id}
+
+      :source-map-list {:text "other sources"
+                        :cell-value-factory identity
                         :cell-factory {:fx/cell-type :tree-table-cell
                                        :describe (fn [row]
-                                                   {:graphic (or (addon-fs-link (:dirname row))
-                                                                 {:fx/type :label
-                                                                  :text (get row :dirname "")})})}
-                        :cell-value-factory identity}
-         :source {:min-width 130 :pref-width 135 :max-width 145
-                  :cell-factory {:fx/cell-type :tree-table-cell
-                                 :describe (fn [row]
-                                             {:graphic (href-to-hyperlink row)})}
-                  :cell-value-factory identity}
-         :source-id {:min-width 60 :pref-width 150}
-         :source-map-list {:cell-factory {:fx/cell-type :tree-table-cell
-                                          :describe (fn [row]
-                                                      (let [urls (for [source-map (:source-map-list row)
-                                                                       :let [url (cli/addon-source-map-to-url row source-map)]
-                                                                       :when (and url
-                                                                                  (not (= (:source row) (:source source-map))))]
-                                                                   (href-to-hyperlink (assoc source-map :url url)))
-                                                            urls (utils/nilable (vec urls))]
-                                                        (if urls
-                                                          {:graphic {:fx/type :h-box
-                                                                     :children urls}}
-                                                          {:graphic {:fx/type :label
-                                                                     :text ""}})))}
-                           :cell-value-factory identity}
+                                                   (let [urls (for [source-map (:source-map-list row)
+                                                                    :let [url (cli/addon-source-map-to-url row source-map)]
+                                                                    :when (and url
+                                                                               (not (= (:source row) (:source source-map))))]
+                                                                (href-to-hyperlink (assoc source-map :url url)))
+                                                         urls (utils/nilable (vec urls))]
+                                                     (if urls
+                                                       {:graphic {:fx/type :h-box
+                                                                  :children urls}}
+                                                       {:graphic {:fx/type :label
+                                                                  :text ""}})))}}
 
-         :name {:min-width 100 :pref-width 300}
-         :description {:min-width 150 :pref-width 450}
-         :tag-list {:min-width 200 :pref-width 300 :style-class ["tag-button-column"]
+      :name {:text "name"
+             :min-width 100 :pref-width 300
+             :cell-value-factory (comp utils/no-new-lines :label)}
+
+      :description {:text "description"
+                    :min-width 150 :pref-width 450
+                    :cell-value-factory (comp utils/no-new-lines :description)}
+
+      :dirsize {:text "size"
+                :min-width 80 :pref-width 80
+                :cell-value-factory :dirsize
+                :cell-factory {:fx/cell-type :tree-table-cell
+                               :describe (fn [bytes]
+                                           (when (number? bytes)
+                                             {:text (utils/filesize bytes)}))}}
+
+      :starred {:text "" :menu-label "starred"
+                :min-width 50 :pref-width 50 :max-width 50 :style-class ["invisible-button-column" "star-column"]
+                :comparator (fn [a b]
+                              (if (starred? a) 1 0))
+                :cell-value-factory identity
+                :cell-factory {:fx/cell-type :tree-table-cell
+                               :describe (fn [installed-addon]
+                                           (if (or (not (map? installed-addon))
+                                                   (addon/ignored? installed-addon)
+                                                   (not (:matched? installed-addon)))
+                                             {:text ""}
+                                             (let [starred (starred? installed-addon)
+                                                   f (if starred
+                                                       cli/remove-summary-from-user-catalogue
+                                                       cli/add-addon-to-user-catalogue)]
+                                               {:graphic (button (:star constants/glyph-map)
+                                                                 (async-handler (partial f installed-addon))
+                                                                 {:style-class (if starred "starred" "unstarred")})})))}}
+
+      :tag-list {:text "tags"
+                 :min-width 200 :pref-width 300 :style-class ["tag-button-column"]
+                 :cell-value-factory identity
+                 :cell-factory {:fx/cell-type :tree-table-cell
+                                :describe (fn [row]
+                                            {:graphic {:fx/type :h-box
+                                                       :children (mapv (fn [tag]
+                                                                         (button (name tag)
+                                                                                 (async-handler #(do (switch-tab! SEARCH-TAB)
+                                                                                                     (cli/search-add-filter :tag tag)))
+                                                                                 {:tooltip (name tag)}))
+                                                                       (:tag-list row))}})}}
+
+      :updated-date {:text "updated"
+                     :min-width 100 :pref-width 130 :max-width 150
+                     :cell-value-factory :updated-date
+                     :cell-factory {:fx/cell-type :tree-table-cell
+                                    :describe (fn [dt]
+                                                {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+
+      :created-date {:text "created"
+                     :min-width 90 :pref-width 110 :max-width 120
+                     :cell-value-factory :created-date
+                     :cell-factory {:fx/cell-type :tree-table-cell
+                                    :describe (fn [dt]
+                                                ;; for some reason I'm getting the whole row here ... (:uber button column?)!
+                                                {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
+
+      :installed-version {:text "installed" :menu-label "installed version"
+                          :min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]
+                          :cell-value-factory :installed-version}
+
+      :available-version {:text "available" :menu-label "available version"
+                          :min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]
+                          :cell-value-factory cli/available-versions-v1}
+
+      :combined-version {:text "version" :menu-label "installed+available version"
+                         :min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]
+                         :cell-value-factory cli/available-versions-v2}
+
+      :game-version {:text "WoW" :menu-label "game version (WoW)"
+                     :min-width 70 :pref-width 70 :max-width 100
+                     :cell-value-factory identity
+                     :cell-factory {:fx/cell-type :tree-table-cell
+                                    :describe (fn [row]
+                                                (let [text (some-> row :interface-version str utils/interface-version-to-game-version)
+                                                      text (if-not (string? text) "" text)]
+                                                  {:graphic {:fx/type fx.ext.node/with-tooltip-props
+                                                             :props {:tooltip {:fx/type :tooltip
+                                                                               :text (-> text utils/patch-name (or "?"))
+                                                                               ;; the tooltip will be long and intrusive, make delay longer than typical.
+                                                                               :show-delay 400}}
+                                                             :desc {:fx/type :label
+                                                                    :style-class ["table-cell"]
+                                                                    :text text}}}))}}
+
+      :uber-button {:text "" :menu-label "über button"
+                    :min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
                     :cell-value-factory identity
                     :cell-factory {:fx/cell-type :tree-table-cell
                                    :describe (fn [row]
-                                               {:graphic {:fx/type :h-box
-                                                          :children (mapv (fn [tag]
-                                                                            (button (name tag)
-                                                                                    (async-handler #(do (switch-tab! SEARCH-TAB)
-                                                                                                        (cli/search-add-filter :tag tag)))
-                                                                                    {:tooltip (name tag)}))
-                                                                          (:tag-list row))}})}}
-         :created-date {:min-width 90 :pref-width 110 :max-width 120
-                        :cell-value-factory :created-date
-                        :cell-factory {:fx/cell-type :tree-table-cell
-                                       :describe (fn [dt]
-                                                   ;; for some reason I'm getting the whole row here ... (:uber button column?)!
-                                                   {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
-         :updated-date {:min-width 90 :pref-width 110 :max-width 120
-                        :cell-value-factory :updated-date
-                        :cell-factory {:fx/cell-type :tree-table-cell
-                                       :describe (fn [dt]
-                                                   {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
-         :installed-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["installed-column"]}
-         :available-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["available-version-column"]}
-         :combined-version {:min-width 100 :pref-width 175 :max-width 250 :style-class ["version-column"]}
-         :game-version {:min-width 70 :pref-width 70 :max-width 100
-                        :cell-factory {:fx/cell-type :tree-table-cell
-                                       :describe (fn [text]
-                                                   ;; for some reason I'm getting the whole row here
-                                                   (let [text (if-not (string? text) "" text)]
-                                                     {:graphic {:fx/type fx.ext.node/with-tooltip-props
-                                                                :props {:tooltip {:fx/type :tooltip
-                                                                                  :text (-> text utils/patch-name (or "?"))
-                                                                                  ;; the tooltip will be long and intrusive, make delay longer than typical.
-                                                                                  :show-delay 400}}
-                                                                :desc {:fx/type :label
-                                                                       :style-class ["table-cell"]
-                                                                       :text text}}}))}}
-
-         :uber-button {:min-width 80 :pref-width 80 :max-width 120 :style-class ["invisible-button-column"]
-                       :cell-value-factory identity
-                       :cell-factory {:fx/cell-type :tree-table-cell
-                                      :describe (fn [row]
-                                                  (if (or (not row)
-                                                          (not (map? row)))
-                                                    ;; for some reason I'm getting the contents of the :created-date column here
-                                                    {:text ""}
-
-                                                    (let [job-id (joblib/addon-id row)]
-                                                      {:graphic (if (and (core/unsteady? (:name row))
-                                                                         (joblib/has-job? queue job-id))
-                                                                  (addon-progress-bar row queue job-id)
-                                                                  (uber-button row))})))}}}
-
-        ;; rename some UI column keys and then merge with the gui columns
-        merge-ui-gui-columns (fn [[key val]]
-                               [key (merge
-                                     (clojure.set/rename-keys val {:label :text, :value-fn :cell-value-factory})
-                                     (get -gui-column-map key))])
-        column-map (->> cli/column-map (map merge-ui-gui-columns) (into {}))]
-    column-map))
+                                               (if (not (map? row))
+                                                 ;; for some reason I'm getting the contents of the :created-date column here
+                                                 {:text ""}
+                                                 ;; else
+                                                 (let [job-id (joblib/addon-id row)]
+                                                   {:graphic (if (and (core/unsteady? (:name row))
+                                                                      (joblib/has-job? queue job-id))
+                                                               (addon-progress-bar row queue job-id)
+                                                               (uber-button row))})))}}})))
 
 (defn-spec make-table-column map?
   "returns a description of a table column that lives within a table."
@@ -1379,18 +1440,25 @@
                   (let [^javafx.scene.control.CheckMenuItem menu-item (.getSource ev)]
                     (cli/set-preference :addon-zips-to-keep (if (.isSelected menu-item)
                                                               0 nil))))}))
+(defn menu-item--keep-user-catalogue-updated
+  [{:keys [fx/context]}]
+  (let [selected? (fx/sub-val context get-in [:app-state :cfg :preferences :keep-user-catalogue-updated])]
+    {:fx/type :check-menu-item
+     :text "Keep user catalogue updated"
+     :selected selected?
+     :on-action (fn [_]
+                  (cli/set-preference :keep-user-catalogue-updated (not selected?)))}))
 
 (defn-spec build-column-menu ::sp/list-of-maps
   "returns a list of columns that are 'selected' if present in `selected-column-list`."
   [selected-column-list :ui/column-list]
-  (let [column-list (cli/sort-column-list (keys cli/column-map))
-        queue nil
-        gui-column-map (gui-column-map queue)
+  (let [gui-column-map (gui-column-map)
+        column-list (cli/sort-column-list (keys gui-column-map))
         toggle-column-menu-item
         (fn [column-id]
           (let [column (column-id gui-column-map)]
             {:fx/type :check-menu-item
-             :text (or (:text column) (name column-id))
+             :text (or (:menu-label column) (:text column) (name column-id))
              :selected (utils/in? column-id selected-column-list)
              :on-action (async-event-handler #(cli/toggle-ui-column column-id (-> % .getTarget .isSelected)))}))
 
@@ -1412,6 +1480,7 @@
         no-addon-dir? (nil? addon-dir)
         selected-theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
         selected-columns (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns])
+        split-pane (fx/sub-val context get-in [:app-state :gui-split-pane])
         file-menu [(menu-item "Install addon from file" (async-handler zip-file-picker)
                               {:disable no-addon-dir?})
                    (menu-item "Import addon" (async-handler import-addon-handler)
@@ -1437,10 +1506,11 @@
                    separator
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
-        prefs-menu [{:fx/type menu-item--num-zips-to-keep}]
+        prefs-menu [{:fx/type menu-item--num-zips-to-keep}
+                    {:fx/type menu-item--keep-user-catalogue-updated}]
 
         view-menu (into
-                   [(menu-item "Refresh" (async-handler cli/hard-refresh) {:key "F5"})
+                   [(menu-item "Refresh" (async-handler core/hard-refresh) {:key "F5"})
                     separator
                     (menu-item "_Installed" (switch-tab-event-handler INSTALLED-TAB) {:key "Ctrl+I"})
                     (menu-item "Searc_h" (switch-tab-event-handler SEARCH-TAB)
@@ -1458,7 +1528,12 @@
                               (fx/sub-val context get-in [:app-state :cfg :selected-catalogue])
                               (fx/sub-val context get-in [:app-state :cfg :catalogue-location-list]))
                              [separator
-                              (menu-item "Refresh user catalogue" (async-handler cli/refresh-user-catalogue))])
+                              (menu-item "Refresh user catalogue" (async-handler
+                                                                   (fn []
+                                                                     (if split-pane
+                                                                       (cli/set-sub-pane :notice-logger)
+                                                                       (switch-tab! LOG-TAB))
+                                                                     (cli/refresh-user-catalogue))))])
 
         cache-menu [(menu-item "Clear http cache" (async-handler core/delete-http-cache!))
                     (menu-item "Clear addon zips" (async-handler core/delete-downloaded-addon-zips!)
@@ -1542,7 +1617,9 @@
 (defn installed-addons-menu-bar
   "returns a description of the installed-addons tab-pane menu."
   [{:keys [fx/context]}]
-  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])]
+  (let [selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
+        latest-release (fx/sub-val context get-in [:app-state :latest-strongbox-release])
+        latest-version? (core/latest-strongbox-version? latest-release)]
     {:fx/type :h-box
      :padding 10
      :spacing 10
@@ -1554,10 +1631,10 @@
                 {:fx/type wow-dir-dropdown}
                 {:fx/type game-track-dropdown}
                 {:fx/type :button
-                 :text (str "Update Available: " (core/latest-strongbox-release))
+                 :text (str "Update Available: " latest-release)
                  :on-action (handler #(utils/browse-to "https://github.com/ogri-la/strongbox/releases"))
-                 :visible (not (core/latest-strongbox-version?))
-                 :managed (not (core/latest-strongbox-version?))}]}))
+                 :visible (not latest-version?)
+                 :managed (not latest-version?)}]}))
 
 (defn-spec build-release-menu ::sp/list-of-maps
   "returns a list of `:menu-item` maps that will update the given `addon` with 
@@ -1664,22 +1741,25 @@
   [{:keys [fx/context]}]
   (fx/sub-val context get-in [:app-state :unsteady-addon-list]) ;; re-render table when addons become unsteady
   (fx/sub-val context get-in [:app-state :log-lines]) ;; re-render rows when addons emit warnings or errors
-  (let [queue (fx/sub-val context get-in [:app-state :job-queue])
-        row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
+  (let [row-list (fx/sub-val context get-in [:app-state :installed-addon-list])
         selected (fx/sub-val context get-in [:app-state :selected-addon-list])
         selected-addon-dir (fx/sub-val context get-in [:app-state :cfg :selected-addon-dir])
         user-selected-column-list (cli/sort-column-list
                                    (fx/sub-val context get-in [:app-state :cfg :preferences :ui-selected-columns]))
 
-        ;; can't be part of the column map because it's actually attached to the row.
-        ;; this is just a spacer so the arrow always has room and isn't overlapped by another column's values.
-        arrow-column {:fx/type :tree-table-column :cell-value-factory (constantly "")
-                      :min-width 25 :max-width 25 :resizable false}
+        ;; can't be part of the column map because the arrow glyph is actually embedded in the row.
+        ;; this is just a spacer so the arrow always has a fixed amount of room and is not overlapped by other columns.
+        arrow-column {:text ""
+                      :fx/type :tree-table-column
+                      :min-width 25 :max-width 25 :resizable false
+                      :cell-value-factory (constantly "")}
 
         selected-columns (or user-selected-column-list sp/default-column-list)
-        column-list (utils/select-vals (gui-column-map queue) selected-columns)
+        column-list (utils/select-vals (gui-column-map context) selected-columns)
         column-list (mapv make-tree-table-column column-list)
+        ;; the column list can be empty if the user removes all columns!
         column-list (if-not (empty? column-list) (into [arrow-column] column-list) [])
+        column-list (mapv #(dissoc % :menu-label) column-list)
 
         ;; wraps the list of addons in a :`tree-item` component to model the parent->child relationship.
         row-list (mapv (fn [row]
@@ -1937,7 +2017,7 @@
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [n]
                                                  (when n
-                                                   {:text (format-number n)}))}}
+                                                   {:text (utils/format-number n)}))}}
                      {:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [addon]
@@ -1974,8 +2054,7 @@
 (defn search-addons-search-field
   [{:keys [fx/context]}]
   (let [search-state (fx/sub-val context get-in [:app-state, :search])
-        ;;known-host-list (fx/sub-val context get-in [:app-state, :db-stats :known-host-list])
-        known-host-list (core/get-state :db-stats :known-host-list)
+        known-host-list (or (fx/sub-val context get-in [:app-state :db-stats :addons/known-host-list]) [])
         disable-host-selector? (= 1 (count known-host-list))
 
         tag-set (->> search-state :filter-by :tag)
@@ -2024,6 +2103,7 @@
                  :title "addon host"
                  :items known-host-list
                  :show-checked-count false
+                 :id "search-addon-hosts-list"
                  :on-checked-items-changed (fn [val]
                                              (cli/search-add-filter :source val))
                  :disable disable-host-selector?}
@@ -2032,6 +2112,22 @@
                 ;; :id "search-random-button"
                 ;; :text "random"
                 ;; :on-action (handler cli/random-search)}
+
+                {:fx/type :button
+                 :id "search-clear-button"
+                 :text "clear"
+                 :on-action (fn [_]
+                              (when-let [ccb (first (select "#search-addon-hosts-list"))]
+                                (.clearChecks (.getCheckModel ccb)))
+                              (cli/clear-search!))
+                 :disable (let [ss (dissoc search-state :results)
+                                as (dissoc core/-search-state-template :results)]
+                            (if (clojure.string/blank? (:term ss))
+                              ;; we use alternating `" "` and `nil` to 'bump' search results.
+                              ;; if we have one of those, don't consider the search term.
+                              (= (dissoc ss :term)
+                                 (dissoc as :term))
+                              (= ss as)))}
 
                 {:fx/type :h-box
                  :id "spacer"
@@ -2111,11 +2207,8 @@
 (defn addon-detail-key-vals-widget
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
-  (let [key-col (fn [keypair]
-                  ;; shouldn't ever be nil but better safe than sorry
-                  (-> keypair :key (or ":nil") str (subs 1)))
-        column-list [{:text "key" :min-width 150 :pref-width 150 :max-width 200 :resizable false :cell-value-factory key-col}
-                     {:text "val" :cell-value-factory :val}]
+  (let [column-list [{:text "key" :min-width 220 :pref-width 250 :max-width 300 :resizable false :cell-value-factory (comp utils/pretty-print-keyword :key)}
+                     {:text "val" :cell-value-factory (comp utils/pretty-print-value :val)}]
 
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
@@ -2481,7 +2574,10 @@
   (let [log-lines (fx/sub-val context get-in [:app-state :log-lines])
         log-lines (cli/log-entries-since-last-refresh log-lines)
 
-        toggle (fx/sub-val context get-in [:app-state :gui-split-pane])
+        split-pane-state (fx/sub-val context get-in [:app-state :gui-split-pane])
+        sub-pane-selected (fx/sub-val context get-in [:app-state :gui-sub-pane])
+        selected? (and split-pane-state
+                       (= sub-pane-selected :notice-logger))
 
         ;; {:warn 1, :info 20}
         stats (utils/count-occurances log-lines :level)
@@ -2515,45 +2611,88 @@
                        :show-delay 400}}
      :desc {:fx/type :toggle-button
             :text lbl
-            :selected (boolean toggle)
+            :selected selected?
             :style-class (utils/items
                           ["toggle-button" (cond
                                              has-errors? "with-error"
                                              has-warnings? "with-warning")])
             :on-selected-changed (async-handler (fn []
-                                                  (cli/toggle-split-pane)
+                                                  (cli/set-sub-pane :notice-logger)
+                                                  (cli/set-split-pane (not selected?))
                                                   (cli/change-notice-logger-level max-level)))}}))
+
+(defn key-vals-widget
+  "general purpose two-column table intended for two-column key+val data."
+  [{:keys [column-list row-list placeholder]}]
+  (let [row-list (or row-list [])]
+    {:fx/type :table-view
+     :id "key-vals"
+     :style-class ["table-view"]
+     :placeholder {:fx/type :text
+                   :style-class ["table-placeholder-text"]
+                   :text (or placeholder "")}
+     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+     :columns (mapv make-table-column column-list)
+     :items row-list}))
+
+(defn stats-button
+  [{:keys [fx/context]}]
+  (let [split-pane-state (fx/sub-val context get-in [:app-state :gui-split-pane])
+        sub-pane-selected (fx/sub-val context get-in [:app-state :gui-sub-pane])
+        selected? (and split-pane-state
+                       (= sub-pane-selected :stats))]
+
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text "tooltip"
+                       :show-delay 400}}
+     :desc {:fx/type :toggle-button
+            :id "more-stats"
+            :text "more stats"
+            :selected selected?
+            :style-class ["toggle-button"]
+            :on-selected-changed (async-handler (fn []
+                                                  (cli/set-sub-pane :stats)
+                                                  (cli/set-split-pane (not selected?))))}}))
 
 (defn status-bar
   "this is the litle strip of text at the bottom of the application."
   [{:keys [fx/context]}]
-  (let [num-matching-template "%s of %s installed addons found in catalogue."
-        all-matching-template "all installed addons found in catalogue."
-        catalogue-count-template "%s addons in catalogue."
+  (let [stats (fx/sub-val context get-in [:app-state :db-stats])
 
-        ia (fx/sub-val context get-in [:app-state :installed-addon-list])
+        ;; don't show the message if we haven't finished loading yet
+        hide-status? (or (zero? (get stats :addons/total 0))
+                         (zero? (get stats :installed-addons/total 0)))
 
-        uia (filter :matched? ia)
-
-        a-count (count (fx/sub-val context get-in [:app-state :db]))
-        ia-count (count ia)
-        uia-count (count uia)
-
-        strings [(format catalogue-count-template (format-number a-count))
-                 (if (= ia-count uia-count)
-                   all-matching-template
-                   (format num-matching-template uia-count ia-count))]]
+        catalogue-count-status (format "%s addons in catalogue, %s addons installed, %s addons matched to catalogue"
+                                       (get stats :addons/total 0)
+                                       (get stats :installed-addons/total 0)
+                                       (get stats :installed-addons/num-matched 0))]
 
     {:fx/type :h-box
      :id "status-bar"
      :children [{:fx/type :h-box
                  :id "status-bar-left"
-                 :children [{:fx/type :text
+                 :children [{:fx/type stats-button}
+                            {:fx/type :label
                              :style-class ["text"]
-                             :text (join " " strings)}]}
+                             :text (if hide-status? "" catalogue-count-status)}]}
                 {:fx/type :h-box
                  :id "status-bar-right"
                  :children [{:fx/type split-pane-button}]}]}))
+
+(defn db-stats-widget
+  "an instance of the `key-vals-widget` for displaying the `:db-stats` data"
+  [{:keys [fx/context]}]
+  (let [db-stats (fx/sub-val context get-in [:app-state :db-stats])
+        key-vals (sort-by :key (mapv (fn [[key val]] {:key key :val val}) db-stats))]
+    {:fx/type key-vals-widget
+     :column-list [{:text "" :min-width 250 :pref-width 270 :max-width 290
+                    :style-class ["key-column"]
+                    :cell-value-factory (comp utils/pretty-print-keyword :key)}
+                   {:text "" :cell-value-factory (comp utils/pretty-print-value :val)
+                    :style-class ["val-column"]}]
+     :row-list key-vals}))
 
 ;;
 
@@ -2565,7 +2704,12 @@
         style (fx/sub-val context get :style)
         showing? (fx/sub-val context get-in [:app-state :gui-showing?])
         theme (fx/sub-val context get-in [:app-state :cfg :gui-theme])
-        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])]
+        split-pane-on? (fx/sub-val context get-in [:app-state :gui-split-pane])
+        default-sub-pane :notice-logger
+        sub-pane (or (fx/sub-val context get-in [:app-state :gui-sub-pane])
+                     default-sub-pane)
+        -notice-logger {:fx/type notice-logger}
+        -db-stats {:fx/type  db-stats-widget}]
     {:fx/type :stage
      :showing showing?
      :on-close-request exit-handler
@@ -2589,13 +2733,13 @@
              :root {:fx/type :border-pane
                     :id (name theme)
                     :top {:fx/type menu-bar}
-                    :center (if split-pane-on?
-                              {:fx/type :split-pane
-                               :orientation :vertical
-                               :divider-positions [0.6]
-                               :items [{:fx/type tabber}
-                                       {:fx/type notice-logger}]}
-                              {:fx/type tabber})
+                    :center {:fx/type :split-pane
+                             :orientation :vertical
+                             :divider-positions (if split-pane-on? [0.6] [1])
+                             :items [{:fx/type tabber}
+                                     {:fx/type :v-box
+                                      :managed split-pane-on?
+                                      :children [(if (= sub-pane :notice-logger) -notice-logger -db-stats)]}]}
                     :bottom {:fx/type status-bar}}}}))
 
 (defn start
@@ -2621,12 +2765,6 @@
                                 (swap! gui-state fx/swap-context assoc :style (style))))
             (core/add-cleanup-fn #(remove-watch rf key)))
 
-        ;; logging to app state for use in the UI
-        _ (cli/init-ui-logger)
-
-        ;; asynchronous searching. as the user types, update the state with search results asynchronously
-        _ (cli/-init-search-listener)
-
         renderer (fx/create-renderer
                   :middleware (comp
                                fx/wrap-context-desc
@@ -2641,6 +2779,7 @@
 
         ;; don't do this, renderer has to be unmounted and the app closed before further state changes happen during cleanup.
         ;;_ (core/add-cleanup-fn #(fx/unmount-renderer gui-state renderer))
+
         _ (swap! core/state assoc :disable-gui (fn []
                                                  (fx/unmount-renderer gui-state renderer)
                                                  ;; the slightest of delays allows any final rendering to happen before the exit-handler is called.
@@ -2660,9 +2799,19 @@
     ;; happens during testing and causes a few weird windows to hang around.
     ;; see `(run! (fn [_] (test :jfx)) (range 0 100))`
     (let [kick (future
-                 (set-icon)
+                 ;; roughly follows `cli/start`
+
+                 ;; logging to app state for use in the UI
+                 (cli/init-ui-logger)
+                 ;; asynchronous searching. as the user types, update the state with search results asynchronously
+                 (cli/-init-search-listener)
+
                  (core/refresh)
-                 (bump-search))]
+
+                 (bump-search)
+                 (core/latest-strongbox-release!)
+                 (set-icon) ;; 601ms :(
+                 )]
       (core/add-cleanup-fn #(future-cancel kick)))
 
     ;; calling the `renderer` will re-render the GUI.

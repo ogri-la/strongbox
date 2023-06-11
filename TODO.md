@@ -6,24 +6,182 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* fonts are screwy on some systems
-    - https://github.com/ogri-la/strongbox/issues/384
-    - embedded an older, smaller, lighter fontawesome and switched the glyphs
+* 'downloading strongbox data' shouldn't be blocking the gui from starting
+    - is the version check happening async too?
     - done
 
-* log pane, bug, the text 'catalogue' is being truncated in multi-line messages
-    - see screenshot Screenshot at 2022-09-24 08-56-35.png
+* size of addon on disk
+    - I'd like to see a column with 'size on disk'
+        - "1024KiB", "1MiB", "1.04MB"
+        - done
+    - I'd like to see a total size of all addons in addon dir
+        - "1024MiB", "1GiB"
+        - see :db-stats
+    - I'd like to see size of disk and free space
+        - "2TiB of 14TiB free"
+        - nah
+    - and everything mooshed together
+        - "1GiB of addons on /dev/foo with 2TiB of 14TiB available"
+        - nah
 
-* dark theme, 'wow' column text is black on black for some reason
+* user catalogue, add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
+    - done, via favouriting, but! it's not available on the installed addon pane page
     - done
 
-* add a .desktop file for AUR installations
+* user catalogue, what is happening now that regular non-github addons can be favourited?
+    - do they need to have their details refreshed?
+        - yes, they are copies from whatever catalogue they came from.
+    - also, we have a github catalogue now, I bet the majority of these updates can be pulled directly from catalogues.
+        - import-addon will
+            - calls find-addon 
+                - for github, gitlab and curseforge addons
+                    - this involves calls to various apis and checks and things
+                - otherwise, looks up the addon in the catalogue
+                - calls expand-summary
+                - skips the optional dry-run installation
+            - calls expand-summary 
+                - (again)
+            - calls add-addon to add addon to user-catalogue ..
+            - writes user-catalogue to disk
+            - forces an update of the :db by setting it to nil
+
+        - refresh-user-catalogue
+            - calls refresh-user-catalogue-item on each item:
+                - calls find-addon
+                    - for github, gitlab and curseforge addons
+                        - this involves calls to various apis and checks and things
+                    - otherwise, looks up the addon in the catalogue
+                    - calls expand-summary
+                    - skips the optional dry-run installation
+                - calls add-addon to add addon to user-catalogue ..
+            - writes user-catalogue to disk
+
+        - we want to:
+            - check the catalogue for the addon first
+                - I think find-addon should be skipped as we already have the addon as an addon-summary with a url, source, source-id, etc.
+            - if not found in catalogue ... ? 
+                - import it with find-addon?
+    - done
+
+* search, a 'clear' button
+    - resets favourited, search input, tags, etc
+    - done
+
+* search, buttons are slightly different sizes
+    - input star and dropdown are a few pixels shorter than the buttons on either side
+    - done
+
+* user catalogue, schedule refreshes
+    - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
+        - update README
+    - perhaps a preference?
+        - opt-in, opt-out?
+    - some task on startup that examines the catalogue's age and decides to do a refresh?
+        - would play havoc with testing.
+            - disable during testing?
+    - done
+
+* gui, raw data, 'key' column too small for 'supported-game-tracks'
+    - done
+
+* gui, installed, 'updated' column too small for 'NN months ago'
+    - done
+
+* user-catalogue
+    - switch to log window to see progress when refresh-catalogue triggered
+        - only when triggered from menu
+        - scheduled refreshes happen in background
+    - done
+
+* display github requests remaining
+    - done
+
+* user-catalogue, don't switch to user catalogue if sub-pane is up and notice logger is showing
+    - done
+
+* 'core/state :db-stats', seems like a nice idea to put more information here
+    - known-hosts
+    - num addons per-host
+    - num addons favourited/user-catalogue
+    - num addons
+    - total size of addons
+    - ...?
+    - a button on the opposite of the log popup button but similar that will show some overall stats
+    - done
+
+* size column should be right aligned
+    - done
+
+* remove tukui
+    - I'm not keeping all this logic for two addons
+    - stop catalogue addons from being merged into full catalogue
+        - done
+    - can the addons be mirrored/hosted on github?
+        - done
+    - follow curseforge removal pr
+        - done
+
+* update screenshots
     - done
 
 ## todo
 
-
 ## todo bucket (no particular order)
+
+* search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
+    - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
+        - which it isn't, but that's not the point.
+
+* expand-summary, can the game track wrangling logic be made generic rather than per-host?
+    - this would tie in with returning *all* releases from a host
+    - it would insulate host logic from selected game tracks and game track strictness
+    - it would handle pinned logic as well
+        - currently handled in catalogue
+
+* user catalogue, refreshing may guarantee exceeding github limit.
+    - if we know this, add a warning? refuse? stop?
+
+* support NO_COLOR envvar, http://no-color.org
+
+* gui, bug, sorting isn't preserved between addon dir switches
+    - for example, sorting by 'size' in one addon dir, then switching to another will see random sorting
+
+* gui, 'set-icon' is taking a long time to do it's thing.
+
+* gui, raw data, add textual versions of this data as well
+    - pretty printing in a gui is one thing, but useless if it can't be copied
+    - have a text field with plain text and yaml or json formatted addon data could be useful as well
+
+* gui, better copying from the interface, especially the log box
+
+* manually select the primary addon in a group of addons to prevent synthetic titles
+
+* gui, right-click column header and show columns to disable
+
+* no errors displayed when installing from addon detail page
+
+* search, add ability to browse catalogue page by page
+    - returned to bucket 2022-03-02
+    - the 'search' tab kinda sorta is this ... perhaps a preference to disable sampling?
+
+* http, add with-backoff support to download-file
+    - just had a wowinterface addon download timeout
+
+* ux, offer to clean up .nfo files when removing an addon directory
+    - not just .nfo files, but .zip files matching a pattern too
+
+* grouping
+    - I think the tree-table-view allows us to 'group' things now ...
+        - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
+            - ignored are collapsed
+            
+* gui, try replacing the auto fit columns with something like this:
+    - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
+
+# 
+
+* bug, I noticed a weird issue on the mac where Tukui was installing an addon called "Tukui 2"
+    - the original "Tukui" addon indicated a release was available but another, seemingly identical addon "Tukui 2" had been installed
 
 * add support for cloning git repositories
     - this is to get around addon repositories not uploading 'releases' when tagging
@@ -42,27 +200,13 @@ see CHANGELOG.md for a more formal list of changes by release
     - how about a shallow clone?
         - just the files are cloned to a directory
 
-* size of addon on disk
-    - I'd like to see a column with 'size on disk'
-        - "1024KiB", "1MiB", "1.04MB"
-    - I'd like to see a total size of all addons in addon dir
-        - "1024MiB", "1GiB"
-    - I'd like to see size of disk and free space
-        - "2TiB of 14TiB free"
-    - and everything mooshed together
-        - "1GiB of addons on /dev/foo with 2TiB of 14TiB available"
+* zip, switch to apache commons compress for decompressing
+    - https://commons.apache.org/proper/commons-compress/
+    - .tar.gz and 7z support would be interesting
+    - rar should just die already
+    - this would fix a major showstopper in porting to windows
+    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
 
-* wowinterface, fetch addon data from secondary source
-    - *augment* what is currently implemented with my own source
-        - failure to fetch this other data shouldn't prevent wowi updates from working normally
-    - this source is hosted on github as static content, updated daily.
-
-* 'core/state :db-stats', seems like a nice idea to put more information here
-    - known-hosts
-    - num addons per-host
-    - num addons favourited/user-catalogue
-    - num addons
-    - ...?
 
 * github, install addon from the auto-generated .zip files
     - it looks like auctionator has disabled/deleted their 'releases' and put a link to their curseforge page up
@@ -71,13 +215,14 @@ see CHANGELOG.md for a more formal list of changes by release
             - https://github.com/Auctionator/Auctionator/tags
     - we'll have to do some directory name munging
 
-* gui, right-click column header and show columns to disable
+* wowinterface, fetch addon data from secondary source
+    - *augment* what is currently implemented with my own source
+        - failure to fetch this other data shouldn't prevent wowi updates from working normally
+    - this source is hosted on github as static content, updated daily.
 
 * github authentication
     - so user doesn't get capped
         - or have to wrangle GITHUB_AUTH tokens
-
-* no errors displayed when installing from addon detail page
 
 * bug, trade skill master string-converter changed directory names between 2.0.7 and 2.1.0
     - see also Combuctor 9.1.3 vs Combuctor 8.1.1 with 'BagBrother' in old addons
@@ -91,15 +236,8 @@ see CHANGELOG.md for a more formal list of changes by release
         install combuctor 9.1.3
         find 'combuctor' and install from wowi (8.1.1)
         get weird orphaned BagBrother addon
-    - 2022-06-27, returned to bucket 
+    - 2022-06-27, returned to bucket
         - I don't have a solution for this, good or bad.
-
-* zip, switch to apache commons compress for decompressing
-    - https://commons.apache.org/proper/commons-compress/
-    - .tar.gz and 7z support would be interesting
-    - rar should just die already
-    - this would fix a major showstopper in porting to windows
-    - 2022-05-29: returned to bucket, gazumped by installing addon from file.
 
 * bug, addon detail, highlighted installed version is causing rows to be highlighted in the raw data column?
     - looks like a javafx problem, no idea how to fix
@@ -109,15 +247,13 @@ see CHANGELOG.md for a more formal list of changes by release
         - perhaps check the addon name isn't prefixed with '_Classic' ? 
             - how many would be affected by this?
 * create a parser for that shit markup that is preventing reconcilation
-* manually select the primary addon in a group of addons to prevent synthetic titles
 * finer grained control over grouping of addons
-* gui, better copying from the interface, especially the log box
+    - like what?
+    - like a grouped addon or grouping lists of addons?
 * possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file loses the match.
     - mutual dependencies information is mostly blank
 
 * catalogue, download counts for github addons
-* search, add ability to browse catalogue page by page
-    - returned to bucket 2022-03-02
 
 ### catalogue v3 / capture more addon data
 
@@ -135,7 +271,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ###
 
-
 * investigate better popularity metric than 'downloads'
     - if we make an effort to scrape everyday, we can generate this popularity graph ourselves
 * wowinterface, revisit the pages that are being scraped, make sure we're not missing any
@@ -148,11 +283,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * bug, test [:core :clear-addon-ignore-flag--implicit-ignore] is printing an error when game-track-list definitely exists
     - what is removing it?
 
+### major version 7
+
 * default to keeping last three zip files by default
     - stretch goal
         - probably not a good idea for this release where we might want to keep zips around
 
-* 'downloading strongbox data' shouldn't be blocking the gui from starting
+###
+
 
 * user catalogue pane
     - context menu
@@ -176,9 +314,6 @@ see CHANGELOG.md for a more formal list of changes by release
             - or is missing useful information
         - or the zip file is badly formed
     - stuff a regular user should gloss over but a dev might find useful
-
-* http, add with-backoff support to download-file
-    - just had a wowinterface addon download timeout
 
 * a more permanent store than just cached files
     - I want to store release data permanently
@@ -212,22 +347,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * gitlab, add optional API authentication like github
 
-* ux, offer to clean up .nfo files when removing a directory
-
 * bug, stacktrace on double refresh
 
-* grouping
-    - I think the tree-table-view allows us to 'group' things now ...
-        - it's 'flat' at the moment, but it could be grouped by 'ignored', 'pinned', 'updates available'
-            - ignored are collapsed
-
-* add a 'add to user-catalogue' option to make an addon always available despite selected catalogue
-    - done, via favouriting, but! it's not available on the installed addon pane page
-
 * add a 'catalogue is N days old' somewhere
-
-* gui, try replacing the auto fit columns with something like this:
-    - https://stackoverflow.com/questions/14650787/javafx-column-in-tableview-auto-fit-size#answer-49134109
 
 * gui, toggleable highlighers as a menuitem
     - highlight unmatched
@@ -284,9 +406,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - feels a bit like scope creep to me
         - it would be nice and convenient, but a lot of work to build and maintain
 
-* schedule user catalogue refreshes
-    - ensure the user catalogue doesn't get too stale and perform an update in the background if it looks like it's very old
-        - update README
+
 
 * http, clear non-catalogue cache after session
     - it seems reasonable that stopping and starting the app will have it re-fetch addon summaries.

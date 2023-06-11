@@ -3,7 +3,6 @@
    [clojure.spec.alpha :as s]
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
-   [taoensso.tufte :as tufte :refer [p]]
    [java-time]
    [strongbox
     [constants :as constants]
@@ -15,11 +14,6 @@
     [wowinterface-api :as wowinterface-api]
     [gitlab-api :as gitlab-api]
     [github-api :as github-api]]))
-
-(defn-spec host-disabled? boolean?
-  "returns `true` if the addon host has been disabled"
-  [addon map?]
-  (-> addon :source (= "curseforge")))
 
 (defn-spec -expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
@@ -63,29 +57,38 @@
         game-track* game-track
         game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
     (cond
-      (not game-track) (error (format "unsupported game track '%s'." (str game-track*)))
-      (host-disabled? addon) (warn (utils/message-list (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label ".")
-                                                       ["use 'Source' and 'Find similar' from the addon context menu for alternatives."]))
-      :else (if-let [source-updates (if strict?
-                                      (-expand-summary addon game-track)
-                                      (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
-              source-updates
+      (not game-track)
+      (error (format "unsupported game track '%s'." (str game-track*)))
 
-              ;; "no 'Retail' release found on github"
-              ;; "no 'Classic' release found on wowinterface"
-              ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
-              (let [single-template "no '%s' release found on %s."
-                    multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
-                    msg (if strict?
-                          (format single-template (sp/game-track-labels-map game-track) (:source addon))
-                          (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
-                                                             (:source addon))))]
-                (warn msg))))))
+      (strongbox.addon/host-disabled? addon)
+      (if (= (:source addon) "curseforge")
+        (warn (utils/message-list (str "addon host 'curseforge' was disabled " constants/curseforge-cutoff-label ".")
+                                  ["use 'Source' and 'Find similar' from the addon context menu for alternatives."]))
+        (warn (utils/message-list (str "addon host 'tukui' was disabled " constants/tukui-cutoff-label ".")
+                                  ["use 'Source' and 'Find similar' from the addon context menu for alternatives."])))
+
+      :else
+      (if-let [source-updates (if strict?
+                                (-expand-summary addon game-track)
+                                (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
+        source-updates
+
+        ;; "no 'Retail' release found on github"
+        ;; "no 'Classic' release found on wowinterface"
+        ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
+        (let [single-template "no '%s' release found on %s."
+              multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
+              msg (if strict?
+                    (format single-template (sp/game-track-labels-map game-track) (:source addon))
+                    (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
+                                                       (:source addon))))]
+          (warn msg))))))
 
 ;;
 
 (defn-spec toc2summary (s/nilable :addon/summary)
-  "accepts toc or toc+nfo data and emits a version of the data that validates as an `:addon/summary`"
+  "accepts toc or toc+nfo data and emits a version of the data that validates as an `:addon/summary`.
+  used as a last ditch effort to match installed addons against the catalogue by guessing a bunch of parameters."
   [toc (s/or :just-toc :addon/toc, :mixed :addon/toc+nfo)]
   (when-not (:ignore? toc)
     (let [sink nil
@@ -130,8 +133,7 @@
 (defn-spec format-catalogue-data :catalogue/catalogue
   "returns a correctly formatted, ordered, catalogue given a list of addons and a datestamp"
   [addon-list :addon/summary-list, datestamp ::sp/ymd-dt]
-  (let [addon-list (p :cat/sort-addons
-                      (sort-by :name addon-list))]
+  (let [addon-list (sort-by :name addon-list)]
     {:spec {:version 2}
      :datestamp datestamp
      :total (count addon-list)
@@ -160,8 +162,7 @@
 (defn validate
   "validates the given data as a `:catalogue/catalogue`, returning nil if data is invalid"
   [catalogue]
-  (p :catalogue:validate
-     (sp/valid-or-nil :catalogue/catalogue catalogue)))
+  (sp/valid-or-nil :catalogue/catalogue catalogue))
 
 (defn-spec write-catalogue (s/or :ok ::sp/extant-file, :error nil?)
   "write catalogue to given `output-file` as JSON. returns path to output file"

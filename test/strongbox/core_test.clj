@@ -6,6 +6,7 @@
    [envvar.core :refer [with-env]]
    [me.raynes.fs :as fs]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
+   [java-time :as jt]
    [strongbox.cli :as cli]
    [strongbox
     [addon :as addon :refer [downloaded-addon-fname]]
@@ -264,6 +265,7 @@
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon3",
+                     :dirsize 0
                      :download-count 3,
                      :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
                      :game-track :retail,
@@ -290,34 +292,8 @@
                      :version "1.2.3"}
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
-                     :dirname "Addon4",
-                     :download-count 4,
-                     :download-url "https://www.tukui.org/addons.php?download=4",
-                     :game-track :retail,
-                     :group-id "https://www.tukui.org/addons.php?id=4",
-                     :installed-game-track :retail,
-                     :installed-version "1.2.3",
-                     :interface-version 80200,
-                     :label "Addon4",
-                     :matched? true,
-                     :name "addon4",
-                     :primary? true,
-                     :release-list [{:download-url "https://www.tukui.org/addons.php?download=4",
-                                     :game-track :retail,
-                                     :interface-version 80200,
-                                     :version "1.2.3"}],
-                     :source "tukui",
-                     :source-id 4,
-                     :source-map-list [{:source "tukui", :source-id 4}],
-                     :supported-game-tracks [:retail],
-                     :tag-list [],
-                     :update? false,
-                     :updated-date "2019-07-03T07:11:47Z",
-                     :url "https://www.tukui.org/addons.php?id=4",
-                     :version "1.2.3"}
-                    {:created-date "2011-01-04T05:42:23Z",
-                     :description "desc",
                      :dirname "Addon5",
+                     :dirsize 0
                      :download-count 5,
                      :download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
                      :game-track :classic-tbc,
@@ -408,6 +384,7 @@
           expected [{:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
                      :dirname "Addon3",
+                     :dirsize 0
                      :download-count 3,
                      :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=3",
                      :game-track :retail ;; addon supports retail and classic, addon dir game track is set to retail
@@ -434,34 +411,8 @@
                      :version "1.2.3"}
                     {:created-date "2011-01-04T05:42:23Z",
                      :description "desc",
-                     :dirname "Addon4",
-                     :download-count 4,
-                     :download-url "https://www.tukui.org/addons.php?download=4",
-                     :game-track :retail,
-                     :group-id "https://www.tukui.org/addons.php?id=4",
-                     :installed-game-track :retail,
-                     :installed-version "1.2.3",
-                     :interface-version 80200,
-                     :label "Addon4",
-                     :matched? true,
-                     :name "addon4",
-                     :primary? true,
-                     :release-list [{:download-url "https://www.tukui.org/addons.php?download=4",
-                                     :game-track :retail,
-                                     :interface-version 80200,
-                                     :version "1.2.3"}],
-                     :source "tukui",
-                     :source-id 4,
-                     :source-map-list [{:source "tukui", :source-id 4}],
-                     :supported-game-tracks [:retail],
-                     :tag-list [],
-                     :update? false,
-                     :updated-date "2019-07-03T07:11:47Z",
-                     :url "https://www.tukui.org/addons.php?id=4",
-                     :version "1.2.3"}
-                    {:created-date "2011-01-04T05:42:23Z",
-                     :description "desc",
                      :dirname "Addon5",
+                     :dirsize 0
                      :download-count 5,
                      :download-url "https://github.com/author/addon5/releases/download/Addon5-v1.2.3/Addon5-v1.2.3.zip",
                      :game-track :classic-tbc
@@ -496,38 +447,37 @@
 
 (deftest check-for-addon-update
   (testing "the key `:update?` is set to `true` when the installed version doesn't match the catalogue version"
-    (let [;; we start off with a list of these called a catalogue. it's downloaded from github
-          catalogue {:tag-list [:auction-house]
-                     :download-count 1
-                     :label "Every Addon"
-                     :name "every-addon",
-                     :source "curseforge",
-                     :source-id 0
-                     :updated-date "2012-09-20T05:32:00Z",
-                     :url "https://www.curseforge.com/wow/addons/every-addon"}
+    (let [;; we start off with a list of these called a catalogue
+          catalogue [{:label "Every Addon"
+                      :name "every-addon",
+                      :description "Does foo, only better."
+                      :source "wowinterface",
+                      :source-id 0
+                      :game-track-list [:retail]
+                      :url "https://github.com/addons/every-addon"
+                      :download-count 1
+                      :tag-list [:auction-house]
+                      :updated-date "2012-09-20T05:32:00Z",
+                      :created-date "2023-08-01T00:00:00Z"}]
 
-          ;; this is subset of the data the remote addon host (like curseforge) serves us
-          api-result {:latestFiles [{:downloadUrl "https://example.org/foo"
-                                     :displayName "v8.10.00"
-                                     :gameVersionFlavor "wow_retail",
-                                     :gameVersion ["7.0.0"]
-                                     :fileDate "2001-01-03T00:00:00.000Z",
-                                     :fileName "EveryAddon.zip"
-                                     :releaseType 1,
-                                     :exposeAsAlternative nil}]}
-          alt-api-result (assoc-in api-result [:latestFiles 0 :displayName] "v8.20.00")
+          dummy-catalogue (catalogue/new-catalogue catalogue)
 
-          dummy-catalogue (catalogue/new-catalogue [catalogue])
+          ;; this is a subset of the data the remote addon host (like wowinterface) serves us
+          api-result [{:game-track :retail,
+                       :UIVersion "v8.10.00"}]
+
+          alt-api-result (assoc-in api-result [0 :UIVersion] "v8.20.00")
 
           fake-routes {;; catalogue
                        "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json dummy-catalogue)})}
 
-                       ;; every-addon
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/0"
+                       ;; every-addon 0
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/0.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json api-result)})}
 
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       ;; every-addon 1
+                       "https://api.mmoui.com/v3/game/WOW/filedetails/1.json"
                        {:get (fn [req] {:status 200 :body (utils/to-json alt-api-result)})}}]
 
       (with-global-fake-routes-in-isolation fake-routes
@@ -549,7 +499,7 @@
                      :name "every-addon",
                      :group-id "doesntmatter"
                      :primary? true,
-                     :source "curseforge"
+                     :source "wowinterface"
                      :source-id 0}
 
                 ;; the nfo data is simply merged over the top of the scraped toc data
@@ -559,20 +509,16 @@
                 ;; in this case we have a catalogue of 1 and only interested in the first result
                 result (first (core/db-match-installed-addon-list-with-catalogue (core/get-state :db) [toc]))
 
-                ;; previously done in above step, mooshing the installed addon and catalogue item together is
-                ;; now a separate step
+                ;; the installed addon result and catalogue item result are mooshed together
                 toc-addon (core/moosh-addons toc (:catalogue-match result))
-
                 alt-toc-addon (assoc toc-addon :source-id 1)
 
                 ;; and what we 'expand' that data into
-                source-updates {:download-url "https://example.org/foo",
+                source-updates {:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=0"
                                 :version "v8.10.00"
                                 :game-track :retail
-                                :release-list [{:download-url "https://example.org/foo",
+                                :release-list [{:download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=0"
                                                 :game-track :retail,
-                                                :interface-version 70000,
-                                                :release-label "[WoW 7.0.0] EveryAddon",
                                                 :version "v8.10.00"}]}
 
                 alt-source-updates (assoc source-updates :version "v8.20.00")
@@ -580,7 +526,8 @@
 
                 ;; after calling `check-for-update` we expect the result to be the merged sum of the below parts
                 expected (merge toc-addon source-updates {:update? false})
-                alt-expected (merge alt-toc-addon alt-source-updates {:update? true})]
+                alt-expected (merge alt-toc-addon alt-source-updates {:update? true :download-url "https://cdn.wowinterface.com/downloads/getfile.php?id=1"})
+                alt-expected (assoc-in alt-expected [:release-list 0 :download-url] "https://cdn.wowinterface.com/downloads/getfile.php?id=1")]
 
             (is (= expected (core/check-for-update toc-addon)))
             (is (= alt-expected (core/check-for-update alt-toc-addon)))))))))
@@ -1266,6 +1213,7 @@
                       ;;:version ...
                       :description "Does what no other addon does, slightly differently",
                       :dirname "EveryAddon",
+                      :dirsize 0
                       :group-id "https://group.id/never/fetched",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
@@ -1300,6 +1248,7 @@
             expected {;;:ignore? false, ;; removed rather than set to false.
                       :description "Does what no other addon does, slightly differently",
                       :dirname "EveryAddon",
+                      :dirsize 0
                       :group-id "https://group.id/never/fetched",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
@@ -1343,8 +1292,10 @@
 
               expected {:description "group record for the fetched addon",
                         :dirname "EveryAddon-BundledAddon",
+                        :dirsize 0
                         :group-addons [{:description "A useful addon that everyone bundles with their own.",
                                         :dirname "EveryAddon-BundledAddon",
+                                        :dirsize 0
                                         :group-id "https://group.id/also/never/fetched",
 
                                         :ignore? true,
@@ -1362,6 +1313,7 @@
 
                                        {:description "Does what every addon does, just better",
                                         :dirname "EveryOtherAddon",
+                                        :dirsize 0
                                         :group-id "https://group.id/also/never/fetched",
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
@@ -1421,6 +1373,7 @@
               expected {:ignore? false, ;; explicit `false` rather than removed
                         :description "Does what no other addon does, slightly differently",
                         :dirname "EveryAddon",
+                        :dirsize 0
                         :group-id "https://group.id/never/fetched",
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
@@ -1453,69 +1406,129 @@
           expected-empty-search-state (assoc core/-search-state-template :term search-term)]
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
+
+          ;; we have 4 search results to start with
+          (cli/bump-search)
+          (Thread/sleep 50) ;; searching happens in the background
+          (is (= 4 (-> (core/get-state :search) :results first count)))
+
+          ;; search for 'a'
+          ;; we should have three results:
+          ;; 1. "*A* New Simple Percent"
+          ;; 2. "Skins for *A*ddOns"
+          ;; 3. "Chinchill*a*"
           (cli/search search-term)
-           ;; searching happens in the background
           (Thread/sleep 50)
-          ;; we have one search result from a catalogue of 4 addons
-          (is (= 1 (-> (core/get-state :search) :results count)))
+          (is (= 3 (-> (core/get-state :search) :results first count)))
+
           ;; empty the stale search state
           (core/empty-search-results)
+          (Thread/sleep 50)
           (is (= expected-empty-search-state (core/get-state :search)))
+
           ;; do the search again without specifying a search term
+          ;; we should have three search results again
           (cli/bump-search)
           (Thread/sleep 50)
-          (is (= 1 (-> (core/get-state :search) :results count))))))))
+          (is (= 3 (-> (core/get-state :search) :results first count))))))))
 
-(deftest -latest-strongbox-release
+(deftest reset-search-state
+  (testing "search state can be cleared entirely"
+    (let [dummy-catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body dummy-catalogue})}}
+          search-term "a"]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (cli/bump-search)
+
+          ;; we have four results initially
+          (Thread/sleep 50)
+          (is (= 4 (-> (core/get-state :search) :results first count)))
+
+          ;; search for 'a'
+          ;; we should have three results:
+          ;; 1. "*A* New Simple Percent"
+          ;; 2. "Skins for *A*ddOns"
+          ;; 3. "Chinchill*a*"
+          (cli/search search-term)
+          (Thread/sleep 50)
+          (is (= 3 (-> (core/get-state :search) :results first count)))
+
+          ;; filter by host and we still have one search result
+          (cli/search-add-filter :source ["curseforge"])
+          (Thread/sleep 50)
+          ;;(is (= {} (core/get-state :search)))
+          (is (= 1 (-> (core/get-state :search) :results first count)))
+          (is (= ["curseforge"] (core/get-state :search :filter-by :source)))
+
+          ;; filter by tag and we still have one search result
+          (cli/search-add-filter :tag :unit-frames)
+          (Thread/sleep 50)
+          (is (= 1 (-> (core/get-state :search) :results count)))
+          (is (= #{:unit-frames} (core/get-state :search :filter-by :tag)))
+
+          (core/reset-search-state!)
+          (Thread/sleep 50)
+
+          ;; we have 4 search results from a catalogue of 4 addons
+          (is (= 4 (-> (core/get-state :search) :results first count)))
+
+          ;; and all the filters have been removed
+          (is (nil? (core/get-state :search :term)))
+          (is (empty? (core/get-state :search :filter-by :tag)))
+          (is (nil? (core/get-state :search :filter-by :source))))))))
+
+(deftest -download-strongbox-release
   (testing "standard github response for strongbox release data can be parsed and the release version extracted"
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
           expected "4.3.0"]
       (with-global-fake-routes-in-isolation fake-routes
-        (is (= expected (core/-latest-strongbox-release)))))))
+        (is (= expected (core/-download-strongbox-release)))))))
 
-(deftest -latest-strongbox-release--throttled
+(deftest -download-strongbox-release--throttled
   (testing "throttled github response status for strongbox release data returns a :failed "
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
           expected :failed]
       (with-global-fake-routes-in-isolation fake-routes
-        (is (= expected (core/-latest-strongbox-release)))))))
+        (is (= expected (core/-download-strongbox-release)))))))
 
-(deftest -latest-strongbox-release--unknown
+(deftest -download-strongbox-release--unknown
   (testing "weird github response statuses for strongbox release data returns a :failed "
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 999 :reason-phrase "asdf"})}}
           expected :failed]
       (with-global-fake-routes-in-isolation fake-routes
-        (is (= expected (core/-latest-strongbox-release)))))))
+        (is (= expected (core/-download-strongbox-release)))))))
 
-(deftest -latest-strongbox-release--malformed
+(deftest -download-strongbox-release--malformed
   (testing "successful but malformed/unparseable github response for strongbox release data returns a :failed "
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body "asdf"})}}
           expected :failed]
       (with-global-fake-routes-in-isolation fake-routes
-        (is (= expected (core/-latest-strongbox-release)))))))
+        (is (= expected (core/-download-strongbox-release)))))))
 
-(deftest latest-strongbox-release
+(deftest latest-strongbox-release!
   (testing "standard github response for strongbox release data can be parsed and the release version extracted"
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 200 :body (slurp (fixture-path "github-strongbox-release.json"))})}}
           expected "4.3.0"]
       (with-running-app
         (with-global-fake-routes-in-isolation fake-routes
-          (is (= expected (core/latest-strongbox-release))))))))
+          (is (= expected (core/latest-strongbox-release!))))))))
 
-(deftest latest-strongbox-release--throttled
-  (testing "throttled github response status for strongbox release data returns `nil`"
+(deftest latest-strongbox-release!--throttled
+  (testing "throttled github response status for strongbox release data returns `:failed`"
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}]
       (with-running-app
         (with-global-fake-routes-in-isolation fake-routes
-          (is (nil? (core/latest-strongbox-release))))))))
+          (is (= :failed (core/latest-strongbox-release!))))))))
 
-(deftest latest-strongbox-release--subsequent-failure
+(deftest latest-strongbox-release!--subsequent-failure
   (testing "once discovered, release versions are are stored in app state and not fetched again."
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
@@ -1523,7 +1536,7 @@
       (with-running-app
         (swap! core/state assoc :latest-strongbox-release expected)
         (with-global-fake-routes-in-isolation fake-routes
-          (is (= expected (core/latest-strongbox-release))))))))
+          (is (= expected (core/latest-strongbox-release!))))))))
 
 (deftest unsteady?
   (testing "a function that operates on addons can be wrapped to mark the addon as 'unsteady'"
@@ -1708,8 +1721,10 @@
             ;; after installing A, then B then C, we expect C to have cleanly replaced A and B
             expected {:description "group record for the EveryAddonThree addon",
                       :dirname "EveryAddonOne",
+                      :dirsize 0
                       :group-addons [{:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonOne",
+                                      :dirsize 0
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
@@ -1724,6 +1739,7 @@
                                       :supported-game-tracks [:retail]}
                                      {:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonThree",
+                                      :dirsize 0
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
@@ -1738,6 +1754,7 @@
                                       :supported-game-tracks [:retail]}
                                      {:description "Does what no other addon does, slightly differently.",
                                       :dirname "EveryAddonTwo",
+                                      :dirsize 0
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
@@ -1851,3 +1868,53 @@
 
           expected [toc]]
       (is (= expected (core/db-match-installed-addon-list-with-catalogue db installed-addon-list))))))
+
+(deftest db-addon-by-source-and-source-id
+  (let [expected helper/addon-summary
+        db [helper/addon-summary]
+        {:keys [source source-id]} helper/addon-summary]
+    (is (= expected (core/db-addon-by-source-and-source-id db source source-id)))
+    (is (nil? (core/db-addon-by-source-and-source-id db "wowinterface" "foo")))))
+
+;; ---
+
+(deftest refresh-user-catalogue-item
+  (testing "individual addons can be refreshed, writing the changes to disk afterwards."
+    (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
+          new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
+          expected (assoc user-catalogue :addon-summary-list [new-addon])
+          db []]
+      (with-running-app
+        (swap! core/state assoc :user-catalogue user-catalogue)
+        (core/write-user-catalogue!)
+        (with-redefs [core/find-addon (fn [& args] new-addon)]
+          (core/refresh-user-catalogue-item helper/addon-summary db))
+        (is (= expected (core/get-state :user-catalogue)))))))
+
+(deftest refresh-user-catalogue-item--no-catalogue
+  (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
+    (with-running-app
+      (let [db []]
+        (is (nil? (core/refresh-user-catalogue-item helper/addon-summary db)))))))
+
+(deftest refresh-user-catalogue-item--unhandled-exception
+  (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
+    (with-running-app
+      (with-redefs [core/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
+        (let [db []]
+          (is (nil? (core/refresh-user-catalogue-item helper/addon-summary db))))))))
+
+(deftest scheduled-user-catalogue-refresh
+  (with-running-app
+    (java-time/with-clock (java-time/fixed-clock "2100-01-01T00:00:00Z")
+      (cli/set-preference :keep-user-catalogue-updated true)
+      (is (true? (core/get-state :cfg :preferences :keep-user-catalogue-updated)))
+      (swap! core/state assoc :user-catalogue (catalogue/new-catalogue []))
+      (is (true? (core/refresh-user-catalogue?
+                  (core/get-state :cfg :preferences :keep-user-catalogue-updated)
+                  (core/get-state :user-catalogue :datestamp))))
+      (let [expected ["user-catalogue not updated in the last 9999 days, automatic refresh triggered."
+                      "downloading 'full' catalogue"
+                      "refreshing \"user-catalogue.json\", this may take a minute ..."
+                      "\"user-catalogue.json\" has been refreshed"]]
+        (is (= expected (logging/buffered-log :info (core/scheduled-user-catalogue-refresh))))))))

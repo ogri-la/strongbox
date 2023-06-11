@@ -446,6 +446,7 @@
           ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
           expected {:description "Does what no other addon does, slightly differently",
                     :dirname "EveryAddon",
+                    :dirsize 0
                     :group-id "https://www.wowinterface.com/downloads/info25079",
                     :installed-game-track :retail,
                     :installed-version "1.2.3",
@@ -575,6 +576,7 @@
           ;; a mush of the above (.nfo written during install) and the EveryAddon .toc file
           expected {:description "Does what no other addon does, slightly differently",
                     :dirname "EveryAddon",
+                    :dirsize 0
                     :group-id "https://www.tukui.org/addons.php?id=98",
                     :installed-game-track :retail,
                     :installed-version "0.960",
@@ -586,9 +588,11 @@
                     :source "tukui",
                     :source-id 98
                     :source-map-list [{:source "tukui" :source-id 98}]}
+          _ expected
 
           expected-addon-dir (utils/join install-dir "EveryAddon")
           expected-user-catalogue [match]
+          _ expected-user-catalogue
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
@@ -614,33 +618,41 @@
           ;; user gives us this url, we find it and install it
           (cli/import-addon user-url)
 
-          ;; addon was successfully download and installed
-          (is (fs/exists? expected-addon-dir))
+          ;; addon was (not) successfully download and installed
+          ;;(is (fs/exists? expected-addon-dir))
+          (is (not (fs/exists? expected-addon-dir)))
 
           ;; re-read install dir
           (core/load-all-installed-addons)
 
-          ;; we expect our mushy set of .nfo and .toc data
-          (is (= [expected] (core/get-state :installed-addon-list)))
+          ;; we expect ~our~ (no) mushy set of .nfo and .toc data
+          ;;(is (= [expected] (core/get-state :installed-addon-list)))
+          (is (= [] (core/get-state :installed-addon-list)))
 
           ;; and that the addon was added to the user catalogue
-          (is (= expected-user-catalogue (core/get-state :user-catalogue :addon-summary-list)))
+          ;;(is (= expected-user-catalogue (core/get-state :user-catalogue :addon-summary-list)))
+          (is (nil? (core/get-state :user-catalogue :addon-summary-list)))
 
           ;; and that the user catalogue was persisted to disk
-          (is (= expected-user-catalogue
-                 (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
+          ;;(is (= expected-user-catalogue
+          ;;       (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file)))))
+          (is (nil? (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
 ;; todo: no import-addon-gitlab ?
 
-(deftest refresh-user-catalogue
+(deftest refresh-user-catalogue--not-in-catalogue
   (testing "the user catalogue can be 'refreshed', pulling in updated information from github and the current catalogue"
     (with-running-app+opts {:ui nil}
       (let [;; user-catalogue with a bunch of addons across all hosts that the user has added.
             user-catalogue-fixture (fixture-path "user-catalogue--populated.json")
 
-            ;; default app catalogue, contains newer versions of the addon summaries in the user-catalogue.
-            ;; this is because the catalogue is updated periodically and the user-catalogue is not.
+            ;; default app catalogue. this is what the user should have selected before and after refresh,
+            ;; despite using the 'full' catalogue for the refresh.
             short-catalogue (slurp (fixture-path "user-catalogue--short-catalogue.json"))
+
+            ;; full app catalogue, contains newer versions of the addon summaries in the user-catalogue.
+            ;; this is because regular catalogues are updated periodically and the user-catalogue is not.
+            full-catalogue short-catalogue
 
             tukui-fixture (slurp (fixture-path "user-catalogue--tukui.json"))
             tukui-classic-fixture (slurp (fixture-path "user-catalogue--tukui-classic.json"))
@@ -657,7 +669,10 @@
             gitlab-blob-fixture (slurp (fixture-path "user-catalogue--gitlab-blob.json"))
             gitlab-releases-fixture (slurp (fixture-path "user-catalogue--gitlab-releases.json"))
 
-            fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+            fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/full-catalogue.json"
+                         {:get (fn [req] {:status 200 :body full-catalogue})}
+
+                         "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                          {:get (fn [req] {:status 200 :body short-catalogue})}
 
                          "https://www.tukui.org/api.php?addons"
@@ -711,6 +726,9 @@
           ;; sanity check, ensure user-catalogue loaded
           (is (= expected-num (count (core/get-state :db))))
 
+          ;; ensure default short-catalogue is being used
+          (is (= :short (:name (core/current-catalogue))))
+
           ;; we need to load the short-catalogue using newer versions of what is in the user-catalogue
           ;; the user-catalogue is then matched against db, the newer summary returned and written to the user catalogue
 
@@ -722,32 +740,12 @@
                 expected-user-catalogue (-> (core/get-user-catalogue)
                                             (update-in [:addon-summary-list] #(mapv inc-downloads %))
                                             (assoc :datestamp today))]
-            (cli/refresh-user-catalogue)
+            (core/refresh-user-catalogue)
             ;; ensure new user-catalogue matches expectations
-            (is (= expected-user-catalogue (core/get-user-catalogue)))))))))
+            (is (= expected-user-catalogue (core/get-user-catalogue)))
 
-(deftest refresh-user-catalogue-item
-  (testing "individual addons can be refreshed, writing the changes to disk afterwards."
-    (let [user-catalogue (catalogue/new-catalogue [helper/addon-summary])
-          new-addon (merge helper/addon-summary {:updated-date "2022-02-02T02:02:02"})
-          expected (assoc user-catalogue :addon-summary-list [new-addon])]
-      (with-running-app
-        (swap! core/state assoc :user-catalogue user-catalogue)
-        (core/write-user-catalogue!)
-        (with-redefs [cli/find-addon (fn [& args] new-addon)]
-          (cli/refresh-user-catalogue-item helper/addon-summary))
-        (is (= expected (core/get-state :user-catalogue)))))))
-
-(deftest refresh-user-catalogue-item--no-catalogue
-  (testing "looking for an addon that doesn't exist in the catalogue isn't a total failure"
-    (with-running-app
-      (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary))))))
-
-(deftest refresh-user-catalogue-item--unhandled-exception
-  (testing "unhandled exceptions while refreshing a user-catalogue item isn't a total failure"
-    (with-running-app
-      (with-redefs [cli/find-addon (fn [& args] (throw (Exception. "catastrophe!")))]
-        (is (nil? (cli/refresh-user-catalogue-item helper/addon-summary)))))))
+            ;; ensure the selected catalogue hasn't changed despite downloading the full catalogue
+            (is (= :short (:name (core/current-catalogue))))))))))
 
 ;;
 
@@ -772,6 +770,25 @@
 
         (cli/add-summary-to-user-catalogue helper/addon-summary)
         (cli/remove-summary-from-user-catalogue helper/addon-summary)
+
+        (is (= expected (core/get-state :user-catalogue)))
+        (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
+
+(deftest add-addon-to-user-catalogue
+  (testing "random addons can be added to the user catalogue, provided they can be found in the catalogue."
+    (with-running-app
+      (let [expected (catalogue/new-catalogue [helper/addon-summary])
+            given (select-keys helper/addon-summary [:source :source-id])
+            user-catalogue-file (core/paths :user-catalogue-file)
+            db [helper/addon-summary]]
+
+        (is (nil? (core/get-state :db)))
+        (is (nil? (core/get-state :user-catalogue)))
+        (is (not (fs/exists? user-catalogue-file)))
+
+        (swap! core/state assoc :db db)
+
+        (cli/add-addon-to-user-catalogue given)
 
         (is (= expected (core/get-state :user-catalogue)))
         (is (= expected (catalogue/read-catalogue user-catalogue-file)))))))
