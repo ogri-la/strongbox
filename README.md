@@ -13,8 +13,9 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and
 
 Unfortunately the location of these two addons has changed as well as details around their access.
 
-I've dropped support for tukui.org in **7.0.0** and instead mirror the `tukui` and `elvui` releases on Github. This
-allows them to be incorporated into the Github catalogue.
+I've dropped support for tukui.org in **7.0.0** and instead mirror [tukui](https://github.com/ogri-la/tukui) and
+[elvui](https://github.com/ogri-la/elvui) releases on Github. This automatically includes them in the
+[Github catalogue](https://github.com/ogri-la/strongbox-catalogue/blob/master/github-catalogue.json).
 
 ---
 
