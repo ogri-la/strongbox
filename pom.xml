@@ -4,7 +4,7 @@
   <groupId>ogri-la</groupId>
   <artifactId>strongbox</artifactId>
   <packaging>jar</packaging>
-  <version>6.1.2</version>
+  <version>7.0.0</version>
   <name>strongbox</name>
   <description>World Of Warcraft Addon Manager</description>
   <url>https://github.com/ogri-la/strongbox</url>
@@ -18,7 +18,7 @@
     <url>https://github.com/ogri-la/strongbox</url>
     <connection>scm:git:git://github.com/ogri-la/strongbox.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/ogri-la/strongbox.git</developerConnection>
-    <tag>8d1220551085510b52aed14be3d79586429cea4f</tag>
+    <tag>073a7afcc0b485b1e838f66efec023d0aaa5032b</tag>
   </scm>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -83,12 +83,12 @@
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.cli</artifactId>
-      <version>1.0.206</version>
+      <version>1.0.214</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
       <artifactId>tools.namespace</artifactId>
-      <version>1.1.0</version>
+      <version>1.4.4</version>
     </dependency>
     <dependency>
       <groupId>org.clojure</groupId>
@@ -113,7 +113,7 @@
     <dependency>
       <groupId>clj-commons</groupId>
       <artifactId>fs</artifactId>
-      <version>1.6.307</version>
+      <version>1.6.310</version>
     </dependency>
     <dependency>
       <groupId>slugify</groupId>
@@ -128,12 +128,12 @@
     <dependency>
       <groupId>org.flatland</groupId>
       <artifactId>ordered</artifactId>
-      <version>1.5.9</version>
+      <version>1.15.11</version>
     </dependency>
     <dependency>
       <groupId>clojure.java-time</groupId>
       <artifactId>clojure.java-time</artifactId>
-      <version>0.3.3</version>
+      <version>1.2.0</version>
     </dependency>
     <dependency>
       <groupId>envvar</groupId>
@@ -141,30 +141,14 @@
       <version>1.1.2</version>
     </dependency>
     <dependency>
-      <groupId>gui-diff</groupId>
-      <artifactId>gui-diff</artifactId>
-      <version>0.6.7</version>
-      <exclusions>
-        <exclusion>
-          <artifactId>parsley</artifactId>
-          <groupId>net.cgrant</groupId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>com.taoensso</groupId>
-      <artifactId>tufte</artifactId>
-      <version>2.2.0</version>
-    </dependency>
-    <dependency>
       <groupId>tolitius</groupId>
       <artifactId>lasync</artifactId>
-      <version>0.1.23</version>
+      <version>0.1.24</version>
     </dependency>
     <dependency>
       <groupId>cljfx</groupId>
       <artifactId>cljfx</artifactId>
-      <version>1.7.19</version>
+      <version>1.7.22</version>
       <exclusions>
         <exclusion>
           <artifactId>javafx-web</artifactId>
@@ -233,24 +217,31 @@
       <classifier>mac</classifier>
     </dependency>
     <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-compress</artifactId>
-      <version>1.21</version>
-    </dependency>
-    <dependency>
       <groupId>org.ocpsoft.prettytime</groupId>
       <artifactId>prettytime</artifactId>
-      <version>5.0.2.Final</version>
+      <version>5.0.6.Final</version>
     </dependency>
     <dependency>
       <groupId>org.controlsfx</groupId>
       <artifactId>controlsfx</artifactId>
-      <version>11.1.1</version>
+      <version>11.1.2</version>
     </dependency>
     <dependency>
       <groupId>clj-http-fake</groupId>
       <artifactId>clj-http-fake</artifactId>
       <version>1.0.3</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>gui-diff</groupId>
+      <artifactId>gui-diff</artifactId>
+      <version>0.6.7</version>
+      <exclusions>
+        <exclusion>
+          <artifactId>parsley</artifactId>
+          <groupId>net.cgrant</groupId>
+        </exclusion>
+      </exclusions>
       <scope>test</scope>
     </dependency>
   </dependencies>
