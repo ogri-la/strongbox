@@ -13,8 +13,9 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and
 
 Unfortunately the location of these two addons has changed as well as details around their access.
 
-I've dropped support for tukui.org in **7.0.0** and instead mirror the `tukui` and `elvui` releases on Github. This
-allows them to be incorporated into the Github catalogue.
+I've dropped support for tukui.org in **7.0.0** and instead mirror [tukui](https://github.com/ogri-la/tukui) and
+[elvui](https://github.com/ogri-la/elvui) releases on Github. This automatically includes them in the
+[Github catalogue](https://github.com/ogri-la/strongbox-catalogue/blob/master/github-catalogue.json).
 
 ---
 
@@ -27,15 +28,15 @@ I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-a
 
 ---
 
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-skinny.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-installed-fat.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-detail.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-7.0.0-installed-skinny.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-installed-thumbnail.jpg)](./screenshots/screenshot-7.0.0-installed.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-installed-fat-thumbnail.jpg)](./screenshots/screenshot-7.0.0-installed-fat.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-detail-thumbnail.jpg)](./screenshots/screenshot-7.0.0-detail.png?raw=true)
 
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-skinny.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-installed-fat.png?raw=true)
-[![strongbox version 6.0.0](./screenshots/screenshot-6.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-6.0.0-dark-detail.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-installed-skinny-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-installed-skinny.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-installed-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-installed.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-installed-fat-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-installed-fat.png?raw=true)
+[![strongbox version 7.0.0](./screenshots/screenshot-7.0.0-dark-detail-thumbnail.jpg)](./screenshots/screenshot-7.0.0-dark-detail.png?raw=true)
 
 ## Installation
 

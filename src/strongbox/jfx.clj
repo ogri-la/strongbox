@@ -555,22 +555,21 @@
                 :-fx-alignment "center-left"
 
                 "#status-bar-left"
-                {:-fx-padding "0 10"
+                {:-fx-padding "0 0 0 10px"
                  :-fx-alignment "center-left"
                  :-fx-pref-width 9999.0
                  " > .text" {:-fx-text-fill (colour :table-font-colour)
-                             :-fx-padding "0 0 0 10"}}
+                             :-fx-padding "0 0 0 10"}
+
+                 " #more-stats" {:-fx-min-width 79}}
 
                 "#status-bar-right"
                 {:-fx-min-width "130px" ;; long enough to render "warnings (999)"
-                 :-fx-padding "5px 12px 5px 0"
+                 :-fx-padding "5px 10px 5px 0"
                  :-fx-alignment "center-right"}
 
-                "#status-bar-right .button"
-                {:-fx-padding "4 10"
-                 ;; doesn't look right when button is coloured.
-                 ;;:-fx-background-radius "4"
-                 :-fx-font-size "11px"
+                "#status-bar-right .toggle-button"
+                {:-fx-background-radius "4"
 
                  ;; this isn't great but it's better than nothing. revisit when it makes more sense.
                  ":armed"
@@ -2648,6 +2647,7 @@
                        :text "tooltip"
                        :show-delay 400}}
      :desc {:fx/type :toggle-button
+            :id "more-stats"
             :text "more stats"
             :selected selected?
             :style-class ["toggle-button"]
