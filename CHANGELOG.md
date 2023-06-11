@@ -8,60 +8,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* 'stats' thats serves to centralise a bunch of numbers that are used internally and might be interesting to the user.
+* added 'stats' that serves to centralise a bunch of numbers used internally that might be interesting to the user.
     - see the `more stats` button in the bottom left corner.
-* Github rate limit information is now fetched as part of the stats
-    - but no more than once a minute
-    - see https://github.com/ogri-la/strongbox#user-content-github-api-authentication
+* Github rate limit information is now fetched as part of the stats.
+    - but no more than once a minute.
+    - see: https://github.com/ogri-la/strongbox#user-content-github-api-authentication
 * manually refreshing the user catalogue will now switch to the `log` pane before doing so.
-    - see `Catalogue -> Refresh user catalogue`.
     - the intent is to show that *something* is happening.
-* an (opt-in) automatic refesh of the user-catalogue every 28 days.
-    - see `Preferences` -> `Keep user catalogue updated`.
-    - the user-catalogue is a catalogue of the addons added to strongbox using `File` -> `Import addon` 
-        - or through 'starring' a regular catalogue addon.
-* a "clear" button to the search addons tab that removes all search filters, including search terms.
-* new column for installed addons "starred" that will add an installed addon to the 'user-catalogue'.
+    - see: `Catalogue -> Refresh user catalogue`
+* new (opt-in) preference to automaticaly refresh the user-catalogue every 28 days.
+    - the user-catalogue are addons added to strongbox using `File -> Import addon` or by 'starring' a regular addon.
+    - see: `Preferences -> Keep user catalogue updated`.
+* added a "clear" button to the addons search that removes all search filters, including search terms.
+* added new column for installed addons "starred" that will add an installed addon to the 'user-catalogue'.
     - star button disabled when addon is being ignored or isn't matched against the catalogue.
 * new column for installed addons "size" with the total size of the addon on disk, including any grouped addons.
-    - you can find it under `View` -> `Columns` -> `size`
+    - see: `View -> Columns -> size`
 * `user.clj`, where the REPL will take you by default during development.
     - this lets me separate some development dependencies and logic from what is released.
 
 ### Changed
 
 * the main window is now always split with the bottom pane hidden by default.
-    - if can be dragged open or either of the two status bar buttons can be clicked to toggle it.
+    - if can be dragged open or toggled open by either of the two status bar buttons.
 * clicking the status bar buttons to open the bottom pane is now much quicker.
 * refreshing the user-catalogue now checks imported/starred addons against the full catalogue before checking online.
     - if it fails to find addon in catalogue, it will fall back to checking online like before.
-    - the user-catalogue is ostensibly for addons without a catalogue (github, gitlab) but is now also for 'starred' addons. Now that we have a github catalogue, attempting to refresh addons from the catalogue is much faster.
-* menu labels for the installed addons table columns have been tweaked (see `View` -> `Columns`)
+    - the user-catalogue was originally for imported addons without a catalogue (github, gitlab) but is now also for 'starred' addons. Refreshing it now that we have a Github catalogue is much faster.
+* menu labels for the installed addons table columns have been tweaked (see `View -> Columns`)
     - "installed" is now "installed version"
     - "available" is now "available version"
     - "version" is now "installed+available version"
     - "WoW" is now "game version (WoW)"
-* the 'fat' column profile now uses the "installed" and "available" columns rather than the combined "version" column.
-* the 'fat' column profile includes the new 'starred' and 'size' columns.
-    - you can find it under `View` -> `Columns` -> `fat`
+* the "fat" column profile now uses the "installed" and "available" columns rather than the combined "version" column.
+* the "fat" column profile includes the new "starred" and "size" columns.
+    - see: `View -> Columns -> fat`
 * `jlink compress=2` changed to `jlink compress=1` during the building of the linux AppImage.
-    - `2` means 'zip', which interferes with the final AppImage compression.
+    - `2` means "zip", which interferes with the final AppImage compression.
     - this shaves off ~7MB from the final AppImage.
-* replaced the compressed, static, 'emergency' catalogue with a simple JSON string.
+* replaced the compressed, static, "emergency" catalogue with a simple JSON string.
     1. it wasn't working at compile time like I thought.
     2. regular strings are more compressible ultimately when building an AppImage.
 * bumped dependencies.
     - removed `apache.commons.compressors` as no longer required.
 * some dependencies used for development are no longer bundled during release.
-* strongbox release info will only be downloaded once the app has finished loading.
-* strongbox release info will only be downloaded once per-session.
-    - it would previously re-attempt to download the release info on failure endlessly.
+* strongbox release data will only be downloaded once the app has finished loading.
+* strongbox release data will only be downloaded once per-session.
+    - it would previously re-attempt to download the release data on failure endlessly.
 
 ### Fixed
 
-* filter buttons on the search tab are now a uniform height.
-* `key` column in the addon detail 'raw data' widget is now wide enough for the text 'supported game tracks'.
-* `updated` column in the installed addon tab is now wide enough for the text '12 months ago'.
+* search tab filter buttons are now a uniform height.
+* `key` column in the addon detail "raw data" widget is now wide enough for the text "supported game tracks".
+* `updated` column in the installed addon tab is now wide enough for the text "12 months ago".
 * possible cache stampede fetching strongbox release info. A lock is now acquired to ensure checks happen sequentially.
     - it was possible for the GUI to fire off many requests to Github simultaneously, bypassing cache and overwriting each other.
 
@@ -72,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - excluded from being imported.
     - excluded from the user-catalogue.
     - no longer scraped from the tukui.org API into a catalogue.
-    - no longer present in the 'full' or 'short' catalogues.
+    - no longer present in the "full" or "short" catalogues.
     - excluded from search results.
     - removed from the 'emergency' (built-in, hardcoded) catalogue (used when remote catalogues are unavailable).
     - removed from lists of available addon hosts to switch an addon between.
