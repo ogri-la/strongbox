@@ -16,7 +16,7 @@
 (def level-map {:debug 0 :info 1 :warn 2 :error 3 :report 4})
 
 ;; https://github.com/ptaoussanis/timbre/blob/56d67dd274d7d11ab31624a70b4b5ae194c03acd/src/taoensso/timbre.cljc#L856-L858
-(def colour-log-map
+(def -colour-log-map
   {:debug :blue
    :info nil
    :warn :yellow
@@ -26,28 +26,29 @@
 
 (defn anon-println-appender
   "removes the hostname from the output format string"
-  [data]
-  (let [{:keys [?err timestamp_ msg_ level]} data
-        level-colour (colour-log-map level)
-        addon (some-> data :context :addon)
-        label (or (:dirname addon)
-                  (:name addon)
-                  "app")
-        pattern "%s [%s] [%s] %s"
-        msg (force msg_)]
-    (when ?err
-      (println (timbre/stacktrace ?err)))
+  [colour-log-map]
+  (fn [data]
+    (let [{:keys [?err timestamp_ msg_ level]} data
+          level-colour (colour-log-map level)
+          addon (some-> data :context :addon)
+          label (or (:dirname addon)
+                    (:name addon)
+                    "app")
+          pattern "%s [%s] [%s] %s"
+          msg (force msg_)]
+      (when ?err
+        (println (timbre/stacktrace ?err)))
 
-    (when-not (empty? msg)
-      ;; looks like: "11:17:57.009 [info] [app] checking for updates"
-      (println
-       (timbre/color-str level-colour
-                         (format
-                          pattern
-                          (force timestamp_)
-                          (name level)
-                          label
-                          msg))))))
+      (when-not (empty? msg)
+        ;; looks like: "11:17:57.009 [info] [app] checking for updates"
+        (println
+         (timbre/color-str level-colour
+                           (format
+                            pattern
+                            (force timestamp_)
+                            (name level)
+                            label
+                            msg)))))))
 
 (def -default-logging-config
   {:min-level default-log-level
@@ -60,7 +61,7 @@
    :appenders {:println {:enabled? true
                          :async? false
                          :output-fn :inherit
-                         :fn anon-println-appender}}})
+                         :fn (anon-println-appender -colour-log-map)}}})
 
 (defn-spec add-appender! nil?
   "adds appender at `key` to logging config"
