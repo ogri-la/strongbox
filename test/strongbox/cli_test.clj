@@ -95,39 +95,30 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}}
           expected-num-addons 4
-          page-1 0]
+          page1 first]
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           ;; any catalogue with less than 60 (a magic number) items has >100% probability of being included.
           (cli/search nil)
           (Thread/sleep 10)
           ;; sanity check, we have all four addons
-          (is (= expected-num-addons (count (core/get-state :search :results page-1))))
+          (is (= expected-num-addons (-> (core/get-state) :search :results page1 count)))
 
           ;; limit results to just wowinterface
           (cli/search-add-filter :source ["wowinterface"])
           (Thread/sleep 10)
-          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
-                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
-                                    :source))) ;; we have one addon from each of the hosts
+          (is (= "wowinterface" (-> (core/get-state) :search :results page1 first :source)))
 
           ;; limit results to just github
           (cli/search-add-filter :source ["github"])
           (Thread/sleep 10)
-          (is (= "github" (-> (core/get-state :search :results page-1)
-                              first
-                              :source)))
+          (is (= "github" (-> (core/get-state) :search :results page1 first :source)))
 
           ;; limit results to just wowinterface+github, results are OR'd, order from catalogue is preserved (wowi, curse, tukui, github)
           (cli/search-add-filter :source ["github" "wowinterface"])
           (Thread/sleep 10)
-          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
-                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
-                                    :source))) ;; we have one addon from each of the hosts
-          (is (= "github" (-> (core/get-state :search :results page-1)
-                              second ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
-                              :source))) ;; we have one addon from each of the hosts
-          )))))
+          (is (= "wowinterface" (-> (core/get-state) :search :results page1 first :source)))
+          (is (= "github" (-> (core/get-state) :search :results page1 second :source))))))))
 
 (deftest search-db--filter-by--tag
   (testing "a populated database can be filtered by tag from the CLI"

@@ -864,9 +864,10 @@
 
 (defn db-search
   "returns a lazily fetched and paginated list of addon summaries.
-  results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
-  search never takes more than `cap` results.
-  matches on `uin` are case insensitive. if no user input, returns a list of randomly ordered results.
+  results are constructed using a `seque` that (somehow) bypasses chunking behaviour so 
+  searching never takes more than `cap` results.
+  matches on `uin` are case insensitive.
+  if no user input, returns a list of randomly ordered ('sampled') results.
   `filter-by` filters are applied before searching for `uin`."
   ([search-term cap filter-by]
    (db-search (get-state :db) (utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)))
@@ -906,7 +907,8 @@
 
          random-sample? (and (nil? uin)
                              (empty? selected-tag-set)
-                             (not (:user-catalogue filter-by)))]
+                             (not (:user-catalogue filter-by))
+                             (not (:source filter-by)))]
 
      ;; no/empty input, do a random sample
      (if random-sample?

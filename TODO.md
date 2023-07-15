@@ -6,10 +6,11 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
 * search, possible bug, thought I fixed it so catalogues are navigable now?
     - selecting by host still gives me samples
+    - done
+
+## todo
 
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
