@@ -12,6 +12,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* search, vertically centre tag buttons. 
+    - they're currently top-aligned
+
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
     - the 'search' tab kinda sorta is this ... perhaps a preference to disable sampling?
@@ -32,6 +35,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - "ignored addons in the addon detail pane now display mutual dependencies (if any)."
 
 ## todo bucket (no particular order)
+
+* github-addons.md, update or get rid of
+
+* *.sh, consolidate these root-level bash scripts into a manage.sh 
+
+* move Dockerfile* files into a CircleCI folder
+
+* release.md, move to strongbox-release-script
 
 * metrics, add a 'catalogue is N days old'
     - add an 'oldest' addon (days since created date)?

@@ -138,6 +138,11 @@
   []
   (search (some-> @core/state :search :term (str " "))))
 
+(defn-spec toggle-search-sampling! nil?
+  []
+  (swap! core/state update-in [:search :sample?] not)
+  (bump-search))
+
 (defn-spec search-results ::sp/list-of-maps
   "returns the current page of search results"
   ([]

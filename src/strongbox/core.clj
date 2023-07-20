@@ -89,7 +89,8 @@
    :page 0
    :results []
    :selected-result-list []
-   :results-per-page 60})
+   :results-per-page 60
+   :sample? true})
 
 (def -state-template
   {:cleanup []
@@ -862,6 +863,19 @@
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
 
+(defn-spec db-search-sampling? boolean?
+  "returns `true` if a database search should return a random sample.
+  essentially, if nothing has been searched for and no filters have been set, we should take a random
+  sample of the selected catalogue UNLESS something has explicitly flipped the `:sample?` boolean."
+  [search-state map?]
+  (let [filter-by (-> search-state :filter-by)]
+    ;; todo: could we just compare this to the default empty search state ...?
+    (and (:sample? search-state) ;; true by default, set to false to short circuit this logic.
+         (empty? (-> search-state :term (or "") clojure.string/trim))
+         (empty? (:tag filter-by))
+         (not (:user-catalogue filter-by))
+         (not (:source filter-by)))))
+
 (defn db-search
   "returns a lazily fetched and paginated list of addon summaries.
   results are constructed using a `seque` that (somehow) bypasses chunking behaviour so 
@@ -870,9 +884,10 @@
   if no user input, returns a list of randomly ordered ('sampled') results.
   `filter-by` filters are applied before searching for `uin`."
   ([search-term cap filter-by]
-   (db-search (get-state :db) (utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)))
+   (let [{:keys [db user-catalogue-idx search]} (get-state)]
+     (db-search db (utils/nilable search-term) cap filter-by user-catalogue-idx (db-search-sampling? search))))
 
-  ([db uin cap filter-by user-catalogue-idx]
+  ([db uin cap filter-by user-catalogue-idx random-sample?]
    (let [constantly-true (constantly true)
 
          user-catalogue-filter (if (:user-catalogue filter-by)
@@ -903,12 +918,7 @@
          db (->> db
                  (filter user-catalogue-filter)
                  (filter host-filter)
-                 (filter tag-filter))
-
-         random-sample? (and (nil? uin)
-                             (empty? selected-tag-set)
-                             (not (:user-catalogue filter-by))
-                             (not (:source filter-by)))]
+                 (filter tag-filter))]
 
      ;; no/empty input, do a random sample
      (if random-sample?
