@@ -10,14 +10,19 @@ see CHANGELOG.md for a more formal list of changes by release
     - selecting by host still gives me samples
     - done
 
-## todo
-
-* search, vertically centre tag buttons. 
-    - they're currently top-aligned
-
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
     - the 'search' tab kinda sorta is this ... perhaps a preference to disable sampling?
+    - done
+
+* search, vertically centre tag buttons. 
+    - they're currently top-aligned
+    - done
+
+* cljfx, javafx
+    - bump deps
+
+## todo
 
 * catalogue/search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
     - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available

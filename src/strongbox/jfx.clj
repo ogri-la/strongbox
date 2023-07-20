@@ -538,6 +538,7 @@
                 "#search-selected-tag-bar"
                 {:-fx-padding "0 0 10 10"
                  :-fx-spacing "10"
+                 :-fx-alignment "center-left"
                  " > .button" {:-fx-padding "2.5 8"
                                :-fx-background-radius "4"}}
 
@@ -550,25 +551,14 @@
                  :-fx-alignment "center-left"
 
                  ".left-hbox"
-                 {
-                  ;;:-fx-background-color :blue
-                  :-fx-alignment "center-left"
-                  :-fx-pref-width 9999.0
-                  }
+                 {:-fx-alignment "center-left"
+                  :-fx-pref-width 9999.0}
 
                  ".right-hbox"
-                 {;;:-fx-background-color :orange
-                  :-fx-min-width "150px"
+                 {:-fx-min-width "150px"
                   :-fx-pref-width "200px"
                   :-fx-alignment "center-right"
-                  :-fx-padding "5 10 5 5"
-
-
-                   
-
-                  }
-                 }
-                }
+                  :-fx-padding "5 10 5 5"}}}
 
                ;;
                ;; status bar (bottom of app)
@@ -2179,7 +2169,6 @@
       {:fx/type :v-box
        :children [row-1 row-2]})))
 
-
 (defn-spec db-search-sampling? boolean?
   "returns `true` if a database search should return a random sample.
   essentially, if nothing has been searched for and no filters have been set, we should take a random
@@ -2194,16 +2183,14 @@
 
 (defn search-addons-table-extra
   [{:keys [fx/context]}]
-  (let [search (fx/sub-val context get-in [:app-state, :search])
-        ]
-  {:fx/type :check-box
-   :text "sample results"
-   :selected (:sample? search)
+  (let [search (fx/sub-val context get-in [:app-state, :search])]
+    {:fx/type :check-box
+     :text "sample results"
+     :selected (:sample? search)
    ;; prevent sample toggle if search in a state where sampling not possible
-   :disable (not (db-search-sampling? search))
-   :node-orientation :right-to-left
-   :on-selected-changed (async-handler cli/toggle-search-sampling!)
-   }))
+     :disable (not (db-search-sampling? search))
+     :node-orientation :right-to-left
+     :on-selected-changed (async-handler cli/toggle-search-sampling!)}))
 
 (defn search-addons-pane
   [_]
