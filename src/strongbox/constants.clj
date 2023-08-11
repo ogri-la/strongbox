@@ -69,7 +69,8 @@
 (def releases
   "https://wowpedia.fandom.com/wiki/Patch"
 
-  {"10.0" "Dragonflight"
+  {"10.1" "Dragonflight: Embers of Neltharion"
+   "10.0" "Dragonflight"
 
    "9.2" "Shadowlands: Eternity's End"
    "9.1" "Shadowlands: Chains of Domination"
