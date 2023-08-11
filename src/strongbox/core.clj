@@ -864,7 +864,7 @@
     (into [] xf db)))
 
 (defn-spec db-search-sampling? boolean?
-  "returns `true` if a database search should return a random sample.
+  "returns `true` if a database search should return a random sample of results.
   essentially, if nothing has been searched for and no filters have been set, we should take a random
   sample of the selected catalogue UNLESS something has explicitly flipped the `:sample?` boolean."
   [search-state map?]
@@ -923,6 +923,7 @@
      ;; no/empty input, do a random sample
      (if random-sample?
        (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
+         (println "sampling!!!!!!!!!!!!!!!!!" pct "with cap" cap)
          ;; decrement cap here so navigation for random search results is disabled
          [(take (dec cap) (random-sample pct db))])
 

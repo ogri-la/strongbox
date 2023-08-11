@@ -547,8 +547,7 @@
                  ".updated-column" {:-fx-alignment "center"}}
 
                 "#search-addons-footer "
-                {;;:-fx-background-color "#ddd"
-                 :-fx-alignment "center-left"
+                {:-fx-alignment "center-left"
 
                  ".left-hbox"
                  {:-fx-alignment "center-left"
@@ -2184,13 +2183,17 @@
 (defn search-addons-table-extra
   [{:keys [fx/context]}]
   (let [search (fx/sub-val context get-in [:app-state, :search])]
-    {:fx/type :check-box
-     :text "sample results"
-     :selected (:sample? search)
-   ;; prevent sample toggle if search in a state where sampling not possible
-     :disable (not (db-search-sampling? search))
-     :node-orientation :right-to-left
-     :on-selected-changed (async-handler cli/toggle-search-sampling!)}))
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text (format "show a single page of %s random addons" (:results-per-page search))
+                       :show-delay 200}}
+     :desc {:fx/type :check-box
+            :text "sample results"
+            :selected (:sample? search)
+            ;; prevent sample toggle if search in a state where sampling not possible
+            :disable (not (db-search-sampling? search))
+            :node-orientation :right-to-left
+            :on-selected-changed (async-handler cli/toggle-search-sampling!)}}))
 
 (defn search-addons-pane
   [_]

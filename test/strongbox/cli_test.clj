@@ -228,6 +228,53 @@
 
           (is (not (cli/search-has-prev?))))))))
 
+(deftest search-db--sampled-results
+  (testing "search results are sampled by default"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+          cap 2
+          page-1 first
+          page-2 second]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; sampling by default
+          (is (core/db-search-sampling? (core/get-state :search)))
+          
+          ;; we have four items in catalogue so each item has a 15% chance (* 0.25 0.6) of being included.
+          ;; we then take one fewer than the per-page `cap` so the pagination buttons stay disabled.
+          ;; if we set 3 results per page cap we'll always get one page of results with the first two sampled addons back.
+          (swap! core/state assoc-in [:search :results-per-page] (inc cap))
+          (cli/bump-search)
+          (Thread/sleep 100)
+
+          ;; one page, two results
+          (is (-> (core/get-state) :search :results count (= 1)))
+          (is (-> (core/get-state) :search :results page-1 count (= 2)))
+
+          ;; disable sampling
+          (cli/toggle-search-sampling!)
+          (is (not (core/db-search-sampling? (core/get-state :search))))
+
+          ;; and disable the random result pagination navigation button hack
+          (swap! core/state assoc-in [:search :results-per-page] cap)
+          (cli/bump-search)
+          (Thread/sleep 100)
+          
+          ;; two pages, each with two results
+          (is (-> (core/get-state) :search :results count (= 2)))
+          (is (-> (core/get-state) :search :results page-1 count (= 2)))
+          (is (-> (core/get-state) :search :results page-2 count (= 2)))     
+
+          )))))
+
+(deftest search-db--sampled-results--toggled-off
+  (testing "sampled search results can be toggled off."
+    nil))
+
+  
+
+
 (deftest pin-addon
   (testing "an addon can be installed, selected and pinned to it's current installed version"
     (let [addon {:name "everyaddon-classic" :label "EveryAddon (Classic)" :version "1.2.3" :url "https://group.id/never/fetched"
