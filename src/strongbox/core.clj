@@ -869,7 +869,6 @@
   sample of the selected catalogue UNLESS something has explicitly flipped the `:sample?` boolean."
   [search-state map?]
   (let [filter-by (-> search-state :filter-by)]
-    ;; todo: could we just compare this to the default empty search state ...?
     (and (:sample? search-state) ;; true by default, set to false to short circuit this logic.
          (empty? (-> search-state :term (or "") clojure.string/trim))
          (empty? (:tag filter-by))
@@ -923,7 +922,6 @@
      ;; no/empty input, do a random sample
      (if random-sample?
        (let [pct (->> db count (max 1) (/ 100) (* 0.6))]
-         (println "sampling!!!!!!!!!!!!!!!!!" pct "with cap" cap)
          ;; decrement cap here so navigation for random search results is disabled
          [(take (dec cap) (random-sample pct db))])
 

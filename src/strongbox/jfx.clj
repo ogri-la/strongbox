@@ -2174,13 +2174,13 @@
   sample of the selected catalogue UNLESS something has explicitly flipped the `:sample?` boolean."
   [search-state map?]
   (let [filter-by (-> search-state :filter-by)]
-    ;; todo: could we just compare this to the default empty search state ...?
-    (and (empty? (-> search-state :term (or "") clojure.string/trim))
-         (empty? (:tag filter-by))
-         (not (:user-catalogue filter-by))
-         (not (:source filter-by)))))
+    (and ;;(:sample? search-state) ;; differs to `core/db-search-sampling`. this fn determines if box should be ticked, not *is* the box ticked.
+     (empty? (-> search-state :term (or "") clojure.string/trim))
+     (empty? (:tag filter-by))
+     (not (:user-catalogue filter-by))
+     (not (:source filter-by)))))
 
-(defn search-addons-table-extra
+(defn search-addons-table-footer-right
   [{:keys [fx/context]}]
   (let [search (fx/sub-val context get-in [:app-state, :search])]
     {:fx/type fx.ext.node/with-tooltip-props
@@ -2208,7 +2208,7 @@
                         :children []}
                        {:fx/type :h-box
                         :style-class ["right-hbox"]
-                        :children [{:fx/type search-addons-table-extra}]}]}})
+                        :children [{:fx/type search-addons-table-footer-right}]}]}})
 
 (defn addon-detail-button-menu
   "a row of buttons attached to available actions for the given addon"
