@@ -205,6 +205,7 @@
                     :file-opts {:debug? true
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
@@ -242,6 +243,7 @@
                                 :debug? true
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
@@ -281,6 +283,7 @@
                                 ;; todo: shouldn't these have `:strict?` in them?
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -317,6 +320,7 @@
                                 :selected-catalogue :full
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -365,7 +369,7 @@
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -416,7 +420,7 @@
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -467,7 +471,7 @@
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -517,7 +521,7 @@
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -565,7 +569,7 @@
 
                                 :preferences {:addon-zips-to-keep 3
                                               :ui-selected-columns [:source :name :description :available-version :uber-button]}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -617,7 +621,7 @@
 
                                 :preferences {:addon-zips-to-keep 3
                                               :ui-selected-columns [:source :name :description :available-version :uber-button]}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -672,7 +676,7 @@
                                               :ui-selected-columns [:source :name :description
                                                                     :installed-version :available-version ;; replaced in 5.0.0
                                                                     :game-version :uber-button]}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -728,7 +732,7 @@
                                                                     :installed-version :available-version ;; replaced in 5.0.0
                                                                     :game-version :uber-button]
                                               :keep-user-catalogue-updated true}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -784,7 +788,7 @@
                                                                     :installed-version :available-version ;; replaced in 5.0.0
                                                                     :game-version :uber-button]
                                               :keep-user-catalogue-updated true}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 

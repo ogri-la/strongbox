@@ -1,5 +1,6 @@
 (ns strongbox.config
   (:require
+   [envvar.core]
    [clojure.spec.alpha :as s]
    [clojure.set]
    [orchestra.core :refer [defn-spec]]
@@ -205,12 +206,13 @@
 
 (defn -load-settings
   "returns a map of user configuration settings that can be merged over `core/state`"
-  [cli-opts file-opts etag-db]
+  [cli-opts file-opts etag-db env-opts]
   (let [cfg (merge-config file-opts cli-opts)]
     {:cfg cfg
      :cli-opts cli-opts
      :file-opts file-opts
-     :etag-db etag-db}))
+     :etag-db etag-db
+     :env env-opts}))
 
 (defn-spec load-settings-file map?
   "reads application settings from the given file.
@@ -236,9 +238,19 @@
   [etag-db-file ::sp/file]
   (utils/load-json-file-safely etag-db-file {:no-file? {} :bad-data? {}}))
 
+(defn-spec env map?
+  []
+  @envvar.core/env)
+
+(defn-spec load-env map?
+  "reads supported environment variables"
+  []
+  {:no-color (-> (env) :no-color utils/nilable boolean)})
+
 (defn load-settings
   "reads config files and returns a map of configuration settings that can be merged over `core/state`."
   [cli-opts cfg-file etag-db-file]
-  (let [file-opts (load-settings-file cfg-file)
+  (let [env-opts (load-env)
+        file-opts (load-settings-file cfg-file)
         etag-db (load-etag-db-file etag-db-file)]
-    (-load-settings cli-opts file-opts etag-db)))
+    (-load-settings cli-opts file-opts etag-db env-opts)))

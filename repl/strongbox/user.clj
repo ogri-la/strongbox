@@ -7,6 +7,7 @@
    [clojure.tools.namespace.repl :as tn :refer [refresh]]
    [strongbox
     [logging :as logging]
+    [config :as config]
     [addon :as addon]
     [constants :as constants]
     [main :as main :refer [restart stop]]
@@ -81,6 +82,7 @@
                     ;; for testing purposes, no addon host is disabled
                     utils/folder-size-bytes (constantly 0)
                     constants/max-user-catalogue-age 9999
+                    config/env (constantly {:no-color false})
                     *testing-problems* testing-problems
                     
                     ]

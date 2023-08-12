@@ -22,13 +22,14 @@ see CHANGELOG.md for a more formal list of changes by release
 * cljfx, javafx
     - bump deps
 
+* support NO_COLOR envvar, http://no-color.org
+    - done
+
 ## todo
 
 * catalogue/search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
     - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
         - which it isn't, but that's not the point.
-
-* support NO_COLOR envvar, http://no-color.org
 
 * gui, better copying from the interface, especially the log box
 

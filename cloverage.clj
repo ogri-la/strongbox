@@ -3,6 +3,7 @@
    [clojure.test :as test :refer [report with-test-out inc-report-counter testing-vars-str testing-contexts-str *testing-contexts* *stack-trace-depth*]]
    [clojure.stacktrace :as stack]
    [strongbox
+    [config :as config]
     [main :as main]
     [constants :as constants]
     [utils :as utils]
@@ -68,6 +69,7 @@
                     ;;joblib/tick-delay joblib/*tick*
                     utils/folder-size-bytes (constantly 0)
                     constants/max-user-catalogue-age 9999
+                    config/env (constantly {:no-color false})
                     *testing-problems* testing-problems]
         (core/reset-logging!)
         (apply require (map symbol ns-list))
