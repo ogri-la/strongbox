@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * added checkbox to bottom of search tab that will toggle search results sampling when search results are unfiltered.
     - this lets you browse a catalogue page by page.
-* patch tooltip for Dragonflight 10.1 "Embers of Neltharion"
+* added patch tooltip for Dragonflight 10.1 "Embers of Neltharion"
+* added support for the `NO_COLOR` environment variable.
+    - it turns off coloured output in the console if that is where you launched strongbox from.
 
 ### Changed
 
