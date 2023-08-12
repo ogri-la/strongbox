@@ -396,6 +396,8 @@ Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://a
 
 **Moved here: https://ogri-la.github.io/wow-addon-managers/**
 
+Last updated: **2023-08-13**
+
 [Request a change](https://github.com/ogri-la/strongbox-comrades/issues). 
 
 ## License
