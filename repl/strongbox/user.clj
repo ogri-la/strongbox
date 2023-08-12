@@ -64,7 +64,7 @@
   (main/stop)
   (clojure.tools.namespace.repl/refresh) ;; reloads all namespaces, including strongbox.whatever-test ones
   (utils/instrument true) ;; always test with spec checking ON
-  
+
   (try
     (let [testing-problems (atom {:fail [] :error []})]
       ;; note! remember to update `cloverage.clj` with any new bindings
@@ -92,15 +92,15 @@
                               :cli :gui :jfx
                               :curseforge-api :wowinterface-api :gitlab-api :github-api :tukui-api
                               :release-json])
-            (do (with-gui-diff
-                  (if fn-kw
-                    ;; `test-vars` will run the test but not give feedback if test passes OR test not found
-                    ;; slightly better than nothing
-                    (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
-                    (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test")))))
-                (report-testing-problems))
+            (with-gui-diff
+              (if fn-kw
+                ;; `test-vars` will run the test but not give feedback if test passes OR test not found
+                ;; slightly better than nothing
+                (clojure.test/test-vars [(resolve (symbol (str "strongbox." (name ns-kw) "-test") (name fn-kw)))])
+                (clojure.test/run-all-tests (re-pattern (str "strongbox." (name ns-kw) "-test")))))
             (error "unknown test file:" ns-kw))
-          (clojure.test/run-all-tests #"strongbox\..*-test"))))
+          (clojure.test/run-all-tests #"strongbox\..*-test"))
+        (report-testing-problems)))
     (finally
       ;; use case: we run the tests from the repl and afterwards we call `restart` to start the app.
       ;; `stop` inside `restart` will be outside of `with-redefs` and still have logging `:min-level` set to `:debug`

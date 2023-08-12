@@ -246,7 +246,7 @@
           ;; if we set 3 results per page cap we'll always get one page of results with the first two sampled addons back.
           (swap! core/state assoc-in [:search :results-per-page] (inc cap))
           (cli/bump-search)
-          (Thread/sleep 100)
+          (Thread/sleep 50)
 
           ;; one page, two results
           (is (-> (core/get-state) :search :results count (= 1)))
@@ -254,12 +254,13 @@
 
           ;; disable sampling
           (cli/toggle-search-sampling!)
+          (Thread/sleep 50)
           (is (not (core/db-search-sampling? (core/get-state :search))))
 
           ;; and disable the random result pagination navigation button hack
           (swap! core/state assoc-in [:search :results-per-page] cap)
           (cli/bump-search)
-          (Thread/sleep 100)
+          (Thread/sleep 50)
 
           ;; two pages, each with two results
           (is (-> (core/get-state) :search :results count (= 2)))
