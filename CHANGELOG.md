@@ -8,9 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* added checkbox to bottom of search tab that will toggle search results sampling when search results are unfiltered.
+    - this lets you browse a catalogue page by page.
+* patch tooltip for Dragonflight 10.1 "Embers of Neltharion"
+
 ### Changed
 
+* bumped JavaFX dependencies from 17.x to 19.x.
+* removed the fixed widths on the 'updated' and 'downloads' columns in the search pane.
+    - attempting to control column widths in a JavaFX table is futile.
+
 ### Fixed
+
+* tag buttons in search pane are now centred vertically.
+* selecting hosts in search pane no longer samples results.
 
 ### Removed
 

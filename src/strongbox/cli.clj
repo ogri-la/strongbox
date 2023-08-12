@@ -136,7 +136,14 @@
   "search for the set `[:search :term]`, if one exists, and adds some whitespace to jog the GUI into forcing an empty.
   the db search function trims whitespace so there won't be any change to results"
   []
-  (search (some-> @core/state :search :term (str " "))))
+  (let [term (some-> @core/state :search :term)
+        term (if (nil? term) "" nil)]
+    (search term)))
+
+(defn-spec toggle-search-sampling! nil?
+  []
+  (swap! core/state update-in [:search :sample?] not)
+  (bump-search))
 
 (defn-spec search-results ::sp/list-of-maps
   "returns the current page of search results"

@@ -1407,7 +1407,11 @@
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
 
-          ;; we have 4 search results to start with
+          ;; we have 4 search results to start with:
+          ;; 1. "$old!it"
+          ;; 2. "A New Simple Percent"
+          ;; 3. "Skins for AddOns"
+          ;; 4. "Chinchilla"
           (cli/bump-search)
           (Thread/sleep 50) ;; searching happens in the background
           (is (= 4 (-> (core/get-state :search) :results first count)))
@@ -1427,10 +1431,14 @@
           (is (= expected-empty-search-state (core/get-state :search)))
 
           ;; do the search again without specifying a search term
-          ;; we should have three search results again
+          ;; we should have 4 search results again:
+          ;; 1. "$old!it"
+          ;; 2. "A New Simple Percent"
+          ;; 3. "Skins for AddOns"
+          ;; 4. "Chinchilla"
           (cli/bump-search)
           (Thread/sleep 50)
-          (is (= 3 (-> (core/get-state :search) :results first count))))))))
+          (is (= 4 (-> (core/get-state :search) :results first count))))))))
 
 (deftest reset-search-state
   (testing "search state can be cleared entirely"

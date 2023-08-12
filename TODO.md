@@ -6,14 +6,23 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-## todo
-
 * search, possible bug, thought I fixed it so catalogues are navigable now?
     - selecting by host still gives me samples
+    - done
 
 * search, add ability to browse catalogue page by page
     - returned to bucket 2022-03-02
     - the 'search' tab kinda sorta is this ... perhaps a preference to disable sampling?
+    - done
+
+* search, vertically centre tag buttons. 
+    - they're currently top-aligned
+    - done
+
+* cljfx, javafx
+    - bump deps
+
+## todo
 
 * catalogue/search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
     - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
@@ -31,6 +40,14 @@ see CHANGELOG.md for a more formal list of changes by release
         - "ignored addons in the addon detail pane now display mutual dependencies (if any)."
 
 ## todo bucket (no particular order)
+
+* github-addons.md, update or get rid of
+
+* *.sh, consolidate these root-level bash scripts into a manage.sh 
+
+* move Dockerfile* files into a CircleCI folder
+
+* release.md, move to strongbox-release-script
 
 * metrics, add a 'catalogue is N days old'
     - add an 'oldest' addon (days since created date)?
