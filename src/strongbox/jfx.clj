@@ -538,12 +538,26 @@
                 "#search-selected-tag-bar"
                 {:-fx-padding "0 0 10 10"
                  :-fx-spacing "10"
+                 :-fx-alignment "center-left"
                  " > .button" {:-fx-padding "2.5 8"
                                :-fx-background-radius "4"}}
 
                 ".table-view "
                 {".downloads-column" {:-fx-alignment "center-right"}
-                 ".updated-column" {:-fx-alignment "center"}}}
+                 ".updated-column" {:-fx-alignment "center"}}
+
+                "#search-addons-footer "
+                {:-fx-alignment "center-left"
+
+                 ".left-hbox"
+                 {:-fx-alignment "center-left"
+                  :-fx-pref-width 9999.0}
+
+                 ".right-hbox"
+                 {:-fx-min-width "150px"
+                  :-fx-pref-width "200px"
+                  :-fx-alignment "center-right"
+                  :-fx-padding "5 10 5 5"}}}
 
                ;;
                ;; status bar (bottom of app)
@@ -2006,13 +2020,13 @@
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
                                                             :children (remove nil? (map tag-button (:tag-list row)))}})}}
-                     {:text "updated" :min-width 90 :pref-width 110 :max-width 120 :resizable false
+                     {:text "updated" :min-width 100 :pref-width 110 :max-width 120
                       :cell-value-factory :updated-date
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [dt]
                                                  {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
 
-                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
+                     {:text "downloads" :min-width 90 :pref-width 120 :max-width 120
                       :cell-value-factory :download-count
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [n]
@@ -2154,12 +2168,47 @@
       {:fx/type :v-box
        :children [row-1 row-2]})))
 
+(defn-spec db-search-sampling? boolean?
+  "returns `true` if a database search should return a random sample.
+  essentially, if nothing has been searched for and no filters have been set, we should take a random
+  sample of the selected catalogue UNLESS something has explicitly flipped the `:sample?` boolean."
+  [search-state map?]
+  (let [filter-by (-> search-state :filter-by)]
+    (and ;;(:sample? search-state) ;; differs to `core/db-search-sampling`. this fn determines if box should be ticked, not *is* the box ticked.
+     (empty? (-> search-state :term (or "") clojure.string/trim))
+     (empty? (:tag filter-by))
+     (not (:user-catalogue filter-by))
+     (not (:source filter-by)))))
+
+(defn search-addons-table-footer-right
+  [{:keys [fx/context]}]
+  (let [search (fx/sub-val context get-in [:app-state, :search])]
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text (format "show a single page of %s random addons" (:results-per-page search))
+                       :show-delay 200}}
+     :desc {:fx/type :check-box
+            :text "sample results"
+            :selected (:sample? search)
+            ;; prevent sample toggle if search in a state where sampling not possible
+            :disable (not (db-search-sampling? search))
+            :node-orientation :right-to-left
+            :on-selected-changed (async-handler cli/toggle-search-sampling!)}}))
+
 (defn search-addons-pane
   [_]
   {:fx/type :border-pane
    :id "search-addons"
    :top {:fx/type search-addons-search-field}
-   :center {:fx/type search-addons-table}})
+   :center {:fx/type search-addons-table}
+   :bottom {:fx/type :h-box
+            :id "search-addons-footer"
+            :children [{:fx/type :h-box
+                        :style-class ["left-hbox"]
+                        :children []}
+                       {:fx/type :h-box
+                        :style-class ["right-hbox"]
+                        :children [{:fx/type search-addons-table-footer-right}]}]}})
 
 (defn addon-detail-button-menu
   "a row of buttons attached to available actions for the given addon"
@@ -2748,7 +2797,8 @@
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
                         :style (style)}
-        gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
+        ;;gui-state (atom (fx/create-context state-template cache/lru-cache-factory))
+        gui-state (atom (fx/create-context state-template))
         update-gui-state (fn [new-state]
                            (let [new-state (update-in new-state [:job-queue] deref)]
                              (swap! gui-state fx/swap-context assoc :app-state new-state)))
