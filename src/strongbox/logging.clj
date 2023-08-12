@@ -26,10 +26,10 @@
 
 (defn anon-println-appender
   "removes the hostname from the output format string"
-  [colour-log-map]
+  [appender-config]
   (fn [data]
     (let [{:keys [?err timestamp_ msg_ level]} data
-          level-colour (colour-log-map level)
+          level-colour (-> appender-config :colour-log-map level)
           addon (some-> data :context :addon)
           label (or (:dirname addon)
                     (:name addon)
@@ -61,7 +61,7 @@
    :appenders {:println {:enabled? true
                          :async? false
                          :output-fn :inherit
-                         :fn (anon-println-appender -colour-log-map)}}})
+                         :fn (anon-println-appender {:colour-log-map -colour-log-map})}}})
 
 (defn-spec add-appender! nil?
   "adds appender at `key` to logging config"

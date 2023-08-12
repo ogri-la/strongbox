@@ -1,6 +1,6 @@
 (ns strongbox.config
   (:require
-   [envvar.core :refer [env]]
+   [envvar.core]
    [clojure.spec.alpha :as s]
    [clojure.set]
    [orchestra.core :refer [defn-spec]]
@@ -238,10 +238,14 @@
   [etag-db-file ::sp/file]
   (utils/load-json-file-safely etag-db-file {:no-file? {} :bad-data? {}}))
 
+(defn-spec env map?
+  []
+  @envvar.core/env)
+
 (defn-spec load-env map?
   "reads supported environment variables"
-  []  
-  {:no-color (-> @env :no-color utils/nilable boolean)})
+  []
+  {:no-color (-> (env) :no-color utils/nilable boolean)})
 
 (defn load-settings
   "reads config files and returns a map of configuration settings that can be merged over `core/state`."

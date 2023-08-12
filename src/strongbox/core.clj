@@ -406,8 +406,8 @@
    (when-let [user-level (some-> @state-atm :cli-opts :verbosity)]
      (timbre/merge-config! {:min-level user-level}))
    (when (some-> @state-atm :env :no-color)
-     (timbre/merge-config! {:output-opts {:stacktrace-fonts {}}
-                            :appenders {:println {:fn (logging/anon-println-appender {})}}}))
+     (timbre/merge-config! {:output-opts {:stacktrace-fonts {}} ;; disable colours in stacktraces
+                            :appenders {:println {:fn (logging/anon-println-appender {:colour-log-map {}})}}})) ;; disable coloured log lines
 
    ;; add a file appender if the user has set level `:debug`
    (-debug-logging state-atm)
