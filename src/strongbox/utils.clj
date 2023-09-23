@@ -112,16 +112,21 @@
           now (java-time/local-date)]
       (.getDays (java-time/period then now))))
 
-(defn datestamp-now-ymd
-  []
-  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
-
 (defn-spec todt ::sp/zoned-dt-obj
   "takes an ISO8601 string and returns a java.time.ZonedDateTime object.
   if the date is missing it's time portion, it's assumed to be `T00:00:00Z`."
   [dt ::sp/inst]
   (let [dt (if (-> dt count (= 10)) (str dt "T00:00:00Z") dt)]
     (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt)))
+
+(defn datestamp-ymd
+  [val]
+  (println "got" val "type" (type val))
+  (jt/format "yyyy-MM-dd" (todt val)))
+
+(defn datestamp-now-ymd
+  []
+  (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
 
 (defn-spec dt-before? boolean?
   "returns `true` if `date-1` happened before `date-2`"

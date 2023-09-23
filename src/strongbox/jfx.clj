@@ -619,6 +619,11 @@
                ;; addon-detail
                ;;
 
+               ".code-text-area"
+               {:-fx-font-family "monospace"
+                :-fx-font-size ".9em"
+                :-fx-text-fill "-fx-text-base-color"}
+
                "#addon-detail-pane "
                {".table-row-cell.installed"
                 {:-fx-background-color (colour :row-updateable)}
@@ -2263,20 +2268,55 @@
         sanitised (apply dissoc addon blacklist)
 
         row-list (apply utils/csv-map [:key :val] (vec sanitised))
-        row-list (sort-by :key row-list)]
-    {:fx/type :border-pane
-     :top {:fx/type :label
-           :style-class ["section-title"]
-           :text "raw data"}
-     :center {:fx/type :table-view
-              :id "key-vals"
-              :style-class ["table-view"]
-              :placeholder {:fx/type :text
-                            :style-class ["table-placeholder-text"]
-                            :text "(not installed)"}
-              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv make-table-column column-list)
-              :items (or row-list [])}}))
+        row-list (sort-by :key row-list)
+
+        addon-string (format "%s\n\nVersion %s\n\n\"%s\"\n\nInstalled from %s\n\nSupports %s\n\nLast updated %s (%s)"
+                             (:label addon)
+                             (:version addon)
+                             (:description addon)
+                             (:source addon)
+                             (clojure.string/join ", " (mapv sp/game-track-labels-map (:supported-game-tracks addon)))
+                             (-> addon :updated-date utils/format-dt)
+                             (-> addon :updated-date utils/datestamp-ymd))
+
+        key-vals
+        {:fx/type :tab
+         :text "keyvals"
+         :id "raw-data-keyvals-tab"
+         :closable false
+         :content {:fx/type :table-view
+                   :id "key-vals"
+                   :style-class ["table-view"]
+                   :placeholder {:fx/type :text
+                                 :style-class ["table-placeholder-text"]
+                                 :text "(not installed)"}
+                   :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+                   :columns (mapv make-table-column column-list)
+                   :items (or row-list [])}}
+
+        as-json
+        {:fx/type :tab
+         :text "json"
+         :id "raw-data-json-tab"
+         :closable false
+         :content {:fx/type :text-area
+                   :style-class ["text-area", "code-text-area"]
+                   :editable false
+                   :text (utils/to-json addon)}}
+
+        plain
+        {:fx/type :tab
+         :text "text"
+         :id "raw-data-text-tab"
+         :closable false
+         :content {:fx/type :text-area
+                   :editable false
+                   :wrap-text true
+                   :text addon-string}}]
+    {:fx/type :tab-pane
+     :tabs [key-vals
+            as-json
+            plain]}))
 
 (defn addon-detail-group-addons
   "displays a list of other addons that came grouped with this addon"

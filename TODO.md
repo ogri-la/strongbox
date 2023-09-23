@@ -27,11 +27,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* rawdata, interface-version is being localised
+
 * catalogue/search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
     - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
         - which it isn't, but that's not the point.
 
 * gui, better copying from the interface, especially the log box
+    - too much faff and bs for selectable text/labels, wontdo.
+    - added selectable plain text and json boxes to the raw text widgets
 
 * no errors displayed when installing from addon detail page
 
