@@ -1,0 +1,27 @@
+app-id: org.flatpak.strongbox
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions: 
+    - org.freedesktop.Sdk.Extension.openjdk11
+command: /app/bin/AppRun.sh
+modules:
+    - name: "openjdk"
+      buildsystem: "simple"
+      build-commands:
+        - "/usr/lib/sdk/openjdk11/install.sh"
+
+    - name: strongbox
+      buildsystem: simple
+      build-commands:
+        - install -D AppRun.sh /app/bin/AppRun.sh
+        - cp app.jar /app/bin/
+      sources:
+        - type: file
+          path: app.jar
+        - type: file
+          path: AppRun.sh
+          
+
+finish-args:
+    - "--env=PATH=/app/jre/bin:/usr/bin"
