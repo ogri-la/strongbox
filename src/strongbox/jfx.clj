@@ -615,14 +615,21 @@
                ".table-view#key-vals .val-column.column-header .label"
                {:-fx-alignment "center-left"}
 
+               ".plain-text-area .content "
+               {:-fx-padding ".75em"}
+
+               ".code-text-area "
+               {:-fx-font-family "monospace"
+                :-fx-font-size ".9em"
+                :-fx-text-fill "-fx-text-base-color"
+
+                ".content"
+                {:-fx-padding ".75em"}}
+
                ;;
                ;; addon-detail
                ;;
 
-               ".code-text-area"
-               {:-fx-font-family "monospace"
-                :-fx-font-size ".9em"
-                :-fx-text-fill "-fx-text-base-color"}
 
                "#addon-detail-pane "
                {".table-row-cell.installed"
@@ -2270,15 +2277,25 @@
         row-list (apply utils/csv-map [:key :val] (vec sanitised))
         row-list (sort-by :key row-list)
 
-        addon-string (format "%s\n\nVersion %s\n\n\"%s\"\n\nInstalled from %s\n\nSupports %s\n\nLast updated %s (%s)"
-                             (:label addon)
-                             (:version addon)
-                             (:description addon)
-                             (:source addon)
-                             (clojure.string/join ", " (mapv sp/game-track-labels-map (:supported-game-tracks addon)))
-                             (-> addon :updated-date utils/format-dt)
-                             (-> addon :updated-date utils/datestamp-ymd))
+        addon-string (if (:version addon)
+                       (format "%s\n\nVersion %s\n\n\"%s\"\n\nInstalled from %s\n\nSupports %s\n\nLast updated %s (%s)"
+                               (:label addon)
+                               (:version addon)
+                               (:description addon)
+                               (:source addon)
+                               (clojure.string/join ", " (mapv sp/game-track-labels-map (:supported-game-tracks addon)))
+                               (-> addon :updated-date utils/format-dt)
+                               (-> addon :updated-date utils/datestamp-ymd))
 
+                       ;; catalogue item
+                       (format "%s\n\n\"%s\"\n\nAvailable from %s\n\nSupports %s\n\nLast updated %s (%s)"
+                               (:label addon)
+                               (:description addon)
+                               (:source addon)
+                               (clojure.string/join ", " (mapv sp/game-track-labels-map (:game-track-list addon)))
+                               (-> addon :updated-date utils/format-dt)
+                               (-> addon :updated-date utils/datestamp-ymd)))
+        
         key-vals
         {:fx/type :tab
          :text "keyvals"
@@ -2300,7 +2317,7 @@
          :id "raw-data-json-tab"
          :closable false
          :content {:fx/type :text-area
-                   :style-class ["text-area", "code-text-area"]
+                   :style-class ["text-area" "code-text-area"]
                    :editable false
                    :text (utils/to-json addon)}}
 
@@ -2310,6 +2327,7 @@
          :id "raw-data-text-tab"
          :closable false
          :content {:fx/type :text-area
+                   :style-class ["text-area" "plain-text-area"]
                    :editable false
                    :wrap-text true
                    :text addon-string}}]
