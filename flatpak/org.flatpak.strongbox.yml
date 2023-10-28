@@ -1,4 +1,4 @@
-app-id: org.flatpak.strongbox
+app-id: la.ogri.strongbox
 runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
