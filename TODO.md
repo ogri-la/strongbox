@@ -35,12 +35,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * no errors displayed when installing from addon detail page
 
+* rename `strongbox` release to `strongbox.AppImage`
+    - re-submit
+    - update release scripts
+
+* add a disable update check cli arg
+    - flatpaks will check for updates in a different way
+
+## todo bucket (no particular order)
+
 * possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file loses the match.
     - mutual dependencies information is mostly blank
     - I think this was fixed in 6.1.0 but check anyway
         - "ignored addons in the addon detail pane now display mutual dependencies (if any)."
-
-## todo bucket (no particular order)
 
 * github-addons.md, update or get rid of
 
