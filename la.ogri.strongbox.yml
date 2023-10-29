@@ -21,7 +21,11 @@ modules:
           path: app.jar
         - type: file
           path: AppRun.sh
-          
-
 finish-args:
-    - "--env=PATH=/app/jre/bin:/usr/bin"
+    - "--socket=x11"
+    - "--share=network"
+    # GPU acceleration for JavaFX
+    - "--device=dri"
+    # fixes GTK warning when 'canberra-gtk-module' in host's ENV
+    - "--env=GTK_MODULES="
+    - "--filesystem=host"

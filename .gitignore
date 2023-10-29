@@ -15,5 +15,4 @@ AppDir/
 custom-jre/
 appimagetool
 coverage/
-flatpak/flatpak/
-flatpak/.flatpak-builder/
+flatpak/

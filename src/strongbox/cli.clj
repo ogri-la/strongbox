@@ -815,13 +815,17 @@
   (update-all)
   (action :list-updates))
 
+(defmethod action :print-config
+  [_]
+  (core/dump-useful-log-info))
+
 (defmethod action :default
   [opts]
   (println "(no action) given:" opts))
 
 (defn start
   [opts]
-  (info "starting cli")
+  (debug "starting cli")
   (init-ui-logger)
   (-init-search-listener)
   (core/refresh)
@@ -829,5 +833,5 @@
 
 (defn stop
   []
-  (info "stopping cli")
+  (debug "stopping cli")
   nil)
