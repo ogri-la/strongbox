@@ -2,11 +2,25 @@
 # creates a custom JRE and self-contained launcher for application using AppImage
 set -ex
 
+echo
+echo "--- building Flatpak ---"
+if ! command -v flatpak > /dev/null; then
+    echo "flatpak not found, cannot continue"
+    exit 1
+fi
+if ! command -v flatpak-builder > /dev/null; then
+    echo "flatpak-builder not found, cannot continue"
+    exit 1
+fi
+
+# ---
+
 ARCH=x86_64
 
-#rm -rf "./target"
+rm -rf "./target"
 
-if [ ! -d target ]; then
+# 'lein clean' may delete jar files within ./target, but preserve ./target dir
+if [ ! -e target/*-standalone.jar ]; then
     echo "--- building uberjar ---"
     lein clean
     rm -f resources/full-catalogue.json
@@ -25,19 +39,9 @@ rm -rf "./$output_dir"
 mkdir -p "./$output_dir"
 cp ./target/*-standalone.jar "$output_dir/app.jar"
 
-# ----------
+# ---
 
-echo
-echo "--- building Flatpak ---"
-if ! command -v flatpak > /dev/null; then
-    echo "flatpak not found, cannot continue"
-    exit 1
-fi
-if ! command -v flatpak-builder > /dev/null; then
-    echo "flatpak-builder not found, cannot continue"
-    exit 1
-fi
-
+echo "--- installing Flatpak runtime"
 flatpak install \
     --noninteractive \
     --arch "$ARCH" \
@@ -46,8 +50,7 @@ flatpak install \
     org.freedesktop.Sdk//23.08 \
     org.freedesktop.Sdk.Extension.openjdk11//23.08
 
-cp la.ogri.strongbox.yml flatpak/
-cp FlatpakAppRun.sh flatpak/AppRun.sh
+cp la.ogri.strongbox.yml la.ogri.strongbox.metainfo.xml flatpak/
 
 (
     cd flatpak
@@ -83,8 +86,6 @@ cp FlatpakAppRun.sh flatpak/AppRun.sh
 
 echo
 echo "--- cleaning up ---"
-
-lein clean
 
 echo
 echo "done."
