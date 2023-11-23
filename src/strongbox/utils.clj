@@ -119,12 +119,15 @@
   (let [dt (if (-> dt count (= 10)) (str dt "T00:00:00Z") dt)]
     (java-time/zoned-date-time (get java-time.format/predefined-formatters "iso-zoned-date-time") dt)))
 
-(defn datestamp-ymd
-  [val]
-  (println "got" val "type" (type val))
-  (jt/format "yyyy-MM-dd" (todt val)))
+(defn-spec datestamp-ymd string?
+  "returns a y-m-d formatted date for the given `val`"
+  [val (s/or :ok ::sp/inst :tolerated nil?)]
+  (if (nil? val)
+    ""
+    (jt/format "yyyy-MM-dd" (todt val))))
 
-(defn datestamp-now-ymd
+(defn-spec datestamp-now-ymd string?
+  "returns a y-m-d formatted date for 'today'"
   []
   (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
 

@@ -630,7 +630,6 @@
                ;; addon-detail
                ;;
 
-
                "#addon-detail-pane "
                {".table-row-cell.installed"
                 {:-fx-background-color (colour :row-updateable)}
@@ -2265,6 +2264,31 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
+(defn addon-as-text-for-installed
+  [addon]
+  (if (empty? addon)
+    ""
+    (format "%s\n\nVersion %s\n\n\"%s\"\n\nInstalled from %s\n\nSupports %s\n\nLast updated %s (%s)"
+            (:label addon)
+            (:version addon)
+            (:description addon)
+            (:source addon)
+            (clojure.string/join ", " (mapv sp/game-track-labels-map (:supported-game-tracks addon)))
+            (-> addon :updated-date utils/format-dt)
+            (-> addon :updated-date utils/datestamp-ymd))))
+
+(defn addon-as-text-for-catalogue
+  [addon]
+  (if (empty? addon)
+    ""
+    (format "%s\n\n\"%s\"\n\nAvailable from %s\n\nSupports %s\n\nLast updated %s (%s)"
+            (:label addon)
+            (:description addon)
+            (:source addon)
+            (clojure.string/join ", " (mapv sp/game-track-labels-map (:game-track-list addon)))
+            (-> addon :updated-date utils/format-dt)
+            (-> addon :updated-date utils/datestamp-ymd))))
+
 (defn addon-detail-key-vals-widget
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
@@ -2275,31 +2299,17 @@
         sanitised (apply dissoc addon blacklist)
 
         transformations {:interface-version str}
-        sanitised (apply (fn [[key valfn]]
-                           (update addon key valfn)) transformations)
+        sanitised (apply (fn [[k vfn]]
+                           (if (k addon) (update sanitised k vfn) addon))
+                         transformations)
 
         row-list (apply utils/csv-map [:key :val] (vec sanitised))
         row-list (sort-by :key row-list)
 
-        addon-string (if (:version addon)
-                       (format "%s\n\nVersion %s\n\n\"%s\"\n\nInstalled from %s\n\nSupports %s\n\nLast updated %s (%s)"
-                               (:label addon)
-                               (:version addon)
-                               (:description addon)
-                               (:source addon)
-                               (clojure.string/join ", " (mapv sp/game-track-labels-map (:supported-game-tracks addon)))
-                               (-> addon :updated-date utils/format-dt)
-                               (-> addon :updated-date utils/datestamp-ymd))
+        addon-string (if (:version sanitised)
+                       (addon-as-text-for-installed sanitised)
+                       (addon-as-text-for-catalogue sanitised))
 
-                       ;; catalogue item
-                       (format "%s\n\n\"%s\"\n\nAvailable from %s\n\nSupports %s\n\nLast updated %s (%s)"
-                               (:label addon)
-                               (:description addon)
-                               (:source addon)
-                               (clojure.string/join ", " (mapv sp/game-track-labels-map (:game-track-list addon)))
-                               (-> addon :updated-date utils/format-dt)
-                               (-> addon :updated-date utils/datestamp-ymd)))
-        
         key-vals
         {:fx/type :tab
          :text "keyvals"
