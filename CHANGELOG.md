@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added patch tooltip for Dragonflight 10.1 "Embers of Neltharion"
 * added support for the `NO_COLOR` environment variable.
     - it turns off coloured output in the console if that is where you launched strongbox from.
-* added new command line `--action` "print-config" that prints the final config and exists.
+* added new command line action `print-config` that prints the final config and exits.
     - usage: `./strongbox --action print-config`
 * added new information captured from the environment when using `--debug` or `--action print-config`.
     - `state.paths.config-dir`, path to where Strongbox is storing the application *config*.
