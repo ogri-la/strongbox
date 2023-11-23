@@ -13,12 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added patch tooltip for Dragonflight 10.1 "Embers of Neltharion"
 * added support for the `NO_COLOR` environment variable.
     - it turns off coloured output in the console if that is where you launched strongbox from.
+* added new command line `--action` "print-config" that prints the final config and exists.
+    - usage: `./strongbox --action print-config`
+* added new information captured from the environment when using `--debug` or `--action print-config`.
+    - `state.paths.config-dir`, path to where Strongbox is storing the application *config*.
+    - `state.paths.data-dir`, path to where Strongbox is storing the application *data*.
+    - `flatpak-id`, looks like `la.ogri.strongbox` when running within a Flatpak.
 
 ### Changed
 
 * bumped JavaFX dependencies from 17.x to 19.x.
 * removed the fixed widths on the 'updated' and 'downloads' columns in the search pane.
     - attempting to control column widths in a JavaFX table is futile.
+* some `info` level logging has been dropped to `debug` to reduce console noise.
 
 ### Fixed
 
