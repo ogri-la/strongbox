@@ -2274,6 +2274,10 @@
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
 
+        transformations {:interface-version str}
+        sanitised (apply (fn [[key valfn]]
+                           (update addon key valfn)) transformations)
+
         row-list (apply utils/csv-map [:key :val] (vec sanitised))
         row-list (sort-by :key row-list)
 
