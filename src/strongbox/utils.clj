@@ -41,10 +41,10 @@
   (if flag
     (do
       (st/instrument)
-      (info "instrumentation is ON"))
+      (debug "instrumentation is ON"))
     (do
       (st/unstrument)
-      (info "instrumentation is OFF"))))
+      (debug "instrumentation is OFF"))))
 
 (defn-spec all boolean?
   "true if all items in `lst` are neither nil nor false"

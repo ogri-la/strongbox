@@ -1,6 +1,6 @@
-# strongbox, a World of Warcraft addon manager
+# Strongbox, a World of Warcraft addon manager
 
-`strongbox` is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon
+Strongbox is an **open source**, **[advertisement free](#recognition)** and **[privacy respecting](#privacy)** addon
 manager for World of Warcraft.
 
 It runs on Linux and macOS.
@@ -9,7 +9,7 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and
 
 ---
 
-***Notice***: tukui.org no longer hosts addons except `elvui` and `tukui` as of **2023-06-01**.
+***Notice***: [tukui.org](https://tukui.org) no longer hosts addons except `elvui` and `tukui` as of **2023-06-01**.
 
 Unfortunately the location of these two addons has changed as well as details around their access.
 
@@ -40,27 +40,43 @@ I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-a
 
 ## Installation
 
-Arch Linux users can install `strongbox` from the [AUR](https://aur.archlinux.org/packages/strongbox/) ([mirror](https://github.com/ogri-la/strongbox-pkgbuild/)).
+### AppImage
 
-For other Linux users:
+Strongbox is available as a standalone [AppImage](https://appimage.org) binary from the [releases](https://github.com/ogri-la/strongbox/releases/) page.
 
-1. download: [./releases/strongbox](https://github.com/ogri-la/strongbox/releases/download/7.0.0/strongbox)
-2. make executable: `chmod +x strongbox`
-3. run: `./strongbox`
+    chmod +x strongbox
+    ./strongbox
 
-If you're on macOS or having a problem with the binary or just prefer Java `.jar` files (requires Java 11+):
+### Arch Linux and the AUR
 
-1. download: [./releases/strongbox-7.0.0-standalone.jar](https://github.com/ogri-la/strongbox/releases/download/7.0.0/strongbox-7.0.0-standalone.jar)
-2. run: `java -jar strongbox-7.0.0-standalone.jar`
+Arch Linux users can install Strongbox from the [AUR](https://aur.archlinux.org/packages/strongbox/) ([mirror](https://github.com/ogri-la/strongbox-pkgbuild/)).
+
+### Flatpak and Flathub
+
+Flatpak users can install Strongbox from [Flathub](https://flathub.org/en-GB/apps/la.ogri.strongbox).
+
+    flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+    flatpak --user install la.ogri.strongbox
+
+*Caveats* when using Flatpaks:
+
+* Strongbox application config and data lives at `~/.var/app/la.ogri.strongbox` on the host and not `~/.local/share` or `~/.config`.
+* [Possible font problems](https://github.com/flatpak/flatpak/issues/4122) around using incorrect fonts and aliasing.
+
+### Java
+
+Java users can run Strongbox using the `.jar` from the [releases](https://github.com/ogri-la/strongbox/releases/) page.
+
+    java -jar strongbox-x.x.x-standalone.jar
 
 ## Usage
 
-`strongbox` works by matching your installed addons to a list of addons available online.
+Strongbox works by matching installed addons to a catalogue of addons available online.
 
-Some addons match directly to those online but others require you to manually search and re-install them before that 
-match can be made.
+Some addons are matched directly to the catalogue but others may require you to search the catalogue and re-install them 
+before that match can be made.
 
-Some addons bundle other addons that *do not appear* in the online list. You will need to re-install the 'parent' addon 
+Some addons bundle other addons that *do not appear* in the catalogue. You will need to re-install the 'parent' addon 
 that bundled those addons.
 
 First time usage:
@@ -99,21 +115,21 @@ Afterwards, use the `Update all` button to update all addons with new versions a
 Under no circumstances whatsoever does this software:
 
 * deal with advertising or advertisers
-* collect, monitor or report upon your usage of `strongbox` or your data
+* collect, monitor or report upon your usage of Strongbox or your data
 * solicit, beg or manipulate for donations
 * attempt to monitise you, the user, in any way
 
 This software also tries very hard to not cause a bother - for you *or* the addon host.
 
-I benefit so much from the hard work of those who write free and open source software, including addon developers, 
-that it's my privilege to offer this small piece back.
+I benefit so much from the hard work of those who write [Free](https://www.fsf.org) and [Open Source](https://opensource.org) software, 
+including addon developers, that it's my privilege to offer this small piece back.
 
 ### Special thanks to:
 
-* [bug reporters, complimenters and those with constructive feedback](https://github.com/ogri-la/strongbox/issues)
+* [bug reporters, feature requesters and those with constructive feedback](https://github.com/ogri-la/strongbox/issues)
     - if you guys hadn't reported it, I wouldn't have known to fix it.
 * [layday](https://github.com/layday) of [instawow](https://github.com/layday/instawow)
-* [vlaaad](https://github.com/vlaaad) of [cljfx](https://github.com/cljfx/cljfx) and his patience
+* [vlaaad](https://github.com/vlaaad) of [cljfx](https://github.com/cljfx/cljfx)
 
 ## Privacy
 
@@ -122,21 +138,21 @@ This software interacts with the following remote hosts:
 * [wowinterface.com](https://wowinterface.com)
 * [api.github.com](https://developer.github.com/v3/repos/releases)
     - to download repository and release data for addons hosted on Github
-    - to download the latest `strongbox` release information
+    - to download the latest Strongbox release information
 * [gitlab.com](https://gitlab.com)
 * [github.com/ogri-la/strongbox-catalogue](https://github.com/ogri-la/strongbox-catalogue), to download addon catalogues
 
 These hosts *may* redirect requests to other hosts.
 
-These interactions use a HTTP user agent header unique to `strongbox` so that it may be identified easily:
+These interactions use a HTTP user agent header unique to Strongbox so that it may be identified easily:
 
-    "strongbox/6.x (https://github.com/ogri-la/strongbox)"
+    "strongbox/x.x (https://github.com/ogri-la/strongbox)"
 
-Running strongbox with `--debug` will generate a file called `debug.log` that I may ask you to upload if you report a 
-bug. *Some* of the details it contains are:
+Running Strongbox with `--debug` will generate a file called `debug.log` that I may ask you to upload if you report a bug.
+*Some* of the details it contains are:
 
 * addons detected in the currently selected addon directory
-* paths to strongbox configuration and data:
+* paths to Strongbox configuration and data:
     - `/home/torkus/.local/share/strongbox`
     - `/home/torkus/.config/strongbox`
 * details about your OS and the version of Java in use:
@@ -209,7 +225,7 @@ catalogue has approximately 2.8k addons.
 The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 7.2k addons large. It 
 contains many unmaintained addons.
 
-There are also per-host catalogues, like a 'wowinterface' catalogue, and strongbox supports selecting between all of them.
+There are also per-host catalogues, like a 'wowinterface' catalogue, and Strongbox supports selecting between all of them.
 
 Catalogues are updated weekly. New addons released during the week will not be present until the next week. Addons can 
 be installed using its URL in these cases.
@@ -288,7 +304,7 @@ It is up to the user to decide if this is OK or not.
 
 ### ignore addons to prevent accidental changes
 
-When an addon is ignored strongbox will not attempt to find that addon in the catalogue, look for or download updates or 
+When an addon is ignored Strongbox will not attempt to find that addon in the catalogue, look for or download updates or 
 even allow the installation of other addons that may alter the ignored addon or any of its files.
 
 Right-click an addon and select `Ignore` or `Stop ignoring`.
@@ -297,12 +313,12 @@ Addons under development are automatically ('implicitly') ignored.
 
 ### mutual dependency tracking
 
-A 'mutual dependency' in strongbox is when 'Addon A' installs an addon called 'Addon Z' and 'Addon B' *also* installs 
+A 'mutual dependency' in Strongbox is when 'Addon A' installs an addon called 'Addon Z' and 'Addon B' *also* installs 
 'Addon Z'.
 
 Both 'Addon A' and 'Addon B' depend on 'Addon Z' and if 'Addon A' were uninstalled it would (probably) break 'Addon B'.
 
-In this scenario strongbox allows 'Addon B' to overwrite 'Addon Z' but keeps track of the fact that 'Addon A' is also 
+In this scenario Strongbox allows 'Addon B' to overwrite 'Addon Z' but keeps track of the fact that 'Addon A' is also 
 using it. When either 'Addon A' or 'Addon B' are uninstalled, 'Addon Z' is preserved.
 
 The state of 'Addon Z' isn't guaranteed however. 
@@ -389,8 +405,8 @@ All bugs/questions/requests/feedback should go in [Github Issues](https://github
 
 I prefer to **not** receive *code* contributions. See [CONTRIBUTING](CONTRIBUTING.md) for more detail.
 
-Prior to `1.0.0`, `strongbox` was known as `wowman`. The [AUR package](https://aur.archlinux.org/packages/wowman) for 
-`wowman` is obsolete.
+Prior to `1.0.0`, Strongbox was known as "wowman". The [AUR package](https://aur.archlinux.org/packages/wowman) for 
+"wowman" is obsolete.
 
 ## Other addon managers
 
