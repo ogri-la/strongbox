@@ -25,13 +25,15 @@ see CHANGELOG.md for a more formal list of changes by release
 * support NO_COLOR envvar, http://no-color.org
     - done
 
-## todo
-
 * rawdata, interface-version is being localised
+    - done
 
 * gui, better copying from the interface, especially the log box
     - too much faff and bs for selectable text/labels, wontdo.
     - added selectable plain text and json boxes to the raw text widgets
+    - done
+
+## todo
 
 ## todo bucket (no particular order)
 
