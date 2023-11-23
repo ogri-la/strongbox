@@ -202,8 +202,7 @@
                                         :keep-user-catalogue-updated false
 
                                         ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:debug? true
@@ -243,8 +242,7 @@
                                         :keep-user-catalogue-updated false
 
                                         ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
@@ -284,10 +282,8 @@
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
 
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -328,10 +324,8 @@
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
 
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -371,10 +365,8 @@
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
 
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -426,10 +418,8 @@
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
 
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -482,10 +472,8 @@
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
 
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -537,10 +525,8 @@
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
 
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -588,10 +574,9 @@
                                         :ui-selected-columns [:source :name :description :available-version :uber-button]
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -641,10 +626,9 @@
                                         :ui-selected-columns [:source :name :description :available-version :uber-button]
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
-                                        
-                                              ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -700,10 +684,8 @@
                                         ;; new in 6.2.0
                                         :keep-user-catalogue-updated false
 
-
-                                              ;; new in 7.1.0
-                                              :check-for-update true
-                                        }}
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -761,8 +743,7 @@
                                         :keep-user-catalogue-updated true
 
                                         ;; new in 7.1.0
-                                        :check-for-update true
-                                        }}
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -821,8 +802,7 @@
                                         :keep-user-catalogue-updated true
 
                                         ;; new in 7.1.0
-                                        :check-for-update false
-                                        }}
+                                        :check-for-update false}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -849,8 +829,7 @@
                                               :keep-user-catalogue-updated true
 
                                               ;; new in 7.1.0
-                                              :check-for-update false
-                                              }}
+                                              :check-for-update false}}
                     :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))

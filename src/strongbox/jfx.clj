@@ -1471,7 +1471,6 @@
      :selected selected?
      :on-action (fn [_]
                   (cli/set-preference :check-for-update (not selected?)))}))
-    
 
 (defn-spec build-column-menu ::sp/list-of-maps
   "returns a list of columns that are 'selected' if present in `selected-column-list`."

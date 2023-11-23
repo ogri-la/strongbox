@@ -116,10 +116,7 @@
 
    [nil "--[no-]update-check"
     :id :check-for-update
-    :default true
-    ]
-
-   ])
+    :default true]])
 
 (defn validate
   [parsed]
@@ -165,8 +162,7 @@
             ;; force `:noui` for certain actions
             args (if (contains? #{:print-config} (:action options))
                    (assoc-in args [:options :ui] :noui)
-                   args)
-            ]
+                   args)]
         args))))
 
 (defn exit

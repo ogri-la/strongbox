@@ -1786,8 +1786,7 @@
 
         useful-state
         [[:state :paths :config-dir]
-         [:state :paths :data-dir]
-         ]
+         [:state :paths :data-dir]]
 
         useful-props
         ["javafx.version" ;; "15.0.1"
@@ -1816,8 +1815,7 @@
         key-list (-> []
                      (into useful-state)
                      (into useful-props)
-                     (into useful-envvars))
-        ]
+                     (into useful-envvars))]
     (doseq [key key-list]
       (if (sequential? key)
         (let [val (nm key)]
