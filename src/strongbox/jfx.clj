@@ -2865,7 +2865,7 @@
 
 (defn start
   []
-  (timbre/info "starting gui")
+  (timbre/debug "starting gui")
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
                         :style (style)}
@@ -2943,7 +2943,7 @@
 
 (defn stop
   []
-  (timbre/info "stopping gui")
+  (timbre/debug "stopping gui")
   (when-let [unmount-renderer (:disable-gui @core/state)]
     ;; only affects tests running from repl apparently
     (unmount-renderer))

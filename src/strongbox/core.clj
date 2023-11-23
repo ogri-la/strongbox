@@ -1780,7 +1780,14 @@
   "writes selected system properties to the log.
   mostly concerned with OS, Java and JavaFX versions."
   []
-  (let [useful-props
+  (let [state-map (if (some? @state) @state {})
+
+        useful-state
+        [[:state :paths :config-dir]
+         [:state :paths :data-dir]
+         ]
+
+        useful-props
         ["javafx.version" ;; "15.0.1"
          "javafx.runtime.version" ;; "15.0.1+1"
          ]
@@ -1798,11 +1805,22 @@
          :java-awt-graphicsenv ;; "sun.awt.X11GraphicsEnvironment"
          :gtk-modules ;; "canberra-gtk-module"
          :xdg-session-desktop ;; "notion"
+         :flatpak-id ;; "la.ogri.strongbox" when running within a flatpak
          ]
 
         adhoc-vars {:strongbox-version (strongbox-version)}
-        vars (merge adhoc-vars (System/getProperties) @envvar.core/env)]
-    (run! #(info (format "%s=%s" (name %) (get vars %))) (into useful-envvars useful-props))))
+        available-vars (merge adhoc-vars (System/getProperties) @envvar.core/env {:state state-map})
+        nm (partial utils/nav-map available-vars)
+        key-list (-> []
+                     (into useful-state)
+                     (into useful-props)
+                     (into useful-envvars))
+        ]
+    (doseq [key key-list]
+      (if (sequential? key)
+        (let [val (nm key)]
+          (info (format "%s=%s" (->> key (map name) (clojure.string/join ".")) val)))
+        (info (format "%s=%s" (name key) (get available-vars key)))))))
 
 ;;
 
@@ -1814,7 +1832,7 @@
   [& [cli-opts]]
   (-start)
   (reset-logging!)
-  (info "starting app")
+  (debug "starting app")
   (set-paths!)
   (detect-repl!)
   (init-dirs)
@@ -1826,7 +1844,7 @@
 
 (defn stop
   [state]
-  (info "stopping app")
+  (debug "stopping app")
   ;; traverse cleanup list and call them
   (doseq [f (:cleanup @state)]
     (debug "calling" f)

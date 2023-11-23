@@ -39,6 +39,7 @@
   []
   (let [opts (:cli-opts @core/state)]
     (case (:ui opts)
+      :noui (cli/stop)
       :cli (cli/stop)
       :gui (jfx :stop)
 
@@ -57,6 +58,7 @@
   [& [cli-opts]]
   (core/start (merge {:spec? *spec?*} cli-opts))
   (case (:ui cli-opts)
+    :noui (cli/action cli-opts)
     :cli (cli/start cli-opts)
     :gui (jfx :start)
 
@@ -110,7 +112,7 @@
    ["-a" "--action ACTION" "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'"
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:list :list-updates :update-all])]]])
+    :validate [(in? [:print-config :list :list-updates :update-all])]]])
 
 (defn validate
   [parsed]
@@ -151,7 +153,13 @@
             ;; force `:cli` for certain actions
             args (if (contains? #{} (:action options))
                    (assoc-in args [:options :ui] :cli)
-                   args)]
+                   args)
+
+            ;; force `:noui` for certain actions
+            args (if (contains? #{:print-config} (:action options))
+                   (assoc-in args [:options :ui] :noui)
+                   args)
+            ]
         args))))
 
 (defn exit
