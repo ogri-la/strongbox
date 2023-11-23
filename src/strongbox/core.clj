@@ -450,7 +450,7 @@
     (swap! state merge final-config)
     (reset-logging!)
     ;; erm, this is something I use while developing: (restart {:spec? false})
-    ;; spec checking slows everything down so turning it off gives me a feel of actual performance.
+    ;; spec checking slows everything down so turning it off gives me a feel for actual performance.
     (when (contains? cli-opts :spec?)
       (utils/instrument (:spec? cli-opts))))
   nil)
@@ -1427,16 +1427,18 @@
 (defn-spec latest-strongbox-release! ::sp/latest-strongbox-release
   "downloads and sets the most recently released version of strongbox on github, returning the found version or `:failed` on error."
   []
-  (let [lsr (get-state :latest-strongbox-release)]
-    (case lsr
-      ;; we haven't looked yet, so look.
-      nil (let [lsr (-download-strongbox-release)]
-            (swap! state assoc :latest-strongbox-release lsr)
-            lsr)
-      ;; we've already looked and failed, don't try again this session.
-      :failed nil
-      ;; we've already looked, return what we found
-      lsr)))
+  (let [lsr (get-state :latest-strongbox-release)
+        check-for-update? (get-state :cfg :preferences :check-for-update)]
+    (when check-for-update?
+      (case lsr
+        ;; we haven't looked yet, so look.
+        nil (let [lsr (-download-strongbox-release)]
+              (swap! state assoc :latest-strongbox-release lsr)
+              lsr)
+        ;; we've already looked and failed, don't try again this session.
+        :failed nil
+        ;; we've already looked, return what we found
+        lsr))))
 
 ;; stats
 
@@ -1784,8 +1786,7 @@
 
         useful-state
         [[:state :paths :config-dir]
-         [:state :paths :data-dir]
-         ]
+         [:state :paths :data-dir]]
 
         useful-props
         ["javafx.version" ;; "15.0.1"
@@ -1814,8 +1815,7 @@
         key-list (-> []
                      (into useful-state)
                      (into useful-props)
-                     (into useful-envvars))
-        ]
+                     (into useful-envvars))]
     (doseq [key key-list]
       (if (sequential? key)
         (let [val (nm key)]

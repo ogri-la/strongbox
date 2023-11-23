@@ -42,6 +42,7 @@
       "ui-selected-columns": [
         "source", "name", "description", "installed-version", "available-version", "game-version", "uber-button"
       ],
-      "keep-user-catalogue-updated": true
+      "keep-user-catalogue-updated": true,
+      "check-for-update": false
   }
 }

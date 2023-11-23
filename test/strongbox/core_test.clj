@@ -1532,7 +1532,7 @@
   (testing "throttled github response status for strongbox release data returns `:failed`"
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}]
-      (with-running-app
+      (with-running-app+opts {:cfg {:preferences {:check-for-update true}}}
         (with-global-fake-routes-in-isolation fake-routes
           (is (= :failed (core/latest-strongbox-release!))))))))
 
@@ -1541,7 +1541,7 @@
     (let [fake-routes {"https://api.github.com/repos/ogri-la/strongbox/releases/latest"
                        {:get (fn [req] {:status 403 :reason-phrase "asdf"})}}
           expected "foo.bar.baz"]
-      (with-running-app
+      (with-running-app+opts {:cfg {:preferences {:check-for-update true}}}
         (swap! core/state assoc :latest-strongbox-release expected)
         (with-global-fake-routes-in-isolation fake-routes
           (is (= expected (core/latest-strongbox-release!))))))))
@@ -1553,7 +1553,7 @@
                      (and (core/unsteady? (:name addon*))
                           (not (empty? (core/get-state :unsteady-addon-list)))))
           addon-fn-affective (core/affects-addon-wrapper addon-fn)]
-      (with-running-app
+      (with-running-app+opts {:cfg {:preferences {:check-for-update true}}}
         (is (empty? (core/get-state :unsteady-addon-list)))
         (is (true? (addon-fn-affective addon)))
         (is (empty? (core/get-state :unsteady-addon-list)))))))
