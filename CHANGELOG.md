@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `state.paths.config-dir`, path to where Strongbox is storing the application *config*.
     - `state.paths.data-dir`, path to where Strongbox is storing the application *data*.
     - `flatpak-id`, looks like `la.ogri.strongbox` when running within a Flatpak.
+* added plain-text and JSON views of the raw addon data to the 'raw data' widget on the addon detail tab.
+    - it's pretty basic but JavaFX really resists being able to select text within it's widgets.
 
 ### Changed
 
@@ -31,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * tag buttons in search pane are now centred vertically.
 * selecting hosts in search pane no longer samples results.
+* 'interface version' was being treated as an integer and being localised in the raw data widget.
 
 ### Removed
 

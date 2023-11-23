@@ -112,3 +112,75 @@
                   :g {:h {:j :k}
                       :i {:j :k}}}]
     (is (= expected (jfx/expand given)))))
+
+(deftest addon-as-text-for-installed
+  (testing "empty"
+    (let [given {}
+          expected ""]
+      (is (= expected (jfx/addon-as-text-for-installed given)))))
+
+  (testing "default"
+    (let [given helper/addon
+          expected "EveryAddon
+
+Version 1.2.3
+
+\"Does what no other addon does, slightly differently\"
+
+Installed from curseforge
+
+Supports Retail
+
+Last updated 7 years ago (2016-09-08)"]
+      (is (= expected (jfx/addon-as-text-for-installed given)))))
+
+  (testing "with overrides"
+    (let [overrides {:supported-game-tracks nil
+                     :updated-date nil}
+          given (merge helper/addon overrides)
+          expected "EveryAddon
+
+Version 1.2.3
+
+\"Does what no other addon does, slightly differently\"
+
+Installed from curseforge
+
+Supports 
+
+Last updated  ()"]
+      (is (= expected (jfx/addon-as-text-for-installed given))))))
+
+(deftest addon-as-text-for-catalogue
+  (testing "empty"
+    (let [given {}
+          expected ""]
+      (is (= expected (jfx/addon-as-text-for-catalogue given)))))
+
+  (testing "default"
+    (let [given helper/addon-summary
+          expected "EveryAddon
+
+\"Does what no other addon does, slightly differently\"
+
+Available from curseforge
+
+Supports 
+
+Last updated 7 years ago (2016-09-08)"]
+      (is (= expected (jfx/addon-as-text-for-catalogue given)))))
+
+  (testing "with overrides"
+    (let [overrides {:supported-game-tracks nil
+                     :updated-date nil}
+          given (merge helper/addon-summary overrides)
+          expected "EveryAddon
+
+\"Does what no other addon does, slightly differently\"
+
+Available from curseforge
+
+Supports 
+
+Last updated  ()"]
+      (is (= expected (jfx/addon-as-text-for-catalogue given))))))
