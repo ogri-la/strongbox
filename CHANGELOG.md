@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - `flatpak-id`, looks like `la.ogri.strongbox` when running within a Flatpak.
 * added plain-text and JSON views of the raw addon data to the 'raw data' widget on the addon detail tab.
     - it's pretty basic but JavaFX really resists being able to select text within it's widgets.
+* added new preference 'check for update' that toggles checking for an update to Strongbox on startup (default is `true`).
+* added new command line flag `--update-check` and it's complement `--no-update-check` that toggles update checks.
 
 ### Changed
 
