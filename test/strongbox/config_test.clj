@@ -199,7 +199,11 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:debug? true
@@ -236,7 +240,11 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
@@ -274,7 +282,12 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -313,7 +326,12 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -351,7 +369,12 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -401,7 +424,12 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -452,7 +480,12 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -502,7 +535,12 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -549,7 +587,11 @@
                                         ;; new in 4.7.0
                                         :ui-selected-columns [:source :name :description :available-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -598,7 +640,11 @@
                                         ;; new in 4.7.0
                                         :ui-selected-columns [:source :name :description :available-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+                                        
+                                              ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -652,7 +698,12 @@
                                                               :combined-version ;; new default in 5.0.0
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+
+                                              ;; new in 7.1.0
+                                              :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -707,7 +758,11 @@
                                                               :combined-version ;; new default in 5.0.0
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated true}}
+                                        :keep-user-catalogue-updated true
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -763,7 +818,11 @@
                                                               :combined-version ;; new default in 5.0.0
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated true}}
+                                        :keep-user-catalogue-updated true
+
+                                        ;; new in 7.1.0
+                                        :check-for-update false
+                                        }}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -787,7 +846,11 @@
                                               :ui-selected-columns [:source :name :description
                                                                     :installed-version :available-version ;; replaced in 5.0.0
                                                                     :game-version :uber-button]
-                                              :keep-user-catalogue-updated true}}
+                                              :keep-user-catalogue-updated true
+
+                                              ;; new in 7.1.0
+                                              :check-for-update false
+                                              }}
                     :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))

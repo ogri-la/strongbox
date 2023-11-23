@@ -52,7 +52,10 @@
                  :ui-selected-columns sp/default-column-list
 
                  ;; refresh the user-catalogue every N days
-                 :keep-user-catalogue-updated false}})
+                 :keep-user-catalogue-updated false
+
+                 ;; fetch latest version details from github
+                 :check-for-update true}})
 
 (defn handle-install-dir
   "`:install-dir` was once supported in the user configuration but is now only supported in the command line options.

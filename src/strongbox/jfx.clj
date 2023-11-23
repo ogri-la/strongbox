@@ -1463,6 +1463,16 @@
      :on-action (fn [_]
                   (cli/set-preference :keep-user-catalogue-updated (not selected?)))}))
 
+(defn menu-item--check-for-update
+  [{:keys [fx/context]}]
+  (let [selected? (fx/sub-val context get-in [:app-state :cfg :preferences :check-for-update])]
+    {:fx/type :check-menu-item
+     :text "Check for updates when app starts"
+     :selected selected?
+     :on-action (fn [_]
+                  (cli/set-preference :check-for-update (not selected?)))}))
+    
+
 (defn-spec build-column-menu ::sp/list-of-maps
   "returns a list of columns that are 'selected' if present in `selected-column-list`."
   [selected-column-list :ui/column-list]
@@ -1521,7 +1531,8 @@
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
         prefs-menu [{:fx/type menu-item--num-zips-to-keep}
-                    {:fx/type menu-item--keep-user-catalogue-updated}]
+                    {:fx/type menu-item--keep-user-catalogue-updated}
+                    {:fx/type menu-item--check-for-update}]
 
         view-menu (into
                    [(menu-item "Refresh" (async-handler core/hard-refresh) {:key "F5"})

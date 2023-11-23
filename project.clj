@@ -12,7 +12,7 @@
   :pedantic? false
 
   :dependencies [[org.clojure/clojure "1.10.3"]
-                 [org.clojure/tools.cli "1.0.214"] ;; cli arg parsing
+                 [org.clojure/tools.cli "1.0.219"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.4.4"] ;; reload code
                  [org.clojure/data.json "2.4.0"] ;; json handling
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation

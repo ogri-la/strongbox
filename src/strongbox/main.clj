@@ -112,7 +112,14 @@
    ["-a" "--action ACTION" "perform action and exit. action is one of: 'list', 'list-updates', 'update-all'"
     :id :action
     :parse-fn #(-> % lower-case keyword)
-    :validate [(in? [:print-config :list :list-updates :update-all])]]])
+    :validate [(in? [:print-config :list :list-updates :update-all])]]
+
+   [nil "--[no-]update-check"
+    :id :check-for-update
+    :default true
+    ]
+
+   ])
 
 (defn validate
   [parsed]
