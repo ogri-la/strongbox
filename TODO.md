@@ -33,9 +33,31 @@ see CHANGELOG.md for a more formal list of changes by release
     - added selectable plain text and json boxes to the raw text widgets
     - done
 
+* add a disable update check cli arg
+    - flatpaks will check for updates in a different way
+    - done
+
+* github-addons.md, update or get rid of
+    - got rid of it
+    - done
+
+* release.md, move to strongbox-release-script
+    - done
+
+* gui, raw data, add textual versions of this data as well
+    - pretty printing in a gui is one thing, but useless if it can't be copied
+    - have a text field with plain text and yaml or json formatted addon data could be useful as well
+    - done
+
 ## todo
 
 ## todo bucket (no particular order)
+
+* github, catalogue, no download counts.
+
+* github, catalogue, add any tags if they exist
+
+* github, catalogue, add 'created date'
 
 * no errors displayed when installing from addon detail page
 
@@ -43,16 +65,11 @@ see CHANGELOG.md for a more formal list of changes by release
     - re-submit
     - update release scripts
 
-* add a disable update check cli arg
-    - flatpaks will check for updates in a different way
-
 * update release script
     - update references from 'strongbox' to 'strongbox.AppImage'
 
 * generate a `.flatpakref` file as an asset for release.
     - https://docs.flatpak.org/en/latest/repositories.html#flatpakref-files
-
-## todo bucket (no particular order)
 
 * possible bug? installing combuctor 8.1.1 from file matches against the catalogue (good), then installing 9.1.3 file loses the match.
     - mutual dependencies information is mostly blank
@@ -63,13 +80,9 @@ see CHANGELOG.md for a more formal list of changes by release
     - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
         - which it isn't, but that's not the point.
 
-* github-addons.md, update or get rid of
-
 * *.sh, consolidate these root-level bash scripts into a manage.sh 
 
 * move Dockerfile* files into a CircleCI folder
-
-* release.md, move to strongbox-release-script
 
 * metrics, add a 'catalogue is N days old'
     - add an 'oldest' addon (days since created date)?
@@ -84,12 +97,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * checkbox column for selecting addon rows
     - might be nicer than ctrl-click
-
-* github, catalogue, no download counts.
-
-* github, catalogue, add any tags if they exist
-
-* github, catalogue, add 'created date'
 
 * expand-summary, can the game track wrangling logic be made generic rather than per-host?
     - this would tie in with returning *all* releases from a host
@@ -106,10 +113,6 @@ see CHANGELOG.md for a more formal list of changes by release
     - make it a simple preference
 
 * gui, 'set-icon' is taking a long time to do it's thing.
-
-* gui, raw data, add textual versions of this data as well
-    - pretty printing in a gui is one thing, but useless if it can't be copied
-    - have a text field with plain text and yaml or json formatted addon data could be useful as well
 
 * manually select the primary addon in a group of addons to prevent synthetic titles
 
@@ -203,9 +206,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * finer grained control over grouping of addons
     - like what?
     - like a grouped addon or grouping lists of addons?
-
-
-* catalogue, download counts for github addons
 
 ### catalogue v3 / capture more addon data
 
