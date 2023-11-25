@@ -524,7 +524,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - an addon doesn't get updates any more but still works and is eventually removed from the 'short' catalogue.
         - you decide to go curseforge-only and have that one addon from wowinterface you can't live without (or vice-versa)
 
-## 4.4.1
+## 4.4.1 - 2021-08-19
 
 ### Changed
 
@@ -536,7 +536,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixed bug preventing installation of addons from the search pane.
 * sorting by 'downloads' in search now works as expected.
 
-## 4.4.0
+## 4.4.0 - 2021-08-17
 
 ### Added
 
@@ -561,7 +561,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * row background colour for 'unsteady' addons (updating/downloading/being modified) has been removed.
     - it's too frenetic when multiple addons are doing things in parallel.
 
-## 4.3.0
+## 4.3.0 - 2021-07-01
 
 ### Added
 
@@ -589,7 +589,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * search results are now updated when the catalogue is switched and the search term, if any, is re-searched for.
 * Curseforge API has capped the number of results per-request to a max of 50
 
-## 4.2.0
+## 4.2.0 - 2021-06-02
 
 ### Added
 
@@ -637,7 +637,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - this was added to differentiate two releases using the same name and version but different game tracks.
     - strongbox will mark affected addons as being updateable because the versions no longer match. The same version will be re-installed.
 
-## 4.1.0
+## 4.1.0 - 2021-05-09
 
 ### Added
 
@@ -664,7 +664,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - wowinterface.com changed a label from "Classic" to several other things and it broke classic support detection.
         - I don't know how long this has been happening for.
 
-## 4.0.0
+## 4.0.0 - 2021-04-16
 
 ### Added
 
