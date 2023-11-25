@@ -113,6 +113,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 6.1.2 - 2023-05-16
 
+### Fixed
+
 * issue #402, fixed a freezing bug in the search results, introduced in 5.1.0 (2022-03-02).
     - if the 'full' catalogue were selected, searching and selecting a result would freeze the GUI.
         - it may possibly have disabled mouse events as well, depending on your window manager.
@@ -743,8 +745,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - the gui wasn't positioning it's components as well as it could once vertical resolution exceeded 768px
     - thanks to @DarkVirtue for raising the issue
 
-### Removed
-
 ## 3.2.1 - 2021-01-31
 
 ### Fixed
@@ -977,8 +977,6 @@ This has been a large clean up and code analyis/refactor exercise.
 ### Fixed
 
 * fixes an exception that is raised by clicking a link when Java cannot detect your 'desktop' or a means to open URLs
-
-### Removed
 
 ## 0.12.3 - 2020-02-23
 
@@ -1255,8 +1253,6 @@ curseforge if an addon appears in multiple sources.
 * Application wasn't exiting (properly) when run as a jar. It would exit eventually, but not immediately.
 * Paths to cache and configuration directories fixed up during testing so tests run in a more isolated environment
 * Fake HTTP responses added to tests so curseforge.json/catalog.json is not downloaded while testing
-
-### Removed
 
 ## 0.6.0 - 2019-05-08
 
