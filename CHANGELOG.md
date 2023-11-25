@@ -987,6 +987,8 @@ This has been a large clean up and code analyis/refactor exercise.
 
 ## 0.12.2 - 2020-02-08
 
+### Fixed
+
 * release 0.12.1 was badly formed and missing the commit with the actual fix.
 
 ## 0.12.1 - 2020-02-06
