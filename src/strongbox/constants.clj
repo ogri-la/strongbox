@@ -69,7 +69,12 @@
 (def releases
   "https://wowpedia.fandom.com/wiki/Patch"
 
+<<<<<<< HEAD
   {"10.1" "Dragonflight: Embers of Neltharion"
+=======
+  {"10.2" "Dragonflight: Guardians of the Dream"
+   "10.1" "Dragonflight: Embers of Neltharion"
+>>>>>>> master
    "10.0" "Dragonflight"
 
    "9.2" "Shadowlands: Eternity's End"
