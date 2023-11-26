@@ -1,4 +1,4 @@
-(defproject ogri-la/strongbox "7.0.0"
+(defproject ogri-la/strongbox "7.1.0"
   :description "World Of Warcraft Addon Manager"
   :url "https://github.com/ogri-la/strongbox"
   :license {:name "GNU Affero General Public License (AGPL)"
@@ -12,7 +12,7 @@
   :pedantic? false
 
   :dependencies [[org.clojure/clojure "1.10.3"]
-                 [org.clojure/tools.cli "1.0.214"] ;; cli arg parsing
+                 [org.clojure/tools.cli "1.0.219"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.4.4"] ;; reload code
                  [org.clojure/data.json "2.4.0"] ;; json handling
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
@@ -27,21 +27,21 @@
                  [envvar "1.1.2"] ;; environment variable wrangling
                  [tolitius/lasync "0.1.24"] ;; better parallel processing
 
-                 [cljfx "1.7.22" :exclusions [org.openjfx/javafx-web
+                 [cljfx "1.7.23" :exclusions [org.openjfx/javafx-web
                                               org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
-                 [org.openjfx/javafx-base "17.0.2"]
-                 [org.openjfx/javafx-base "17.0.2" :classifier "linux"]
-                 [org.openjfx/javafx-base "17.0.2" :classifier "mac"]
+                 [org.openjfx/javafx-base "19.0.2.1"]
+                 [org.openjfx/javafx-base "19.0.2.1" :classifier "linux"]
+                 [org.openjfx/javafx-base "19.0.2.1" :classifier "mac"]
 
-                 [org.openjfx/javafx-controls "17.0.2"]
-                 [org.openjfx/javafx-controls "17.0.2" :classifier "linux"]
-                 [org.openjfx/javafx-controls "17.0.2" :classifier "mac"]
+                 [org.openjfx/javafx-controls "19.0.2.1"]
+                 [org.openjfx/javafx-controls "19.0.2.1" :classifier "linux"]
+                 [org.openjfx/javafx-controls "19.0.2.1" :classifier "mac"]
 
-                 [org.openjfx/javafx-graphics "17.0.2"]
-                 [org.openjfx/javafx-graphics "17.0.2" :classifier "linux"]
-                 [org.openjfx/javafx-graphics "17.0.2" :classifier "mac"]
+                 [org.openjfx/javafx-graphics "19.0.2.1"]
+                 [org.openjfx/javafx-graphics "19.0.2.1" :classifier "linux"]
+                 [org.openjfx/javafx-graphics "19.0.2.1" :classifier "mac"]
 
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception in LICENCE.txt

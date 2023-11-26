@@ -538,12 +538,26 @@
                 "#search-selected-tag-bar"
                 {:-fx-padding "0 0 10 10"
                  :-fx-spacing "10"
+                 :-fx-alignment "center-left"
                  " > .button" {:-fx-padding "2.5 8"
                                :-fx-background-radius "4"}}
 
                 ".table-view "
                 {".downloads-column" {:-fx-alignment "center-right"}
-                 ".updated-column" {:-fx-alignment "center"}}}
+                 ".updated-column" {:-fx-alignment "center"}}
+
+                "#search-addons-footer "
+                {:-fx-alignment "center-left"
+
+                 ".left-hbox"
+                 {:-fx-alignment "center-left"
+                  :-fx-pref-width 9999.0}
+
+                 ".right-hbox"
+                 {:-fx-min-width "150px"
+                  :-fx-pref-width "200px"
+                  :-fx-alignment "center-right"
+                  :-fx-padding "5 10 5 5"}}}
 
                ;;
                ;; status bar (bottom of app)
@@ -600,6 +614,17 @@
 
                ".table-view#key-vals .val-column.column-header .label"
                {:-fx-alignment "center-left"}
+
+               ".plain-text-area .content "
+               {:-fx-padding ".75em"}
+
+               ".code-text-area "
+               {:-fx-font-family "monospace"
+                :-fx-font-size ".9em"
+                :-fx-text-fill "-fx-text-base-color"
+
+                ".content"
+                {:-fx-padding ".75em"}}
 
                ;;
                ;; addon-detail
@@ -1449,6 +1474,15 @@
      :on-action (fn [_]
                   (cli/set-preference :keep-user-catalogue-updated (not selected?)))}))
 
+(defn menu-item--check-for-update
+  [{:keys [fx/context]}]
+  (let [selected? (fx/sub-val context get-in [:app-state :cfg :preferences :check-for-update])]
+    {:fx/type :check-menu-item
+     :text "Check for updates when app starts"
+     :selected selected?
+     :on-action (fn [_]
+                  (cli/set-preference :check-for-update (not selected?)))}))
+
 (defn-spec build-column-menu ::sp/list-of-maps
   "returns a list of columns that are 'selected' if present in `selected-column-list`."
   [selected-column-list :ui/column-list]
@@ -1507,7 +1541,8 @@
                    (menu-item "E_xit" exit-handler {:key "Ctrl+Q"})]
 
         prefs-menu [{:fx/type menu-item--num-zips-to-keep}
-                    {:fx/type menu-item--keep-user-catalogue-updated}]
+                    {:fx/type menu-item--keep-user-catalogue-updated}
+                    {:fx/type menu-item--check-for-update}]
 
         view-menu (into
                    [(menu-item "Refresh" (async-handler core/hard-refresh) {:key "F5"})
@@ -2006,13 +2041,13 @@
                                      :describe (fn [row]
                                                  {:graphic {:fx/type :h-box
                                                             :children (remove nil? (map tag-button (:tag-list row)))}})}}
-                     {:text "updated" :min-width 90 :pref-width 110 :max-width 120 :resizable false
+                     {:text "updated" :min-width 100 :pref-width 110 :max-width 120
                       :cell-value-factory :updated-date
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [dt]
                                                  {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
 
-                     {:text "downloads" :min-width 120 :pref-width 120 :max-width 120 :resizable false
+                     {:text "downloads" :min-width 90 :pref-width 120 :max-width 120
                       :cell-value-factory :download-count
                       :cell-factory {:fx/cell-type :table-cell
                                      :describe (fn [n]
@@ -2154,12 +2189,47 @@
       {:fx/type :v-box
        :children [row-1 row-2]})))
 
+(defn-spec db-search-sampling? boolean?
+  "returns `true` if a database search should return a random sample.
+  essentially, if nothing has been searched for and no filters have been set, we should take a random
+  sample of the selected catalogue UNLESS something has explicitly flipped the `:sample?` boolean."
+  [search-state map?]
+  (let [filter-by (-> search-state :filter-by)]
+    (and ;;(:sample? search-state) ;; differs to `core/db-search-sampling`. this fn determines if box should be ticked, not *is* the box ticked.
+     (empty? (-> search-state :term (or "") clojure.string/trim))
+     (empty? (:tag filter-by))
+     (not (:user-catalogue filter-by))
+     (not (:source filter-by)))))
+
+(defn search-addons-table-footer-right
+  [{:keys [fx/context]}]
+  (let [search (fx/sub-val context get-in [:app-state, :search])]
+    {:fx/type fx.ext.node/with-tooltip-props
+     :props {:tooltip {:fx/type :tooltip
+                       :text (format "show a single page of %s random addons" (:results-per-page search))
+                       :show-delay 200}}
+     :desc {:fx/type :check-box
+            :text "sample results"
+            :selected (:sample? search)
+            ;; prevent sample toggle if search in a state where sampling not possible
+            :disable (not (db-search-sampling? search))
+            :node-orientation :right-to-left
+            :on-selected-changed (async-handler cli/toggle-search-sampling!)}}))
+
 (defn search-addons-pane
   [_]
   {:fx/type :border-pane
    :id "search-addons"
    :top {:fx/type search-addons-search-field}
-   :center {:fx/type search-addons-table}})
+   :center {:fx/type search-addons-table}
+   :bottom {:fx/type :h-box
+            :id "search-addons-footer"
+            :children [{:fx/type :h-box
+                        :style-class ["left-hbox"]
+                        :children []}
+                       {:fx/type :h-box
+                        :style-class ["right-hbox"]
+                        :children [{:fx/type search-addons-table-footer-right}]}]}})
 
 (defn addon-detail-button-menu
   "a row of buttons attached to available actions for the given addon"
@@ -2204,6 +2274,31 @@
                       {:disabled? (not (addon/deletable? addon))
                        :tooltip "Permanently delete"})]})
 
+(defn addon-as-text-for-installed
+  [addon]
+  (if (empty? addon)
+    ""
+    (format "%s\n\nVersion %s\n\n\"%s\"\n\nInstalled from %s\n\nSupports %s\n\nLast updated %s (%s)"
+            (:label addon)
+            (:version addon)
+            (:description addon)
+            (:source addon)
+            (clojure.string/join ", " (mapv sp/game-track-labels-map (:supported-game-tracks addon)))
+            (-> addon :updated-date utils/format-dt)
+            (-> addon :updated-date utils/datestamp-ymd))))
+
+(defn addon-as-text-for-catalogue
+  [addon]
+  (if (empty? addon)
+    ""
+    (format "%s\n\n\"%s\"\n\nAvailable from %s\n\nSupports %s\n\nLast updated %s (%s)"
+            (:label addon)
+            (:description addon)
+            (:source addon)
+            (clojure.string/join ", " (mapv sp/game-track-labels-map (:game-track-list addon)))
+            (-> addon :updated-date utils/format-dt)
+            (-> addon :updated-date utils/datestamp-ymd))))
+
 (defn addon-detail-key-vals-widget
   "displays a two-column table of `key: val` fields for what we know about an addon."
   [{:keys [addon]}]
@@ -2213,21 +2308,57 @@
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
 
+        transformations {:interface-version str}
+        sanitised (apply (fn [[k vfn]]
+                           (if (k addon) (update sanitised k vfn) addon))
+                         transformations)
+
         row-list (apply utils/csv-map [:key :val] (vec sanitised))
-        row-list (sort-by :key row-list)]
-    {:fx/type :border-pane
-     :top {:fx/type :label
-           :style-class ["section-title"]
-           :text "raw data"}
-     :center {:fx/type :table-view
-              :id "key-vals"
-              :style-class ["table-view"]
-              :placeholder {:fx/type :text
-                            :style-class ["table-placeholder-text"]
-                            :text "(not installed)"}
-              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
-              :columns (mapv make-table-column column-list)
-              :items (or row-list [])}}))
+        row-list (sort-by :key row-list)
+
+        addon-string (if (:version sanitised)
+                       (addon-as-text-for-installed sanitised)
+                       (addon-as-text-for-catalogue sanitised))
+
+        key-vals
+        {:fx/type :tab
+         :text "keyvals"
+         :id "raw-data-keyvals-tab"
+         :closable false
+         :content {:fx/type :table-view
+                   :id "key-vals"
+                   :style-class ["table-view"]
+                   :placeholder {:fx/type :text
+                                 :style-class ["table-placeholder-text"]
+                                 :text "(not installed)"}
+                   :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+                   :columns (mapv make-table-column column-list)
+                   :items (or row-list [])}}
+
+        as-json
+        {:fx/type :tab
+         :text "json"
+         :id "raw-data-json-tab"
+         :closable false
+         :content {:fx/type :text-area
+                   :style-class ["text-area" "code-text-area"]
+                   :editable false
+                   :text (utils/to-json addon)}}
+
+        plain
+        {:fx/type :tab
+         :text "text"
+         :id "raw-data-text-tab"
+         :closable false
+         :content {:fx/type :text-area
+                   :style-class ["text-area" "plain-text-area"]
+                   :editable false
+                   :wrap-text true
+                   :text addon-string}}]
+    {:fx/type :tab-pane
+     :tabs [key-vals
+            as-json
+            plain]}))
 
 (defn addon-detail-group-addons
   "displays a list of other addons that came grouped with this addon"
@@ -2744,11 +2875,12 @@
 
 (defn start
   []
-  (timbre/info "starting gui")
+  (timbre/debug "starting gui")
   (let [;; the gui uses a copy of the application state because the state atom needs to be wrapped
         state-template {:app-state nil,
                         :style (style)}
-        gui-state (atom (fx/create-context state-template)) ;; cache/lru-cache-factory))
+        ;;gui-state (atom (fx/create-context state-template cache/lru-cache-factory))
+        gui-state (atom (fx/create-context state-template))
         update-gui-state (fn [new-state]
                            (let [new-state (update-in new-state [:job-queue] deref)]
                              (swap! gui-state fx/swap-context assoc :app-state new-state)))
@@ -2821,7 +2953,7 @@
 
 (defn stop
   []
-  (timbre/info "stopping gui")
+  (timbre/debug "stopping gui")
   (when-let [unmount-renderer (:disable-gui @core/state)]
     ;; only affects tests running from repl apparently
     (unmount-renderer))

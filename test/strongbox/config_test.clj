@@ -199,12 +199,16 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:debug? true
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
@@ -235,13 +239,17 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:selected-catalogue :full
                                 :debug? true
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
 
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
@@ -272,7 +280,10 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -281,6 +292,7 @@
                                 ;; todo: shouldn't these have `:strict?` in them?
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -310,13 +322,17 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
                                 :selected-catalogue :full
                                 :addon-dir-list [{:addon-dir "/tmp/.strongbox-bar", :game-track :retail}
                                                  {:addon-dir "/tmp/.strongbox-foo", :game-track :classic}]}
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -347,7 +363,10 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -365,7 +384,7 @@
                                                           ;; removed in 5.0.0
                                                           {:name :curseforge :label "Curseforge" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/curseforge-catalogue.json"}
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -397,7 +416,10 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark
@@ -416,7 +438,7 @@
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -448,7 +470,10 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -467,7 +492,7 @@
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -498,7 +523,10 @@
                                                               :combined-version
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -517,7 +545,7 @@
                                                           {:name :wowinterface :label "WoWInterface" :source "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/wowinterface-catalogue.json"}]
 
                                 :preferences {:addon-zips-to-keep 3}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -545,7 +573,10 @@
                                         ;; new in 4.7.0
                                         :ui-selected-columns [:source :name :description :available-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -565,7 +596,7 @@
 
                                 :preferences {:addon-zips-to-keep 3
                                               :ui-selected-columns [:source :name :description :available-version :uber-button]}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -594,7 +625,10 @@
                                         ;; new in 4.7.0
                                         :ui-selected-columns [:source :name :description :available-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -617,7 +651,7 @@
 
                                 :preferences {:addon-zips-to-keep 3
                                               :ui-selected-columns [:source :name :description :available-version :uber-button]}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -648,7 +682,10 @@
                                                               :combined-version ;; new default in 5.0.0
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated false}}
+                                        :keep-user-catalogue-updated false
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -672,7 +709,7 @@
                                               :ui-selected-columns [:source :name :description
                                                                     :installed-version :available-version ;; replaced in 5.0.0
                                                                     :game-version :uber-button]}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -703,7 +740,10 @@
                                                               :combined-version ;; new default in 5.0.0
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated true}}
+                                        :keep-user-catalogue-updated true
+
+                                        ;; new in 7.1.0
+                                        :check-for-update true}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -728,7 +768,7 @@
                                                                     :installed-version :available-version ;; replaced in 5.0.0
                                                                     :game-version :uber-button]
                                               :keep-user-catalogue-updated true}}
-
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 
@@ -759,7 +799,10 @@
                                                               :combined-version ;; new default in 5.0.0
                                                               :game-version :uber-button]
                                         ;; new in 6.2.0
-                                        :keep-user-catalogue-updated true}}
+                                        :keep-user-catalogue-updated true
+
+                                        ;; new in 7.1.0
+                                        :check-for-update false}}
 
                     :cli-opts {}
                     :file-opts {:gui-theme :dark-green
@@ -783,8 +826,11 @@
                                               :ui-selected-columns [:source :name :description
                                                                     :installed-version :available-version ;; replaced in 5.0.0
                                                                     :game-version :uber-button]
-                                              :keep-user-catalogue-updated true}}
+                                              :keep-user-catalogue-updated true
 
+                                              ;; new in 7.1.0
+                                              :check-for-update false}}
+                    :env {:no-color false}
                     :etag-db {}}]
       (is (= expected (config/load-settings cli-opts cfg-file etag-db-file))))))
 

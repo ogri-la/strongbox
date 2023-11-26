@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.1.0 - 2023-11-26
+
+### Added
+
+* added checkbox to bottom of search tab that will toggle search results sampling when search results are unfiltered.
+    - this lets you browse a catalogue page by page.
+* added patch tooltips for Dragonflight 10.1 and 10.2
+* added support for the `NO_COLOR` environment variable.
+    - it turns off coloured output in the console if that is where you launched strongbox from.
+* added new command line action `print-config` that prints the final config and exits.
+    - usage: `./strongbox --action print-config`
+* added new information captured from the environment when using `--debug` or `--action print-config`.
+    - `state.paths.config-dir`, path to where Strongbox is storing the application *config*.
+    - `state.paths.data-dir`, path to where Strongbox is storing the application *data*.
+    - `flatpak-id`, looks like `la.ogri.strongbox` when running within a Flatpak.
+* added plain-text and JSON views of the raw addon data to the 'raw data' widget on the addon detail tab.
+    - it's pretty basic but JavaFX really resists being able to select text within it's widgets.
+* added new preference 'check for update' that toggles checking for an update to Strongbox on startup (default is `true`).
+* added new command line flag `--update-check` and it's complement `--no-update-check` that toggles update checks.
+* added Flatpak distribution hosted by Flathub
+    - see: https://flathub.org/en-GB/apps/la.ogri.strongbox
+
+### Changed
+
+* bumped JavaFX dependencies from 17.x to 19.x.
+* removed the fixed widths on the 'updated' and 'downloads' columns in the search pane.
+    - attempting to control column widths in a JavaFX table is futile.
+* some `info` level logging has been dropped to `debug` to reduce console noise.
+
+### Fixed
+
+* tag buttons in search pane are now centred vertically.
+* selecting hosts in search pane no longer samples results.
+* 'interface version' was being treated as an integer and being localised in the raw data widget.
+
 ## 7.0.0 - 2023-06-11
 
 ### Added
@@ -77,6 +112,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - removed from lists of available addon hosts to switch an addon between.
 
 ## 6.1.2 - 2023-05-16
+
+### Fixed
 
 * issue #402, fixed a freezing bug in the search results, introduced in 5.1.0 (2022-03-02).
     - if the 'full' catalogue were selected, searching and selecting a result would freeze the GUI.
@@ -296,7 +333,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * replaced 'View -> Columns -> Reset to defaults' with the 'default' column preset.
-* github catalogue tweaks to support latest version of https://github.com/layday/github-wow-addon-catalogue
+* github catalogue tweaks to support latest version of layday's `github-wow-addon-catalogue`.
+    - see: https://github.com/layday/github-wow-addon-catalogue
 * column preferences in the config file are now upgraded to the new default column set.
     - any customised column preferences are preserved.
 * minor, errors/warning/info messages that appeared across multiple messages are now just one message.
@@ -489,7 +527,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - an addon doesn't get updates any more but still works and is eventually removed from the 'short' catalogue.
         - you decide to go curseforge-only and have that one addon from wowinterface you can't live without (or vice-versa)
 
-## 4.4.1
+## 4.4.1 - 2021-08-19
 
 ### Changed
 
@@ -501,7 +539,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * fixed bug preventing installation of addons from the search pane.
 * sorting by 'downloads' in search now works as expected.
 
-## 4.4.0
+## 4.4.0 - 2021-08-17
 
 ### Added
 
@@ -526,7 +564,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * row background colour for 'unsteady' addons (updating/downloading/being modified) has been removed.
     - it's too frenetic when multiple addons are doing things in parallel.
 
-## 4.3.0
+## 4.3.0 - 2021-07-01
 
 ### Added
 
@@ -554,7 +592,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * search results are now updated when the catalogue is switched and the search term, if any, is re-searched for.
 * Curseforge API has capped the number of results per-request to a max of 50
 
-## 4.2.0
+## 4.2.0 - 2021-06-02
 
 ### Added
 
@@ -602,7 +640,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - this was added to differentiate two releases using the same name and version but different game tracks.
     - strongbox will mark affected addons as being updateable because the versions no longer match. The same version will be re-installed.
 
-## 4.1.0
+## 4.1.0 - 2021-05-09
 
 ### Added
 
@@ -629,7 +667,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - wowinterface.com changed a label from "Classic" to several other things and it broke classic support detection.
         - I don't know how long this has been happening for.
 
-## 4.0.0
+## 4.0.0 - 2021-04-16
 
 ### Added
 
@@ -707,8 +745,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * issue #229, "Limited pane size when vertically resizing window"
     - the gui wasn't positioning it's components as well as it could once vertical resolution exceeded 768px
     - thanks to @DarkVirtue for raising the issue
-
-### Removed
 
 ## 3.2.1 - 2021-01-31
 
@@ -854,14 +890,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* another type of code linting, provided by [Joker](https://joker-lang.org/)
+* another type of code linting, provided by Joker.
+    - see: https://joker-lang.org/
 * a `--debug` flag that will run strongbox with lots of output and write a log file.
     - the name of the log file is shown after the application has exited
 * ticket templates with instructions on using the new `--debug` flag
 
 ### Changed
 
-* 'wowman' was renamed 'strongbox' in [the list](https://ogri-la.github.io/wow-addon-managers/)
+* 'wowman' was renamed 'strongbox' in The List
+    - see: https://ogri-la.github.io/wow-addon-managers/
 * split 'tukui' into 'tukui' and 'tukui-classic' in the 'source' column
     - this should make it clearer which game track a tukui addon can be installed to
 * the number of addons displayed in the search results is now tuned according to number of addons in catalogue
@@ -943,8 +981,6 @@ This has been a large clean up and code analyis/refactor exercise.
 
 * fixes an exception that is raised by clicking a link when Java cannot detect your 'desktop' or a means to open URLs
 
-### Removed
-
 ## 0.12.3 - 2020-02-23
 
 ### Fixed
@@ -953,6 +989,8 @@ This has been a large clean up and code analyis/refactor exercise.
     - thanks to https://github.com/rainecheck for reporting this bug
 
 ## 0.12.2 - 2020-02-08
+
+### Fixed
 
 * release 0.12.1 was badly formed and missing the commit with the actual fix.
 
@@ -1221,13 +1259,13 @@ curseforge if an addon appears in multiple sources.
 * Paths to cache and configuration directories fixed up during testing so tests run in a more isolated environment
 * Fake HTTP responses added to tests so curseforge.json/catalog.json is not downloaded while testing
 
-### Removed
-
 ## 0.6.0 - 2019-05-08
 
 ### Added
 
-* Arch Linux [PKGBUILD](https://github.com/ogri-la/wowman-pkgbuild) ([AUR](https://aur.archlinux.org/packages/wowman/))
+* Arch Linux PKGBUILD (AUR)
+    - see: https://github.com/ogri-la/wowman-pkgbuild
+    - see: https://aur.archlinux.org/packages/wowman/
 * total number of downloads is now captured in the catalog and is available in the gui; visible in the search tab
 * a 'spec' section to the catalog with a 'version' of '1'. I expect it to change soon and want to support older versions
 * more aliases for the top 50 most installed addons. This will help with automatic matching and re-installion of addons

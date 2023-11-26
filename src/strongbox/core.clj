@@ -89,7 +89,8 @@
    :page 0
    :results []
    :selected-result-list []
-   :results-per-page 60})
+   :results-per-page 60
+   :sample? true})
 
 (def -state-template
   {:cleanup []
@@ -404,6 +405,9 @@
    ;; layer in any runtime config
    (when-let [user-level (some-> @state-atm :cli-opts :verbosity)]
      (timbre/merge-config! {:min-level user-level}))
+   (when (some-> @state-atm :env :no-color)
+     (timbre/merge-config! {:output-opts {:stacktrace-fonts {}} ;; disable colours in stacktraces
+                            :appenders {:println {:fn (logging/anon-println-appender {:colour-log-map {}})}}})) ;; disable coloured log lines
 
    ;; add a file appender if the user has set level `:debug`
    (-debug-logging state-atm)
@@ -446,7 +450,7 @@
     (swap! state merge final-config)
     (reset-logging!)
     ;; erm, this is something I use while developing: (restart {:spec? false})
-    ;; spec checking slows everything down so turning it off gives me a feel of actual performance.
+    ;; spec checking slows everything down so turning it off gives me a feel for actual performance.
     (when (contains? cli-opts :spec?)
       (utils/instrument (:spec? cli-opts))))
   nil)
@@ -862,16 +866,30 @@
   (let [xf (filter #(= name (:name %)))]
     (into [] xf db)))
 
+(defn-spec db-search-sampling? boolean?
+  "returns `true` if a database search should return a random sample of results.
+  essentially, if nothing has been searched for and no filters have been set, we should take a random
+  sample of the selected catalogue UNLESS something has explicitly flipped the `:sample?` boolean."
+  [search-state map?]
+  (let [filter-by (-> search-state :filter-by)]
+    (and (:sample? search-state) ;; true by default, set to false to short circuit this logic.
+         (empty? (-> search-state :term (or "") clojure.string/trim))
+         (empty? (:tag filter-by))
+         (not (:user-catalogue filter-by))
+         (not (:source filter-by)))))
+
 (defn db-search
   "returns a lazily fetched and paginated list of addon summaries.
-  results are constructed using a `seque` that (somehow) bypasses chunking behaviour so our
-  search never takes more than `cap` results.
-  matches on `uin` are case insensitive. if no user input, returns a list of randomly ordered results.
+  results are constructed using a `seque` that (somehow) bypasses chunking behaviour so 
+  searching never takes more than `cap` results.
+  matches on `uin` are case insensitive.
+  if no user input, returns a list of randomly ordered ('sampled') results.
   `filter-by` filters are applied before searching for `uin`."
   ([search-term cap filter-by]
-   (db-search (get-state :db) (utils/nilable search-term) cap filter-by (get-state :user-catalogue-idx)))
+   (let [{:keys [db user-catalogue-idx search]} (get-state)]
+     (db-search db (utils/nilable search-term) cap filter-by user-catalogue-idx (db-search-sampling? search))))
 
-  ([db uin cap filter-by user-catalogue-idx]
+  ([db uin cap filter-by user-catalogue-idx random-sample?]
    (let [constantly-true (constantly true)
 
          user-catalogue-filter (if (:user-catalogue filter-by)
@@ -902,11 +920,7 @@
          db (->> db
                  (filter user-catalogue-filter)
                  (filter host-filter)
-                 (filter tag-filter))
-
-         random-sample? (and (nil? uin)
-                             (empty? selected-tag-set)
-                             (not (:user-catalogue filter-by)))]
+                 (filter tag-filter))]
 
      ;; no/empty input, do a random sample
      (if random-sample?
@@ -1413,16 +1427,18 @@
 (defn-spec latest-strongbox-release! ::sp/latest-strongbox-release
   "downloads and sets the most recently released version of strongbox on github, returning the found version or `:failed` on error."
   []
-  (let [lsr (get-state :latest-strongbox-release)]
-    (case lsr
-      ;; we haven't looked yet, so look.
-      nil (let [lsr (-download-strongbox-release)]
-            (swap! state assoc :latest-strongbox-release lsr)
-            lsr)
-      ;; we've already looked and failed, don't try again this session.
-      :failed nil
-      ;; we've already looked, return what we found
-      lsr)))
+  (let [lsr (get-state :latest-strongbox-release)
+        check-for-update? (get-state :cfg :preferences :check-for-update)]
+    (when check-for-update?
+      (case lsr
+        ;; we haven't looked yet, so look.
+        nil (let [lsr (-download-strongbox-release)]
+              (swap! state assoc :latest-strongbox-release lsr)
+              lsr)
+        ;; we've already looked and failed, don't try again this session.
+        :failed nil
+        ;; we've already looked, return what we found
+        lsr))))
 
 ;; stats
 
@@ -1766,7 +1782,13 @@
   "writes selected system properties to the log.
   mostly concerned with OS, Java and JavaFX versions."
   []
-  (let [useful-props
+  (let [state-map (if (some? @state) @state {})
+
+        useful-state
+        [[:state :paths :config-dir]
+         [:state :paths :data-dir]]
+
+        useful-props
         ["javafx.version" ;; "15.0.1"
          "javafx.runtime.version" ;; "15.0.1+1"
          ]
@@ -1784,11 +1806,21 @@
          :java-awt-graphicsenv ;; "sun.awt.X11GraphicsEnvironment"
          :gtk-modules ;; "canberra-gtk-module"
          :xdg-session-desktop ;; "notion"
+         :flatpak-id ;; "la.ogri.strongbox" when running within a flatpak
          ]
 
         adhoc-vars {:strongbox-version (strongbox-version)}
-        vars (merge adhoc-vars (System/getProperties) @envvar.core/env)]
-    (run! #(info (format "%s=%s" (name %) (get vars %))) (into useful-envvars useful-props))))
+        available-vars (merge adhoc-vars (System/getProperties) @envvar.core/env {:state state-map})
+        nm (partial utils/nav-map available-vars)
+        key-list (-> []
+                     (into useful-state)
+                     (into useful-props)
+                     (into useful-envvars))]
+    (doseq [key key-list]
+      (if (sequential? key)
+        (let [val (nm key)]
+          (info (format "%s=%s" (->> key (map name) (clojure.string/join ".")) val)))
+        (info (format "%s=%s" (name key) (get available-vars key)))))))
 
 ;;
 
@@ -1800,7 +1832,7 @@
   [& [cli-opts]]
   (-start)
   (reset-logging!)
-  (info "starting app")
+  (debug "starting app")
   (set-paths!)
   (detect-repl!)
   (init-dirs)
@@ -1812,7 +1844,7 @@
 
 (defn stop
   [state]
-  (info "stopping app")
+  (debug "stopping app")
   ;; traverse cleanup list and call them
   (doseq [f (:cleanup @state)]
     (debug "calling" f)

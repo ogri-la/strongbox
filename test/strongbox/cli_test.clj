@@ -95,39 +95,30 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}}
           expected-num-addons 4
-          page-1 0]
+          page-1 first]
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           ;; any catalogue with less than 60 (a magic number) items has >100% probability of being included.
           (cli/search nil)
           (Thread/sleep 10)
           ;; sanity check, we have all four addons
-          (is (= expected-num-addons (count (core/get-state :search :results page-1))))
+          (is (= expected-num-addons (-> (core/get-state) :search :results page-1 count)))
 
           ;; limit results to just wowinterface
           (cli/search-add-filter :source ["wowinterface"])
           (Thread/sleep 10)
-          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
-                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
-                                    :source))) ;; we have one addon from each of the hosts
+          (is (= "wowinterface" (-> (core/get-state) :search :results page-1 first :source)))
 
           ;; limit results to just github
           (cli/search-add-filter :source ["github"])
           (Thread/sleep 10)
-          (is (= "github" (-> (core/get-state :search :results page-1)
-                              first
-                              :source)))
+          (is (= "github" (-> (core/get-state) :search :results page-1 first :source)))
 
           ;; limit results to just wowinterface+github, results are OR'd, order from catalogue is preserved (wowi, curse, tukui, github)
           (cli/search-add-filter :source ["github" "wowinterface"])
           (Thread/sleep 10)
-          (is (= "wowinterface" (-> (core/get-state :search :results page-1)
-                                    first ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
-                                    :source))) ;; we have one addon from each of the hosts
-          (is (= "github" (-> (core/get-state :search :results page-1)
-                              second ;; `get-in` doesn't realize lazy sequences so we'll get nils if we try accessing this with `0`
-                              :source))) ;; we have one addon from each of the hosts
-          )))))
+          (is (= "wowinterface" (-> (core/get-state) :search :results page-1 first :source)))
+          (is (= "github" (-> (core/get-state) :search :results page-1 second :source))))))))
 
 (deftest search-db--filter-by--tag
   (testing "a populated database can be filtered by tag from the CLI"
@@ -236,6 +227,45 @@
           (is (= expected-page-1 (cli/search-results)))
 
           (is (not (cli/search-has-prev?))))))))
+
+(deftest search-db--sampled-results
+  (testing "search results are sampled by default and sampling can be disabled"
+    (let [catalogue (slurp (fixture-path "catalogue--v2.json"))
+          fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                       {:get (fn [req] {:status 200 :body catalogue})}}
+          cap 2
+          page-1 first
+          page-2 second]
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          ;; sampling by default
+          (is (core/db-search-sampling? (core/get-state :search)))
+
+          ;; we have four items in catalogue so each item has a 15% chance (* 0.25 0.6) of being included.
+          ;; we then take one fewer than the per-page `cap` so the pagination buttons stay disabled.
+          ;; if we set 3 results per page cap we'll always get one page of results with the first two sampled addons back.
+          (swap! core/state assoc-in [:search :results-per-page] (inc cap))
+          (cli/bump-search)
+          (Thread/sleep 50)
+
+          ;; one page, two results
+          (is (-> (core/get-state) :search :results count (= 1)))
+          (is (-> (core/get-state) :search :results page-1 count (= 2)))
+
+          ;; disable sampling
+          (cli/toggle-search-sampling!)
+          (Thread/sleep 50)
+          (is (not (core/db-search-sampling? (core/get-state :search))))
+
+          ;; and disable the random result pagination navigation button hack
+          (swap! core/state assoc-in [:search :results-per-page] cap)
+          (cli/bump-search)
+          (Thread/sleep 50)
+
+          ;; two pages, each with two results
+          (is (-> (core/get-state) :search :results count (= 2)))
+          (is (-> (core/get-state) :search :results page-1 count (= 2)))
+          (is (-> (core/get-state) :search :results page-2 count (= 2))))))))
 
 (deftest pin-addon
   (testing "an addon can be installed, selected and pinned to it's current installed version"
