@@ -333,7 +333,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * replaced 'View -> Columns -> Reset to defaults' with the 'default' column preset.
-* github catalogue tweaks to support latest version of https://github.com/layday/github-wow-addon-catalogue
+* github catalogue tweaks to support latest version of layday's `github-wow-addon-catalogue`.
+    - see: https://github.com/layday/github-wow-addon-catalogue
 * column preferences in the config file are now upgraded to the new default column set.
     - any customised column preferences are preserved.
 * minor, errors/warning/info messages that appeared across multiple messages are now just one message.
@@ -889,14 +890,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* another type of code linting, provided by [Joker](https://joker-lang.org/)
+* another type of code linting, provided by Joker.
+    - see: https://joker-lang.org/
 * a `--debug` flag that will run strongbox with lots of output and write a log file.
     - the name of the log file is shown after the application has exited
 * ticket templates with instructions on using the new `--debug` flag
 
 ### Changed
 
-* 'wowman' was renamed 'strongbox' in [the list](https://ogri-la.github.io/wow-addon-managers/)
+* 'wowman' was renamed 'strongbox' in The List
+    - see: https://ogri-la.github.io/wow-addon-managers/
 * split 'tukui' into 'tukui' and 'tukui-classic' in the 'source' column
     - this should make it clearer which game track a tukui addon can be installed to
 * the number of addons displayed in the search results is now tuned according to number of addons in catalogue
