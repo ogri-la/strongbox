@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * added checkbox to bottom of search tab that will toggle search results sampling when search results are unfiltered.
     - this lets you browse a catalogue page by page.
-* added patch tooltip for Dragonflight 10.1 "Embers of Neltharion"
+* added patch tooltips for Dragonflight 10.1 and 10.2
 * added support for the `NO_COLOR` environment variable.
     - it turns off coloured output in the console if that is where you launched strongbox from.
 * added new command line action `print-config` that prints the final config and exits.
@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - it's pretty basic but JavaFX really resists being able to select text within it's widgets.
 * added new preference 'check for update' that toggles checking for an update to Strongbox on startup (default is `true`).
 * added new command line flag `--update-check` and it's complement `--no-update-check` that toggles update checks.
+* added Flatpak distribution hosted by Flathub
+    - see: https://flathub.org/en-GB/apps/la.ogri.strongbox
 
 ### Changed
 
@@ -36,8 +38,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * tag buttons in search pane are now centred vertically.
 * selecting hosts in search pane no longer samples results.
 * 'interface version' was being treated as an integer and being localised in the raw data widget.
-
-### Removed
 
 ## 7.0.0 - 2023-06-11
 
