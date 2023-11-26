@@ -1263,7 +1263,9 @@ curseforge if an addon appears in multiple sources.
 
 ### Added
 
-* Arch Linux [PKGBUILD](https://github.com/ogri-la/wowman-pkgbuild) ([AUR](https://aur.archlinux.org/packages/wowman/))
+* Arch Linux PKGBUILD (AUR)
+    - see: https://github.com/ogri-la/wowman-pkgbuild
+    - see: https://aur.archlinux.org/packages/wowman/
 * total number of downloads is now captured in the catalog and is available in the gui; visible in the search tab
 * a 'spec' section to the catalog with a 'version' of '1'. I expect it to change soon and want to support older versions
 * more aliases for the top 50 most installed addons. This will help with automatic matching and re-installion of addons
