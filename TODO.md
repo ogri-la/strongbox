@@ -6,49 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* search, possible bug, thought I fixed it so catalogues are navigable now?
-    - selecting by host still gives me samples
-    - done
-
-* search, add ability to browse catalogue page by page
-    - returned to bucket 2022-03-02
-    - the 'search' tab kinda sorta is this ... perhaps a preference to disable sampling?
-    - done
-
-* search, vertically centre tag buttons. 
-    - they're currently top-aligned
-    - done
-
-* cljfx, javafx
-    - bump deps
-
-* support NO_COLOR envvar, http://no-color.org
-    - done
-
-* rawdata, interface-version is being localised
-    - done
-
-* gui, better copying from the interface, especially the log box
-    - too much faff and bs for selectable text/labels, wontdo.
-    - added selectable plain text and json boxes to the raw text widgets
-    - done
-
-* add a disable update check cli arg
-    - flatpaks will check for updates in a different way
-    - done
-
-* github-addons.md, update or get rid of
-    - got rid of it
-    - done
-
-* release.md, move to strongbox-release-script
-    - done
-
-* gui, raw data, add textual versions of this data as well
-    - pretty printing in a gui is one thing, but useless if it can't be copied
-    - have a text field with plain text and yaml or json formatted addon data could be useful as well
-    - done
-
 ## todo
 
 ## todo bucket (no particular order)
