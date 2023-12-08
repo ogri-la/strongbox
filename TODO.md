@@ -8,7 +8,16 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* cataclysm classic support
+
+* *.sh, consolidate these root-level bash scripts into a manage.sh 
+
+* move Dockerfile* files into a CircleCI folder
+
+
 ## todo bucket (no particular order)
+
+* nfo, replace the URL as the group-id with something random
 
 * github, catalogue, no download counts.
 
@@ -36,10 +45,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * catalogue/search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
     - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
         - which it isn't, but that's not the point.
-
-* *.sh, consolidate these root-level bash scripts into a manage.sh 
-
-* move Dockerfile* files into a CircleCI folder
 
 * metrics, add a 'catalogue is N days old'
     - add an 'oldest' addon (days since created date)?
@@ -70,6 +75,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - make it a simple preference
 
 * gui, 'set-icon' is taking a long time to do it's thing.
+
 
 * manually select the primary addon in a group of addons to prevent synthetic titles
 
@@ -196,7 +202,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * preference for 'fat rows'
     - increase the padding for each row a bit
 
-* nfo, replace the URL as the group-id with something random
 
 * "developer warnings"
     - a preference that bumps certain debug messages to warnings and errors for developers
