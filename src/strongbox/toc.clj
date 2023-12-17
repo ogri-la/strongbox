@@ -121,9 +121,9 @@
          ;;               {:source "curseforge"
          ;;                :source-id x-curse-id})
 
-         tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
-                        {:source "tukui"
-                         :source-id x-tukui-id})
+         ;;tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
+         ;;               {:source "tukui"
+         ;;                :source-id x-tukui-id})
 
          github-source (when-let [x-github (-> keyvals :x-github)]
                          {:source "github"
