@@ -129,9 +129,14 @@
                          {:source "github"
                           :source-id (utils/github-url-to-source-id x-github)})
 
-         source-map-list (when-let [items (->> [wowi-source github-source
-                                                ;;tukui-source
-                                                ;;curse-source
+         github-website-source (when-let [x-website (-> keyvals :x-website)]
+                                 (when (and (not github-source)
+                                            (.startsWith x-website "https://github.com"))
+                                   {:source "github"
+                                    :source-id (utils/github-url-to-source-id x-website)}))
+
+         source-map-list (when-let [items (->> [wowi-source github-source github-website-source
+                                                ;;curse-source tukui-source 
                                                 ]
                                                utils/items
                                                utils/nilable)]
@@ -178,10 +183,10 @@
                  (assoc addon :dirsize dirsize)
                  addon)
 
-         ;; prefers tukui over wowi, wowi over github. I'd like to prefer github over wowi, but github
-         ;; requires API calls to interact with and these are limited unless authenticated.
+         ;; prefers wowi over github and github over github-via-website.
+         ;; I'd like to prefer github over wowi, but github requires API calls to interact with and these are limited unless authenticated.
          addon (merge addon
-                      github-source wowi-source
+                      github-website-source github-source wowi-source
                       ;; curse-source tukui-source
                       ignore-flag source-map-list)]
 
