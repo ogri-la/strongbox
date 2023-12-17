@@ -129,7 +129,8 @@
                          {:source "github"
                           :source-id (utils/github-url-to-source-id x-github)})
 
-         source-map-list (when-let [items (->> [wowi-source tukui-source github-source
+         source-map-list (when-let [items (->> [wowi-source github-source
+                                                ;;tukui-source
                                                 ;;curse-source
                                                 ]
                                                utils/items
@@ -180,7 +181,8 @@
          ;; prefers tukui over wowi, wowi over github. I'd like to prefer github over wowi, but github
          ;; requires API calls to interact with and these are limited unless authenticated.
          addon (merge addon
-                      github-source wowi-source tukui-source
+                      github-source wowi-source
+                      ;; curse-source tukui-source
                       ignore-flag source-map-list)]
 
      (if-not (s/valid? :addon/toc addon)
