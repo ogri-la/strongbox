@@ -160,25 +160,26 @@ SomeAddon.lua")
                  ;;[{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname"}] ;; bad case, non-numeric curse ID
 
                  ;; tukui
-                 [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname"
-                                              :source "tukui" :source-id 123
-                                              :source-map-list [{:source "tukui" :source-id 123}]}]
-                 [{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname"
-                                             :source "tukui" :source-id -1
-                                             :source-map-list [{:source "tukui" :source-id -1}]}]
-                 [{:x-tukui-projectid 123} {:label "dirname *" :name "dirname"
-                                            :source "tukui" :source-id 123
-                                            :source-map-list [{:source "tukui" :source-id 123}]}]
-                 [{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname"}] ;; bad case
+                 ;;[{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname"
+                 ;;                             :source "tukui" :source-id 123
+                 ;;                             :source-map-list [{:source "tukui" :source-id 123}]}]
+                 ;;[{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname"
+                 ;;                            :source "tukui" :source-id -1
+                 ;;                            :source-map-list [{:source "tukui" :source-id -1}]}]
+                 ;;[{:x-tukui-projectid 123} {:label "dirname *" :name "dirname"
+                 ;;                           :source "tukui" :source-id 123
+                 ;;                           :source-map-list [{:source "tukui" :source-id 123}]}]
+                 ;;[{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname"}] ;; bad case
 
                  ;; mixed
                  [{:x-wowi-id "123"
                    :x-tukui-projectid "123"
                    :x-curse-project-id "123"} {:label "dirname *" :name "dirname"
-                                               :source "tukui" :source-id 123 ;; todo: this precedence is interesting ...
+                                               :source "wowinterface" :source-id 123 ;; todo: this precedence is interesting ...
                                                :source-map-list [{:source "wowinterface" :source-id 123}
                                                                  ;;{:source "curseforge" :source-id 123}
-                                                                 {:source "tukui" :source-id 123}]}]]]
+                                                                 ;;{:source "tukui" :source-id 123}
+                                                                 ]}]]]
 
       (fs/mkdir addon-dir)
       (doseq [[given expected] cases
