@@ -7,14 +7,16 @@ see CHANGELOG.md for a more formal list of changes by release
 ## done
 
 * move Dockerfile* files into a CircleCI folder
-
-## todo
-
-* *.sh, consolidate these root-level bash scripts into a manage.sh 
+    - done
 
 * toc, what is the usage of 'x-github'. we're expecting a url but a foo/bar seems fine as well
     - check the github catalogue
     - I'm seeing more usage of 'x-website' 
+    - done
+
+## todo
+
+* *.sh, consolidate these root-level bash scripts into a manage.sh 
 
 ## todo bucket (no particular order)
 

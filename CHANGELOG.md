@@ -8,9 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* `x-website` Github URLs in `.toc` files are now treated as a Github source that an addon can be switched to.
+    - when both `x-github` and Github `x-website` sources exist, `x-github` takes priority.
+
 ### Changed
 
 ### Fixed
+
+* fixed bug preventing classic Wrath `.toc` from being detected and loaded.
+* fixed bug in catalogue location spec where a value that should have been validating as a URL was not.
+* removed `x-tukui-id` source detection in `.toc` files. Tukui no longer hosts addons so these can't be used.
+    - overlooked, should have been part of 7.0.0 major version.
 
 ### Removed
 

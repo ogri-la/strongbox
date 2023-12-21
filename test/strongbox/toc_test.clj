@@ -246,6 +246,7 @@ SomeAddon.lua")
                   [:retail "EveryAddon-Mainline.toc"]
                   [:classic-tbc "EveryAddon-TBC.toc"]
                   [:classic "EveryAddon-Vanilla.toc"]
+                  [:classic-wotlk "EveryAddon-Wrath.toc"]
                   [nil "EveryAddon.toc"]]
         fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc.zip")
         addon-dir (join (helper/install-dir) "EveryAddon")]
