@@ -2915,7 +2915,7 @@
         _ (swap! core/state assoc :disable-gui (fn []
                                                  (fx/unmount-renderer gui-state renderer)
                                                  ;; the slightest of delays allows any final rendering to happen before the exit-handler is called.
-                                                 ;; only affects testing from the repl apparently and not `./run-tests.sh`
+                                                 ;; only affects testing from the repl apparently and not `./manage.sh test`
                                                  (Thread/sleep 25)))
 
         ;; on first load, because the catalogue hasn't been loaded
