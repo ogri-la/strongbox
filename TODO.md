@@ -6,19 +6,19 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* move Dockerfile* files into a CircleCI folder
+
 ## todo
 
-* cataclysm classic support
-
 * *.sh, consolidate these root-level bash scripts into a manage.sh 
-
-* move Dockerfile* files into a CircleCI folder
 
 * toc, what is the usage of 'x-github'. we're expecting a url but a foo/bar seems fine as well
     - check the github catalogue
     - I'm seeing more usage of 'x-website' 
 
 ## todo bucket (no particular order)
+
+* cataclysm classic support
 
 * nfo, replace the URL as the group-id with something random
 
