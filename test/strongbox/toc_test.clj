@@ -150,6 +150,22 @@ SomeAddon.lua")
                                     :source-map-list [{:source "wowinterface" :source-id 123}]}]
                  [{:x-wowi-id "abc"} {:label "dirname *" :name "dirname"}] ;; bad case, non-numeric wowi ID
 
+                 ;; github
+                 [{:x-github "https://github.com/foo/bar"} {:label "dirname *" :name "dirname"
+                                                            :source "github" :source-id "foo/bar"
+                                                            :source-map-list [{:source "github" :source-id "foo/bar"}]}]
+
+                 ;; github via x-website
+                 [{:x-website "https://github.com/SFX-WoW/Masque"} {:label "dirname *" :name "dirname"
+                                                                    :source "github" :source-id "SFX-WoW/Masque"
+                                                                    :source-map-list [{:source "github" :source-id "SFX-WoW/Masque"}]}]
+
+                 ;; github vs github via x-website. when both are present, github is preferred.
+                 [{:x-website "https://github.com/SFX-WoW/Masque"
+                   :x-github "https://github.com/foo/bar"} {:label "dirname *" :name "dirname"
+                                                            :source "github" :source-id "foo/bar"
+                                                            :source-map-list [{:source "github" :source-id "foo/bar"}]}]
+
                  ;; curse
                  ;;[{:x-curse-project-id "123"} {:label "dirname *" :name "dirname"
                  ;;                              :source "curseforge" :source-id 123
@@ -160,25 +176,32 @@ SomeAddon.lua")
                  ;;[{:x-curse-project-id "abc"} {:label "dirname *" :name "dirname"}] ;; bad case, non-numeric curse ID
 
                  ;; tukui
-                 [{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname"
-                                              :source "tukui" :source-id 123
-                                              :source-map-list [{:source "tukui" :source-id 123}]}]
-                 [{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname"
-                                             :source "tukui" :source-id -1
-                                             :source-map-list [{:source "tukui" :source-id -1}]}]
-                 [{:x-tukui-projectid 123} {:label "dirname *" :name "dirname"
-                                            :source "tukui" :source-id 123
-                                            :source-map-list [{:source "tukui" :source-id 123}]}]
-                 [{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname"}] ;; bad case
+                 ;;[{:x-tukui-projectid "123"} {:label "dirname *" :name "dirname"
+                 ;;                             :source "tukui" :source-id 123
+                 ;;                             :source-map-list [{:source "tukui" :source-id 123}]}]
+                 ;;[{:x-tukui-projectid "-1"} {:label "dirname *" :name "dirname"
+                 ;;                            :source "tukui" :source-id -1
+                 ;;                            :source-map-list [{:source "tukui" :source-id -1}]}]
+                 ;;[{:x-tukui-projectid 123} {:label "dirname *" :name "dirname"
+                 ;;                           :source "tukui" :source-id 123
+                 ;;                           :source-map-list [{:source "tukui" :source-id 123}]}]
+                 ;;[{:x-tukui-projectid "abc"} {:label "dirname *" :name "dirname"}] ;; bad case
 
                  ;; mixed
                  [{:x-wowi-id "123"
                    :x-tukui-projectid "123"
-                   :x-curse-project-id "123"} {:label "dirname *" :name "dirname"
-                                               :source "tukui" :source-id 123 ;; todo: this precedence is interesting ...
-                                               :source-map-list [{:source "wowinterface" :source-id 123}
-                                                                 ;;{:source "curseforge" :source-id 123}
-                                                                 {:source "tukui" :source-id 123}]}]]]
+                   :x-curse-project-id "123"
+                   :x-github "https://github.com/foo/bar"
+                   :x-website "https://github.com/bar/foo"}
+
+                  {:label "dirname *" :name "dirname"
+                   :source "wowinterface" :source-id 123 ;; todo: this precedence is interesting ...
+                   :source-map-list [{:source "wowinterface" :source-id 123}
+                                     {:source "github" :source-id "foo/bar"}
+
+                                     ;;{:source "curseforge" :source-id 123}
+                                     ;;{:source "tukui" :source-id 123}
+                                     ]}]]]
 
       (fs/mkdir addon-dir)
       (doseq [[given expected] cases
@@ -223,6 +246,7 @@ SomeAddon.lua")
                   [:retail "EveryAddon-Mainline.toc"]
                   [:classic-tbc "EveryAddon-TBC.toc"]
                   [:classic "EveryAddon-Vanilla.toc"]
+                  [:classic-wotlk "EveryAddon-Wrath.toc"]
                   [nil "EveryAddon.toc"]]
         fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc.zip")
         addon-dir (join (helper/install-dir) "EveryAddon")]

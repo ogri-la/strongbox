@@ -210,7 +210,8 @@
        group-addons))
 
 (defn-spec load-installed-addon (s/or :ok-toc :addon/toc, :ok-nfo :addon/nfo, :error nil?)
-  "reads and merges the toc data and the nfo data from a specific `addon-dir` and all those in it's group, groups them up (again) and returns the grouped mooshed data.
+  "reads and merges the toc data and the nfo data for a specific addon at `addon-dir` (bad name) and all those in it's group,
+  groups them up (again) and returns the grouped mooshed data.
   this was introduced much later than `load-all-installed-addons` as parallel installation and loading of addons was introduced."
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (logging/with-addon {:dirname (-> addon-dir fs/base-name str)}
