@@ -44,4 +44,4 @@ jobs:
           key: v1-dependencies-{{ checksum "project.clj" }}
 
       # run tests!
-      - run: ./manage.sh
+      - run: ./manage.sh test
