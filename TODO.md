@@ -6,52 +6,24 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* search, possible bug, thought I fixed it so catalogues are navigable now?
-    - selecting by host still gives me samples
+* move Dockerfile* files into a CircleCI folder
     - done
 
-* search, add ability to browse catalogue page by page
-    - returned to bucket 2022-03-02
-    - the 'search' tab kinda sorta is this ... perhaps a preference to disable sampling?
+* toc, what is the usage of 'x-github'. we're expecting a url but a foo/bar seems fine as well
+    - check the github catalogue
+    - I'm seeing more usage of 'x-website' 
     - done
 
-* search, vertically centre tag buttons. 
-    - they're currently top-aligned
-    - done
-
-* cljfx, javafx
-    - bump deps
-
-* support NO_COLOR envvar, http://no-color.org
-    - done
-
-* rawdata, interface-version is being localised
-    - done
-
-* gui, better copying from the interface, especially the log box
-    - too much faff and bs for selectable text/labels, wontdo.
-    - added selectable plain text and json boxes to the raw text widgets
-    - done
-
-* add a disable update check cli arg
-    - flatpaks will check for updates in a different way
-    - done
-
-* github-addons.md, update or get rid of
-    - got rid of it
-    - done
-
-* release.md, move to strongbox-release-script
-    - done
-
-* gui, raw data, add textual versions of this data as well
-    - pretty printing in a gui is one thing, but useless if it can't be copied
-    - have a text field with plain text and yaml or json formatted addon data could be useful as well
+* *.sh, consolidate these root-level bash scripts into a manage.sh 
     - done
 
 ## todo
 
 ## todo bucket (no particular order)
+
+* cataclysm classic support
+
+* nfo, replace the URL as the group-id with something random
 
 * github, catalogue, no download counts.
 
@@ -79,10 +51,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * catalogue/search results, if there are addons from the same host (github) with the same name (tukui), disambiguate them
     - 'tukui' in the search results shouldn't mean 'ogri-la/tukui' if 'tukui.org/tukui' is also available
         - which it isn't, but that's not the point.
-
-* *.sh, consolidate these root-level bash scripts into a manage.sh 
-
-* move Dockerfile* files into a CircleCI folder
 
 * metrics, add a 'catalogue is N days old'
     - add an 'oldest' addon (days since created date)?
@@ -113,6 +81,7 @@ see CHANGELOG.md for a more formal list of changes by release
     - make it a simple preference
 
 * gui, 'set-icon' is taking a long time to do it's thing.
+
 
 * manually select the primary addon in a group of addons to prevent synthetic titles
 
@@ -239,7 +208,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * preference for 'fat rows'
     - increase the padding for each row a bit
 
-* nfo, replace the URL as the group-id with something random
 
 * "developer warnings"
     - a preference that bumps certain debug messages to warnings and errors for developers

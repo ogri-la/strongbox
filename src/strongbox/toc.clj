@@ -54,7 +54,7 @@
   "returns a list of file names as `[[game-track, filename.toc], ...]` in the given `addon-dir`.
   `game-track` is `nil` if it can't be guessed from the filename (and not 'retail')."
   [addon-dir ::sp/extant-dir]
-  (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_]{1}(Mainline|Classic|Vanilla|TBC|BCC){1})?\\.toc$")
+  (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_]{1}(Mainline|Classic|Vanilla|TBC|BCC|Wrath){1})?\\.toc$")
         matching-toc-pattern (fn [filename]
                                (let [toc-bname (str (fs/base-name filename))
                                      [toc-bname-match game-track-match] (rest (re-matches pattern toc-bname))]
@@ -121,16 +121,22 @@
          ;;               {:source "curseforge"
          ;;                :source-id x-curse-id})
 
-         tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
-                        {:source "tukui"
-                         :source-id x-tukui-id})
+         ;;tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
+         ;;               {:source "tukui"
+         ;;                :source-id x-tukui-id})
 
          github-source (when-let [x-github (-> keyvals :x-github)]
                          {:source "github"
                           :source-id (utils/github-url-to-source-id x-github)})
 
-         source-map-list (when-let [items (->> [wowi-source tukui-source github-source
-                                                ;;curse-source
+         github-website-source (when-let [x-website (-> keyvals :x-website)]
+                                 (when (and (not github-source)
+                                            (.startsWith x-website "https://github.com"))
+                                   {:source "github"
+                                    :source-id (utils/github-url-to-source-id x-website)}))
+
+         source-map-list (when-let [items (->> [wowi-source github-source github-website-source
+                                                ;;curse-source tukui-source 
                                                 ]
                                                utils/items
                                                utils/nilable)]
@@ -177,10 +183,11 @@
                  (assoc addon :dirsize dirsize)
                  addon)
 
-         ;; prefers tukui over wowi, wowi over github. I'd like to prefer github over wowi, but github
-         ;; requires API calls to interact with and these are limited unless authenticated.
+         ;; prefers wowi over github and github over github-via-website.
+         ;; I'd like to prefer github over wowi, but github requires API calls to interact with and these are limited unless authenticated.
          addon (merge addon
-                      github-source wowi-source tukui-source
+                      github-website-source github-source wowi-source
+                      ;; curse-source tukui-source
                       ignore-flag source-map-list)]
 
      (if-not (s/valid? :addon/toc addon)

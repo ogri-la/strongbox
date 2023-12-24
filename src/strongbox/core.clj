@@ -1682,19 +1682,19 @@
   ;; load the user-catalogue. `db-load-catalogue` will incorporate this if it's found.
   (db-load-user-catalogue)
 
-   ;; load the contents of the selected catalogue and the user catalogue
+  ;; load the contents of the selected catalogue and the user catalogue
   (db-load-catalogue)
 
-   ;; match installed addons to those in catalogue
+  ;; match installed addons to those in catalogue
   (match-all-installed-addons-with-catalogue)
 
-   ;; for those addons that have matches, download their details
+  ;; for those addons that have matches, download their details
   (check-for-updates)
 
-   ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
-   ;;(latest-strongbox-release) ;; check for updates after everything else is done 
+  ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
+  ;;(latest-strongbox-release) ;; check for updates after everything else is done 
 
-   ;; seems like a good place to preserve the etag-db
+  ;; seems like a good place to preserve the etag-db
   (save-settings!)
 
   (scheduled-user-catalogue-refresh)

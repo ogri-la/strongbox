@@ -451,9 +451,10 @@
 ;; catalogue locations
 
 (s/def :catalogue/name keyword?)
+(s/def :catalogue/source ::url)
 
 ;; a `catalogue/location` is a description of a catalogue and where to find it, not the catalogue itself.
-(s/def :catalogue/location (s/keys :req-un [:catalogue/name ::label :addon/source]))
+(s/def :catalogue/location (s/keys :req-un [:catalogue/name ::label :catalogue/source]))
 (s/def :catalogue/location-list (s/or :ok (s/coll-of :catalogue/location)
                                       :empty ::empty-coll))
 

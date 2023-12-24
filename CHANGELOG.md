@@ -4,6 +4,33 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.2.0 - 2023-12-24
+
+### Added
+
+* `x-website` Github URLs in `.toc` files are now treated as a Github source that an addon can be switched to.
+    - when both `x-github` and Github `x-website` sources exist, `x-github` takes priority.
+
+### Changed
+
+* moved AppImage building to `ogri-la/strongbox-appimage`.
+* consolidated all the `.sh` into a single `manage.sh` script.
+    - `lint.sh` moved to `manage.sh` as command 'lint'.
+    - `run-tests.sh` moved to `manage.sh` as command 'test'.
+    - `update-test-fixtures.sh` moved to `manage.sh` as command 'update-test-fixtures'.
+    - `build-linx-image.sh` moved to `ogri-la/strongbox-appimage` as `build-appimage.sh`.
+
+### Fixed
+
+* fixed bug preventing classic Wrath `.toc` from being detected and loaded.
+* fixed bug in catalogue location spec where a value that should have been validating as a URL was not.
+* removed `x-tukui-id` source detection in `.toc` files. Tukui no longer hosts addons so these can't be used.
+    - overlooked, should have been part of 7.0.0 major version.
+
+### Removed
+
+* removed `release.sh` as it had been unused for several years.
+
 ## 7.1.0 - 2023-11-26
 
 ### Added
