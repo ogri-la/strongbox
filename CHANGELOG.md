@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* moved AppImage building to `ogri-la/strongbox-appimage`.
+* consolidated all the `.sh` into a single `manage.sh` script.
+    - `lint.sh` moved to `manage.sh` as command 'lint'.
+    - `run-tests.sh` moved to `manage.sh` as command 'test'.
+    - `update-test-fixtures.sh` moved to `manage.sh` as command 'update-test-fixtures'.
+    - `build-linx-image.sh` moved to `ogri-la/strongbox-appimage` as `build-appimage.sh`.
+
 ### Fixed
 
 * fixed bug preventing classic Wrath `.toc` from being detected and loaded.
@@ -21,6 +28,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - overlooked, should have been part of 7.0.0 major version.
 
 ### Removed
+
+* removed `release.sh` as it had been unused for several years.
 
 ## 7.1.0 - 2023-11-26
 
