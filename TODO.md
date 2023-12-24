@@ -14,9 +14,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - I'm seeing more usage of 'x-website' 
     - done
 
-## todo
-
 * *.sh, consolidate these root-level bash scripts into a manage.sh 
+    - done
+
+## todo
 
 ## todo bucket (no particular order)
 
