@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## 7.2.0 - 2023-12-24
+
+### Added
+
 * `x-website` Github URLs in `.toc` files are now treated as a Github source that an addon can be switched to.
     - when both `x-github` and Github `x-website` sources exist, `x-github` takes priority.
 
