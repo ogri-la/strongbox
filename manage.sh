@@ -61,10 +61,6 @@ elif test "$cmd" = "lint"; then
     lein eastwood
     exit 0
 
-elif test "$cmd" = "release"; then
-    echo "see: github.com/ogri-la/strongbox-release-script"
-    exit 1
-    
 elif test "$cmd" = "update-test-fixtures"; then
     # downloads new test fixtures 
     function dl {
