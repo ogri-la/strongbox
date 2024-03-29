@@ -20,6 +20,7 @@
 (def latest-classic-game-version "1.14.3")
 (def latest-classic-tbc-game-version "2.5.4")
 (def latest-classic-wotlk-game-version "3.4.0")
+(def latest-classic-cata-game-version "4.0.0")
 
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).

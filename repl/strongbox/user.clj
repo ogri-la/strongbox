@@ -14,6 +14,7 @@
     [catalogue :as catalogue]
     [http :as http]
     [core :as core]
+    [specs :as sp]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]))
 

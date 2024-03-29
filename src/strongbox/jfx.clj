@@ -1632,6 +1632,9 @@
                  :value (get sp/game-track-labels-map game-track)
                  :on-value-changed (async-event-handler
                                     (fn [new-game-track]
+                                      (println "got " new-game-track)
+                                      (println "map " sp/game-track-labels-map-inv)
+                                      (println "foo " (get sp/game-track-labels-map-inv new-game-track))
                                       ;; todo: push to cli or core
                                       (core/set-game-track! (get sp/game-track-labels-map-inv new-game-track) (:addon-dir addon-dir-map))
                                       (core/refresh)))

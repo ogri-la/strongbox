@@ -184,7 +184,8 @@
               priority-map {:retail [:retail :classic :classic-tbc :classic-wotlk]
                             :classic [:classic :classic-tbc :classic-wotlk :retail]
                             :classic-tbc [:classic-tbc :classic-wotlk :classic :retail]
-                            :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]}
+                            :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]
+                            :classic-cata [:classic-cata :classic-wotlk :classic-tbc :classic :retail]}
               safe-fallback [game-track]
               priorities (get priority-map game-track safe-fallback)
               group (utils/first-nn #(get grouped-toc-data %) priorities)]
