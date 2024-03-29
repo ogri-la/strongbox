@@ -987,7 +987,7 @@
             (catalogue/read-catalogue
              catalogue-path
              {:bad-data? (fn []
-                           ;; "catalogue 'full failed to load again, it might be corrupt at it's source: https://path/to/online/catalogue.json"
+                           ;; "catalogue 'full' failed to load again, it might be corrupt at it's source: https://path/to/online/catalogue.json"
                            (let [msg (format "catalogue '%s' failed to load again, it might be corrupt at it's source: %s" catalogue-label catalogue-source)]
                              (error (utils/reportable-error msg))))}))
 
