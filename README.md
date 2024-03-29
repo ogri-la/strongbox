@@ -44,8 +44,8 @@ I also maintain a list of [other addon managers](https://ogri-la.github.io/wow-a
 
 Strongbox is available as a standalone [AppImage](https://appimage.org) binary from the [releases](https://github.com/ogri-la/strongbox/releases/) page.
 
-    chmod +x strongbox
-    ./strongbox
+    chmod +x strongbox-x.x.x-x86_64.AppImage
+    ./strongbox-x.x.x-x86_64.AppImage
 
 ### Arch Linux and the AUR
 
