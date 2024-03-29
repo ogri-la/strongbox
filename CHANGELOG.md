@@ -10,7 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* dependencies bumped to latest versions
+
 ### Fixed
+
+* bumps Clojure from 1.10 to 1.11.2 to fix CVE-2024-22871
+    - https://github.com/advisories/GHSA-vr64-r9qj-h27f
 
 ### Removed
 

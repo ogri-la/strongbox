@@ -11,42 +11,42 @@
   ;; https://github.com/technomancy/leiningen/issues/2769
   :pedantic? false
 
-  :dependencies [[org.clojure/clojure "1.10.3"]
-                 [org.clojure/tools.cli "1.0.219"] ;; cli arg parsing
-                 [org.clojure/tools.namespace "1.4.4"] ;; reload code
-                 [org.clojure/data.json "2.4.0"] ;; json handling
+  :dependencies [[org.clojure/clojure "1.11.2"]
+                 [org.clojure/tools.cli "1.1.230"] ;; cli arg parsing
+                 [org.clojure/tools.namespace "1.5.0"] ;; reload code
+                 [org.clojure/data.json "2.5.0"] ;; json handling
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
-                 [com.taoensso/timbre "5.1.2"] ;; logging
+                 [com.taoensso/timbre "6.5.0"] ;; logging
                  [clj-http "3.12.3"] ;; better http slurping
-                 [clj-commons/fs "1.6.310"] ;; file system wrangling
+                 [clj-commons/fs "1.6.311"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
                  [org.flatland/ordered "1.15.11"] ;; better ordered map
-                 [clojure.java-time "1.2.0"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
+                 [clojure.java-time "1.4.2"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
                  [envvar "1.1.2"] ;; environment variable wrangling
-                 [tolitius/lasync "0.1.24"] ;; better parallel processing
+                 [tolitius/lasync "0.1.25"] ;; better parallel processing
 
-                 [cljfx "1.7.23" :exclusions [org.openjfx/javafx-web
-                                              org.openjfx/javafx-media]]
+                 [cljfx "1.8.0" :exclusions [org.openjfx/javafx-web
+                                             org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
-                 [org.openjfx/javafx-base "19.0.2.1"]
-                 [org.openjfx/javafx-base "19.0.2.1" :classifier "linux"]
-                 [org.openjfx/javafx-base "19.0.2.1" :classifier "mac"]
+                 [org.openjfx/javafx-base "20-ea+1"]
+                 [org.openjfx/javafx-base "20-ea+1" :classifier "linux"]
+                 [org.openjfx/javafx-base "20-ea+1" :classifier "mac"]
 
-                 [org.openjfx/javafx-controls "19.0.2.1"]
-                 [org.openjfx/javafx-controls "19.0.2.1" :classifier "linux"]
-                 [org.openjfx/javafx-controls "19.0.2.1" :classifier "mac"]
+                 [org.openjfx/javafx-controls "20-ea+1"]
+                 [org.openjfx/javafx-controls "20-ea+1" :classifier "linux"]
+                 [org.openjfx/javafx-controls "20-ea+1" :classifier "mac"]
 
-                 [org.openjfx/javafx-graphics "19.0.2.1"]
-                 [org.openjfx/javafx-graphics "19.0.2.1" :classifier "linux"]
-                 [org.openjfx/javafx-graphics "19.0.2.1" :classifier "mac"]
+                 [org.openjfx/javafx-graphics "20-ea+1"]
+                 [org.openjfx/javafx-graphics "20-ea+1" :classifier "linux"]
+                 [org.openjfx/javafx-graphics "20-ea+1" :classifier "mac"]
 
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception in LICENCE.txt
-                 [org.ocpsoft.prettytime/prettytime "5.0.6.Final"] ;; Apache 2.0 licenced, pretty date formatting
-                 [org.controlsfx/controlsfx "11.1.2"] ;; BSD-3
+                 [org.ocpsoft.prettytime/prettytime "5.0.7.Final"] ;; Apache 2.0 licenced, pretty date formatting
+                 [org.controlsfx/controlsfx "11.2.1"] ;; BSD-3
                  
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
@@ -65,7 +65,7 @@
 
   :profiles {:repl {:source-paths ["repl"]}
              :dev {:resource-paths ["dev-resources" "resources"] ;; dev-resources take priority
-                   :dependencies [[clj-http-fake "1.0.3"] ;; fake http responses for testing
+                   :dependencies [[clj-http-fake "1.0.4"] ;; fake http responses for testing
                                   [gui-diff "0.6.7" :exclusions [net.cgrant/parsley]] ;; pops up a graphical diff for test results
                                   ]}
 
