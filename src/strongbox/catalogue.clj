@@ -56,7 +56,7 @@
   (let [strict? (boolean strict?)
         track-map {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata]
                    :classic [:classic :classic-tbc :classic-wotlk :classic-cata :retail]
-                   :classic-tbc [:classic-tbc :classic-wotlk :classic :retail]
+                   :classic-tbc [:classic-tbc :classic-wotlk :classic :classic-cata :retail]
                    :classic-wotlk [:classic-wotlk :classic-cata :classic-tbc :classic :retail]
                    :classic-cata [:classic-cata :classic-wotlk :classic-tbc :classic :retail]}
         game-track* game-track
