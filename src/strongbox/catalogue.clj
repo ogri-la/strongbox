@@ -57,7 +57,7 @@
         track-map {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata]
                    :classic [:classic :classic-tbc :classic-wotlk :classic-cata :retail]
                    :classic-tbc [:classic-tbc :classic-wotlk :classic :classic-cata :retail]
-                   :classic-wotlk [:classic-wotlk :classic-cata :classic-tbc :classic :retail]
+                   :classic-wotlk [:classic-wotlk :classic-tbc :classic :classic-cata :retail]
                    :classic-cata [:classic-cata :classic-wotlk :classic-tbc :classic :retail]}
         game-track* game-track
         game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
