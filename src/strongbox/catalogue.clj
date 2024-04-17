@@ -47,13 +47,13 @@
 (defn-spec expand-summary (s/or :ok :addon/expanded, :error nil?)
   "fetches updates from the addon host for the given `addon` and `game-track`.
   when `strict?` is `false` and an addon fails to match for the given `game-track`, other game tracks will be checked.
+  the strategy is to assume the next-best game tracks are the ones updated most recently but no more than one classic release removed.
+  for example, if a release for wotlk classic is not available and a release for cata, bcc and vanilla are, which to choose?
+  this strategy chooses cata, then bcc and finally vanilla, hoping the cata version is backwards compatible rather than the bcc one is
+  forwards-compatible. vanilla is just a far out wild guess.
   emits warnings to user when no release found."
   [addon :addon/expandable, game-track :addon-dir/game-track, strict? ::sp/strict?]
   (let [strict? (boolean strict?)
-        track-map {:retail [:retail :classic :classic-tbc :classic-wotlk]
-                   :classic [:classic :classic-tbc :classic-wotlk :retail]
-                   :classic-tbc [:classic-tbc :classic-wotlk :classic :retail]
-                   :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]}
         game-track* game-track
         game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
     (cond
@@ -70,7 +70,7 @@
       :else
       (if-let [source-updates (if strict?
                                 (-expand-summary addon game-track)
-                                (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
+                                (utils/first-nn (partial -expand-summary addon) (get constants/game-track-priority-map game-track)))]
         source-updates
 
         ;; "no 'Retail' release found on github"
@@ -80,7 +80,7 @@
               multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
               msg (if strict?
                     (format single-template (sp/game-track-labels-map game-track) (:source addon))
-                    (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
+                    (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get constants/game-track-priority-map game-track))
                                                        (:source addon))))]
           (warn msg))))))
 

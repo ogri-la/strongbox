@@ -87,10 +87,11 @@
 (def game-track-labels [[:retail "Retail"]
                         [:classic "Classic"]
                         [:classic-tbc "Classic (TBC)"]
-                        [:classic-wotlk "Classic (WotLK)"]])
+                        [:classic-wotlk "Classic (WotLK)"]
+                        [:classic-cata "Classic (Cata)"]])
 
 (def game-track-labels-map (into {} game-track-labels)) ;; {:retail "WoW Retail", ...}
-(def game-track-labels-map-inv (map-invert game-track-labels)) ;; {"WoW Retail" :retail, ...}
+(def game-track-labels-map-inv (map-invert game-track-labels-map)) ;; {"WoW Retail" :retail, ...}
 (def game-tracks (->> game-track-labels-map keys set)) ;; #{:retail, :classic, ...}
 
 ;; needed to update config

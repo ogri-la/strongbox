@@ -187,10 +187,11 @@ This will restrict the types of addons that can be installed in the current addo
 The `Strict` checkbox allows you to enforce or relax restrictions and mix together addons meant for different systems in 
 the same addon directory. If an addon is available for multiple addon systems it will prefer one over another:
 
-* `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)` then `classic (WotLK)`
-* `classic` will prefer `classic` addons, then `classic (TBC)` then `classic (WotLK)` then `retail`
-* `classic (TBC)` will prefer `classic (TBC)` addons, then `classic (WotLK)` then `classic` then `retail`
-* `classic (WotLK)` will prefer `classic (WotLK)` addons, then `classic (TBC)` then `classic` then `retail`
+* `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)` then `classic (WotLK)` then `classic (Cata)`
+* `classic` will prefer `classic` addons, then `classic (TBC)`, then `classic (WotLK)`, then `classic (Cata)` then `retail`
+* `classic (TBC)` will prefer `classic (TBC)` addons, then `classic (WotLK)`, then `classic (Cata)`, then `classic` then `retail`
+* `classic (WotLK)` will prefer `classic (WotLK)` addons, then `classic (Cata)`, then `classic (TBC)`, then `classic` then `retail`
+* `classic (Cata)` will prefer `classic (Cata)` addons, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
 
 If uncertain which addon system an installed addon supports, look at the `WoW` column value on the `installed` tab and 
 compare it to the `Version` value in the list of WoW [public client builds](https://wowpedia.fandom.com/wiki/Public_client_builds).

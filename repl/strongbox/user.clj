@@ -14,6 +14,7 @@
     [catalogue :as catalogue]
     [http :as http]
     [core :as core]
+    [specs :as sp]
     [utils :as utils :refer [in?]]]
    [gui.diff :refer [with-gui-diff]]))
 
@@ -89,7 +90,7 @@
         (core/reset-logging!)
 
         (if ns-kw
-          (if (some #{ns-kw} [:main :utils :http
+          (if (some #{ns-kw} [:main :utils :http :specs
                               :core :toc :nfo :zip :config :catalogue :addon :logging :joblib
                               :cli :gui :jfx
                               :curseforge-api :wowinterface-api :gitlab-api :github-api :tukui-api

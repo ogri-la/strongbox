@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* added support for Cataclysm Classic
+
 ### Changed
 
-* dependencies bumped to latest versions
+* dependencies bumped to latest versions.
+* game track priority when 'strict' is off made now has a proper and consistent strategy.
 
 ### Fixed
 

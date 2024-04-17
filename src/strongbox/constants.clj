@@ -20,12 +20,32 @@
 (def latest-classic-game-version "1.14.3")
 (def latest-classic-tbc-game-version "2.5.4")
 (def latest-classic-wotlk-game-version "3.4.0")
+(def latest-classic-cata-game-version "4.0.1")
 
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).
 ;; these values need to match the latest-* values above.
 (def default-interface-version 100000)
 (def default-interface-version-classic 11400)
+
+;; take all of the game tracks to the right of your position
+;; then all to the left.
+;; [1 2 3 4 5 6] => 6 => [6 5 4 3 2 1]
+;; [1 2 3 4 5 6] => 5 => [5 6 4 3 2 1]
+;; [1 2 3 4 5 6] => 4 => [4 5 6 3 2 1]
+;; [1 2 3 4 5 6] => 3 => [3 4 5 6 2 1]
+;; [1 2 3 4 5 6] => 2 => [2 3 4 5 6 1]
+;; [1 2 3 4 5 6] => 1 => [1 2 3 4 5 6]
+(def game-track-priority-map
+  "when `strict?` is `false` and an addon fails to match against a given `game-track`, other game tracks will be checked.
+  the strategy is to assume the next-best game tracks are the ones 'closest' to the given `game-track`, newest to oldest.
+  for example, if a release for wotlk classic is not available and releases for cata, bcc and vanilla are, which to choose?
+  this strategy prioritises cata, then bcc and finally vanilla."
+  {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata]
+   :classic [:classic :classic-tbc :classic-wotlk :classic-cata :retail]
+   :classic-tbc [:classic-tbc :classic-wotlk :classic-cata :classic :retail]
+   :classic-wotlk [:classic-wotlk :classic-cata :classic-tbc :classic :retail]
+   :classic-cata [:classic-cata :classic-wotlk :classic-tbc :classic :retail]})
 
 (def bullet "\u2022") ;; •
 

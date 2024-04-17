@@ -16,9 +16,10 @@ see CHANGELOG.md for a more formal list of changes by release
     - update references from 'strongbox' to 'strongbox.AppImage'
     - done
 
-## todo
-
 * cataclysm classic support
+    - done
+
+## todo
 
 * gui, 'set-icon' is taking a long time to do it's thing.
 
