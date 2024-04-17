@@ -54,11 +54,6 @@
   emits warnings to user when no release found."
   [addon :addon/expandable, game-track :addon-dir/game-track, strict? ::sp/strict?]
   (let [strict? (boolean strict?)
-        track-map {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata]
-                   :classic [:classic :classic-tbc :classic-wotlk :classic-cata :retail]
-                   :classic-tbc [:classic-tbc :classic-wotlk :classic :classic-cata :retail]
-                   :classic-wotlk [:classic-wotlk :classic-tbc :classic :classic-cata :retail]
-                   :classic-cata [:classic-cata :classic-wotlk :classic-tbc :classic :retail]}
         game-track* game-track
         game-track (some #{game-track} sp/game-tracks)] ;; :retail => :retail, :unknown-game-track => nil
     (cond
@@ -75,7 +70,7 @@
       :else
       (if-let [source-updates (if strict?
                                 (-expand-summary addon game-track)
-                                (utils/first-nn (partial -expand-summary addon) (get track-map game-track)))]
+                                (utils/first-nn (partial -expand-summary addon) (get constants/game-track-priority-map game-track)))]
         source-updates
 
         ;; "no 'Retail' release found on github"
@@ -85,7 +80,7 @@
               multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
               msg (if strict?
                     (format single-template (sp/game-track-labels-map game-track) (:source addon))
-                    (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get track-map game-track))
+                    (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get constants/game-track-priority-map game-track))
                                                        (:source addon))))]
           (warn msg))))))
 

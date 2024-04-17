@@ -7,6 +7,7 @@
    [orchestra.core :refer [defn-spec]]
    [me.raynes.fs :as fs]
    [strongbox
+    [constants :as constants]
     [logging :as logging]
     [toc :as toc]
     [utils :as utils]
@@ -181,13 +182,8 @@
         ;; prefer the one for the given `game-track`, if it exists, otherwise do as we do with
         ;; the catalogue and use a list of priorities.
         (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
-              priority-map {:retail [:retail :classic :classic-tbc :classic-wotlk]
-                            :classic [:classic :classic-tbc :classic-wotlk :retail]
-                            :classic-tbc [:classic-tbc :classic-wotlk :classic :retail]
-                            :classic-wotlk [:classic-wotlk :classic-tbc :classic :retail]
-                            :classic-cata [:classic-cata :classic-wotlk :classic-tbc :classic :retail]}
               safe-fallback [game-track]
-              priorities (get priority-map game-track safe-fallback)
+              priorities (get constants/game-track-priority-map game-track safe-fallback)
               group (utils/first-nn #(get grouped-toc-data %) priorities)]
 
           ;; after grouping toc data by game-track we may have multiple `:retail` or `:classic` data sets.
