@@ -40,8 +40,7 @@
   "when `strict?` is `false` and an addon fails to match against a given `game-track`, other game tracks will be checked.
   the strategy is to assume the next-best game tracks are the ones 'closest' to the given `game-track`, newest to oldest.
   for example, if a release for wotlk classic is not available and releases for cata, bcc and vanilla are, which to choose?
-  this strategy prioritises cata, then bcc and finally vanilla.
-  an exception to this rule is :retail which just gets tacked on to the end as the last choice alternative."
+  this strategy prioritises cata, then bcc and finally vanilla."
   {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata]
    :classic [:classic :classic-tbc :classic-wotlk :classic-cata :retail]
    :classic-tbc [:classic-tbc :classic-wotlk :classic-cata :classic :retail]
