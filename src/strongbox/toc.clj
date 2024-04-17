@@ -54,7 +54,7 @@
   "returns a list of file names as `[[game-track, filename.toc], ...]` in the given `addon-dir`.
   `game-track` is `nil` if it can't be guessed from the filename (and not 'retail')."
   [addon-dir ::sp/extant-dir]
-  (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_](Mainline|Classic|Vanilla|TBC|BCC|Wrath|Cata){1})?\\.toc$")
+  (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_](Mainline|Classic|Vanilla|TBC|BCC|Wrath|Cata))?\\.toc$")
         matching-toc-pattern (fn [filename]
                                (let [toc-bname (str (fs/base-name filename))
                                      [toc-bname-match game-track-match] (rest (re-matches pattern toc-bname))]

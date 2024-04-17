@@ -50,7 +50,7 @@
            ;; so '101', '201' become '10.' and '20.', minor '01' becomes '00' and '0' is still '0'
            "101010" "10.0.0"
 
-            ;; ambiguous/broken cases
+           ;; ambiguous/broken cases
            "00010" "0.0.0"
            "01000" "0.0.0"
            "10100" "1.1.0" ;; ambiguous, also, 1.10.0, 10.1.0, 10.10.0
