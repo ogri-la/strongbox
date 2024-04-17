@@ -295,9 +295,15 @@
                ["3.foo.bar" :classic-wotlk]
                [constants/latest-classic-wotlk-game-version :classic-wotlk]
 
+               ;; cata
+               ["4." :classic-cata]
+               ["4.3.0" :classic-cata]
+               ["4.foo.bar" :classic-cata]
+               [constants/latest-classic-cata-game-version :classic-cata]
+
                ;; everything else
-               ["4.3.0" :retail]
                ["5.0.4" :retail]
+               ["6.0.4" :retail]
                ;; ...etc
                ["9.0.1" :retail]
                ["10.0.2" :retail]
@@ -374,6 +380,15 @@
                  ["classic_bcc" :classic-tbc]
                  ["1.2.3_classic_bcc_no-lib" :classic-tbc]
 
+                 ["cata" :classic-cata]
+                 ["cata.no-lib" :classic-cata]
+                 ["1.2.3-cata" :classic-cata]
+                 ["1.2.3_cata" :classic-cata]
+                 ["1.2.3.cata" :classic-cata]
+                 ["1.2.3-cata-no-lib" :classic-cata]
+                 ["1.2.3.cata.no-lib" :classic-cata]
+                 ["1.2.3_cata.no_lib" :classic-cata]
+
                  ;; classic
                  ["classic" :classic]
                  ["vanilla" :classic]
@@ -400,6 +415,8 @@
                  ["Classic-TBC" :classic-tbc]
 
                  ;; priority (classic-tbc > classic > retail)
+                 ["retail-classic-tbc-classic-wotlk-cata" :classic-cata]
+                 ["retail-classic-tbc-classic-wotlk" :classic-wotlk]
                  ["retail-classic-tbc-classic" :classic-tbc]
                  ["retail-classic-classic-tbc" :classic-tbc]
                  ["classic-classic-tbc" :classic-tbc]
@@ -472,7 +489,8 @@
   (let [cases [[10123 :classic]
                [20123 :classic-tbc]
                [30123 :classic-wotlk]
-               [40123 :retail] ;; for now
+               [40123 :classic-cata]
+               [50123 :retail] ;; for now
 
                ;; bad interface versions
                [0 nil]
