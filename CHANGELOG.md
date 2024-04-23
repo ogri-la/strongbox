@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* added support for Cataclysm Classic
+* added support for Cataclysm Classic.
 
 ### Changed
 
@@ -20,9 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * bumps Clojure from 1.10 to 1.11.2 to fix CVE-2024-22871
     - https://github.com/advisories/GHSA-vr64-r9qj-h27f
 * an Arch Linux AUR bug introduced with pacman 6.1 that stripped the binary down to nothing.
-    - thanks to @nickromanooo for reporting the bug and tracking down the pacman issue
-
-### Removed
+    - thanks to @nickromanooo for reporting the bug and tracking down the pacman issue.
 
 ## 7.2.0 - 2023-12-24
 
