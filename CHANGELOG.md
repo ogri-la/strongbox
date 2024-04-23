@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * dependencies bumped to latest versions.
-* game track priority when 'strict' is off made now has a proper and consistent strategy.
+* game track priority when 'strict' is off now has a proper and consistent strategy.
 
 ### Fixed
 
