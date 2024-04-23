@@ -131,7 +131,7 @@ Installed from curseforge
 
 Supports Retail
 
-Last updated 7 years ago (2016-09-08)"]
+Last updated 8 years ago (2016-09-08)"]
       (is (= expected (jfx/addon-as-text-for-installed given)))))
 
   (testing "with overrides"
@@ -167,7 +167,7 @@ Available from curseforge
 
 Supports 
 
-Last updated 7 years ago (2016-09-08)"]
+Last updated 8 years ago (2016-09-08)"]
       (is (= expected (jfx/addon-as-text-for-catalogue given)))))
 
   (testing "with overrides"

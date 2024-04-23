@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.3.0 - 2024-04-23
+
+### Added
+
+* added support for Cataclysm Classic.
+
+### Changed
+
+* dependencies bumped to latest versions.
+* game track priority when 'strict' is off now has a proper and consistent strategy.
+
+### Fixed
+
+* bumps Clojure from 1.10 to 1.11.2 to fix CVE-2024-22871
+    - https://github.com/advisories/GHSA-vr64-r9qj-h27f
+* an Arch Linux AUR bug introduced with pacman 6.1 that stripped the binary down to nothing.
+    - thanks to @nickromanooo for reporting the bug and tracking down the pacman issue.
+
 ## 7.2.0 - 2023-12-24
 
 ### Added

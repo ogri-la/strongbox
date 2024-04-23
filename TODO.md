@@ -6,22 +6,24 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* move Dockerfile* files into a CircleCI folder
+* rename `strongbox` release to `strongbox.AppImage`
+    - re-submit
+    - update release scripts
+    - done
+        - https://appimage.github.io/strongbox/
+
+* update release script
+    - update references from 'strongbox' to 'strongbox.AppImage'
     - done
 
-* toc, what is the usage of 'x-github'. we're expecting a url but a foo/bar seems fine as well
-    - check the github catalogue
-    - I'm seeing more usage of 'x-website' 
-    - done
-
-* *.sh, consolidate these root-level bash scripts into a manage.sh 
+* cataclysm classic support
     - done
 
 ## todo
 
 ## todo bucket (no particular order)
 
-* cataclysm classic support
+* gui, 'set-icon' is taking a long time to do it's thing.
 
 * nfo, replace the URL as the group-id with something random
 
@@ -32,13 +34,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * github, catalogue, add 'created date'
 
 * no errors displayed when installing from addon detail page
-
-* rename `strongbox` release to `strongbox.AppImage`
-    - re-submit
-    - update release scripts
-
-* update release script
-    - update references from 'strongbox' to 'strongbox.AppImage'
 
 * generate a `.flatpakref` file as an asset for release.
     - https://docs.flatpak.org/en/latest/repositories.html#flatpakref-files
@@ -79,9 +74,6 @@ see CHANGELOG.md for a more formal list of changes by release
 * alpha/beta opt-in
     - user can opt to install alpha/beta releases per-addon
     - make it a simple preference
-
-* gui, 'set-icon' is taking a long time to do it's thing.
-
 
 * manually select the primary addon in a group of addons to prevent synthetic titles
 
@@ -207,7 +199,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 * preference for 'fat rows'
     - increase the padding for each row a bit
-
 
 * "developer warnings"
     - a preference that bumps certain debug messages to warnings and errors for developers
