@@ -6,19 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* rename `strongbox` release to `strongbox.AppImage`
-    - re-submit
-    - update release scripts
-    - done
-        - https://appimage.github.io/strongbox/
-
-* update release script
-    - update references from 'strongbox' to 'strongbox.AppImage'
-    - done
-
-* cataclysm classic support
-    - done
-
 ## todo
 
 ## todo bucket (no particular order)
