@@ -21,9 +21,9 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
-* gui, 'set-icon' is taking a long time to do it's thing.
-
 ## todo bucket (no particular order)
+
+* gui, 'set-icon' is taking a long time to do it's thing.
 
 * nfo, replace the URL as the group-id with something random
 
