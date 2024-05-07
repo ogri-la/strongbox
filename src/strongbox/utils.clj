@@ -297,6 +297,7 @@
 
 (defn-spec interface-version-to-game-version (s/or :ok string?, :no-match nil?)
   [iface-version (s/or :deprecated string?, :ok int?)]
+  ;; revisit
   ;; warning! there is no way to convert *unambiguously* between the 'patch level' and the 'interface version'
   ;; for example, patch "1.2.0" => "10200", but so does "1.20.0" => "10200"
   ;; there haven't been any minor versions >4 since MOP

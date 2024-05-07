@@ -413,12 +413,12 @@ Prior to `1.0.0`, Strongbox was known as "wowman". The [AUR package](https://aur
 
 Moved here: **https://ogri-la.github.io/wow-addon-managers/**
 
-Last updated: **2023-08-13**
+Last updated: **2024-05-07**
 
 [Request a change](https://github.com/ogri-la/strongbox-comrades/issues). 
 
 ## License
 
-Copyright © 2018-2023 Torkus
+Copyright © 2018-2024 Torkus
 
 Distributed under the GNU Affero General Public Licence, version 3 [with additional permissions](LICENCE.txt#L665)
