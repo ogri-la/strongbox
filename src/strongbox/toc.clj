@@ -98,6 +98,18 @@
   [label string?]
   (-> label lower-case rm-trailing-version utils/slugify))
 
+(defn-spec parse-interface-value (s/or :ok ::sp/list-of-ints, :err nil?)
+  [val (s/or :ok string?, :supported int?, :noop nil?)]
+  (when val
+    (if (int? val)
+      [val]
+      (some->> (clojure.string/split val #",")
+               (map clojure.string/trim)
+               (map utils/to-int)
+               (remove nil?)
+               vec
+               utils/nilable))))
+
 ;;
 
 (defn-spec parse-addon-toc (s/or :ok :addon/toc, :invalid nil?)
@@ -147,10 +159,14 @@
                        {:ignore? true})
 
          ;; todo: warning when interface version not defined.
-         interface-version (or (some-> keyvals :interface utils/to-int)
-                               constants/default-interface-version)
+         ;; todo: many interface versions now possible
 
-         game-track (utils/interface-version-to-game-track interface-version)
+         interface-version-list (or (some-> keyvals :interface parse-interface-value)
+                                    [constants/default-interface-version])
+         interface-version (first interface-version-list)
+
+         game-track-list (mapv utils/interface-version-to-game-track interface-version-list)
+         game-track (first game-track-list)
 
          _ (when (and (some? (:-filename-game-track keyvals))
                       (not= (:-filename-game-track keyvals) game-track))
@@ -158,7 +174,9 @@
                     ;; 'classic' in .toc filename does not match 'retail' derived from it's 'Interface' value of '90200'.
                     ;; see BigWigs_Classic for a false-positive
                      "'%s' in .toc filename does not match '%s' derived from it's 'Interface' value of '%s'."
-                     (name (:-filename-game-track keyvals)) (name game-track) interface-version)))
+                     (name (:-filename-game-track keyvals))
+                     (name game-track)
+                     interface-version)))
 
          addon {:name (normalise-name label)
                 :dirname dirname
@@ -166,10 +184,12 @@
                 ;; `:notes` is preferred but we'll fall back to `:description`
                 :description (or (:notes keyvals) (:description keyvals))
                 :interface-version interface-version
-                :-toc/game-track game-track
+                :interface-version-list interface-version-list
+
+                :-toc/game-track game-track ;; todo: investigate why :-toc/* values are being used again ...
 
                 ;; expanded upon in `parse-addon-toc-guard` when it knows about *all* available toc files
-                :supported-game-tracks [game-track]
+                :supported-game-tracks game-track-list
 
                 :installed-version (:version keyvals)
 

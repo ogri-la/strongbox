@@ -481,6 +481,7 @@
                     :installed-game-track :retail,
                     :installed-version "1.2.3",
                     :interface-version 70000,
+                    :interface-version-list [70000]
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "rotation-master",

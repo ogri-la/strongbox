@@ -274,6 +274,7 @@
                      :installed-game-track :retail,
                      :installed-version "1.2.3",
                      :interface-version 70000,
+                     :interface-version-list [70000],
                      :label "Addon3",
                      :matched? true,
                      :name "addon3",
@@ -301,6 +302,7 @@
                      :installed-game-track :classic-tbc,
                      :installed-version "v0.6",
                      :interface-version 70000,
+                     :interface-version-list [70000],
                      :label "Addon5",
                      :matched? true,
                      :name "addon5",
@@ -393,6 +395,7 @@
                      :installed-game-track :classic, ;; imported game track
                      :installed-version "1.2.3",
                      :interface-version 70000,
+                     :interface-version-list [70000]
                      :label "Addon3",
                      :matched? true,
                      :name "addon3",
@@ -420,6 +423,7 @@
                      :installed-game-track :classic-tbc,
                      :installed-version "v0.6",
                      :interface-version 70000,
+                     :interface-version-list [70000]
                      :label "Addon5",
                      :matched? true,
                      :name "addon5",
@@ -1218,6 +1222,7 @@
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
                       :interface-version 70000,
+                      :interface-version-list [70000],
                       :supported-game-tracks [:retail]
                       :label "EveryAddon 1.2.3",
                       :name "everyaddon",
@@ -1253,6 +1258,7 @@
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
                       :interface-version 70000,
+                      :interface-version-list [70000],
                       :supported-game-tracks [:retail]
                       :label "EveryAddon 1.2.3",
                       :name "everyaddon",
@@ -1303,6 +1309,7 @@
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
                                         :interface-version 80000,
+                                        :interface-version-list [80000],
                                         :supported-game-tracks [:retail]
                                         :label "BundledAddon a.b.c",
                                         :name "everyotheraddon",
@@ -1318,6 +1325,7 @@
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
                                         :interface-version 70000,
+                                        :interface-version-list [70000],
                                         :supported-game-tracks [:retail]
                                         :label "EveryOtherAddon 5.6.7",
                                         :name "everyotheraddon",
@@ -1330,6 +1338,7 @@
                         :installed-game-track :retail,
                         :installed-version "5.6.7",
                         :interface-version 80000,
+                        :interface-version-list [80000],
                         :supported-game-tracks [:retail]
                         :label "fetched (group)",
                         :name "everyotheraddon",
@@ -1378,6 +1387,7 @@
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
                         :interface-version 70000,
+                        :interface-version-list [70000],
                         :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
                         :name "everyaddon",
@@ -1737,6 +1747,7 @@
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
                                       :interface-version 70000,
+                                      :interface-version-list [70000],
                                       :label "EveryAddon",
                                       :name "everyaddon",
                                       :primary? false,
@@ -1752,6 +1763,7 @@
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
                                       :interface-version 70000,
+                                      :interface-version-list [70000],
                                       :label "EveryAddon",
                                       :name "everyaddon",
                                       :primary? false,
@@ -1767,6 +1779,7 @@
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
                                       :interface-version 70000,
+                                      :interface-version-list [70000],
                                       :label "EveryAddon",
                                       :name "everyaddon",
                                       :primary? false,
@@ -1779,6 +1792,7 @@
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
                       :interface-version 70000,
+                      :interface-version-list [70000],
                       :label "EveryAddonThree (group)",
                       :name "everyaddon",
                       :primary? false,

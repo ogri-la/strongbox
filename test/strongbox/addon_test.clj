@@ -43,85 +43,168 @@
 
 (deftest group-addons
   (testing "addons with nothing to group on are not modified"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3" :supported-game-tracks [:retail]}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6" :supported-game-tracks [:retail]}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9" :supported-game-tracks [:retail]}]
+    (let [addon-list [{:name "a1",
+                       :dirname "A1",
+                       :label "A1",
+                       :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "1.2.3"
+                       :supported-game-tracks [:retail]}
+
+                      {:name "a2",
+                       :dirname "A2",
+                       :label "A2",
+                       :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "4.5.6"
+                       :supported-game-tracks [:retail]}
+
+                      {:name "a3",
+                       :dirname "A3",
+                       :label "A2",
+                       :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "7.8.9"
+                       :supported-game-tracks [:retail]}]
           expected addon-list]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "addons with groupable data but no groupings are not modified"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                      {:name "a2", :dirname "A2", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "4.5.6"
                        :supported-game-tracks [:retail]
                        :group-id "bar" :primary? true}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                      {:name "a3", :dirname "A3", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "7.8.9"
                        :supported-game-tracks [:retail]
                        :group-id "baz" :primary? true}]
           expected addon-list]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "addons with groupable data with one marked as the `primary`, group as expected"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                      {:name "a2", :dirname "A2", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "4.5.6"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                      {:name "a3", :dirname "A3", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "7.8.9"
                        :supported-game-tracks [:retail]
                        :group-id "bar" :primary? true}]
 
-          expected [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+          expected [{:name "a1", :dirname "A1", :label "A1", :description ""
+                     :interface-version 80300
+                     :interface-version-list [80300]
+                     :installed-version "1.2.3"
                      :supported-game-tracks [:retail]
                      :group-id "foo" :primary? true :group-addons
-                     [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                     [{:name "a1", :dirname "A1", :label "A1", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                      {:name "a2", :dirname "A2", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "4.5.6"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}]}
 
-                    {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                    {:name "a3", :dirname "A3", :label "A2", :description ""
+                     :interface-version 80300
+                     :interface-version-list [80300]
+                     :installed-version "7.8.9"
                      :supported-game-tracks [:retail]
                      :group-id "bar" :primary? true}]]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "synthetic records are created for groupable addons with no primary addon"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                      {:name "a2", :dirname "A2", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "4.5.6"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                      {:name "a3", :dirname "A3", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "7.8.9"
                        :supported-game-tracks [:retail]
                        :group-id "bar" :primary? true}]
 
-          expected [{:name "a1", :dirname "A1", :label "foo (group)", :description "group record for the foo addon" :interface-version 80300 :installed-version "1.2.3"
+          expected [{:name "a1", :dirname "A1", :label "foo (group)", :description "group record for the foo addon"
+                     :interface-version 80300
+                     :interface-version-list [80300]
+                     :installed-version "1.2.3"
                      :supported-game-tracks [:retail]
                      :group-id "foo" :primary? false :group-addons
-                     [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+                     [{:name "a1", :dirname "A1", :label "A1", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                      {:name "a2", :dirname "A2", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "4.5.6"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}]}
 
-                    {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                    {:name "a3", :dirname "A3", :label "A2", :description ""
+                     :interface-version 80300
+                     :interface-version-list [80300]
+                     :installed-version "7.8.9"
                      :supported-game-tracks [:retail]
                      :group-id "bar" :primary? true}]]
       (is (= expected (addon/group-addons addon-list)))))
 
   (testing "if any one addon in a group is ignored, the top-level addon ('all') is also ignored"
-    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description "" :interface-version 80300 :installed-version "1.2.3"
+    (let [addon-list [{:name "a1", :dirname "A1", :label "A1", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "1.2.3"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? true}
-                      {:name "a2", :dirname "A2", :label "A2", :description "" :interface-version 80300 :installed-version "4.5.6"
+                      {:name "a2", :dirname "A2", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "4.5.6"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false}
-                      {:name "a3", :dirname "A3", :label "A2", :description "" :interface-version 80300 :installed-version "7.8.9"
+                      {:name "a3", :dirname "A3", :label "A2", :description ""
+                       :interface-version 80300
+                       :interface-version-list [80300]
+                       :installed-version "7.8.9"
                        :supported-game-tracks [:retail]
                        :group-id "foo" :primary? false :ignore? true}]
 
@@ -130,6 +213,7 @@
                      :label "A1"
                      :description ""
                      :interface-version 80300
+                     :interface-version-list [80300]
                      :installed-version "1.2.3"
 
                      :supported-game-tracks [:retail]
@@ -141,6 +225,7 @@
                                      :label "A1",
                                      :description ""
                                      :interface-version 80300
+                                     :interface-version-list [80300]
 
                                      :supported-game-tracks [:retail]
                                      :installed-version "1.2.3"
@@ -151,6 +236,7 @@
                                      :label "A2",
                                      :description ""
                                      :interface-version 80300
+                                     :interface-version-list [80300]
 
                                      :supported-game-tracks [:retail]
                                      :installed-version "4.5.6"
@@ -161,6 +247,7 @@
                                      :label "A2",
                                      :description ""
                                      :interface-version 80300
+                                     :interface-version-list [80300]
 
                                      :supported-game-tracks [:retail]
                                      :installed-version "7.8.9"
@@ -186,6 +273,7 @@
                     :label "SomeAddon",
                     :description "asdf",
                     :interface-version 80300,
+                    :interface-version-list [80300]
 
                     :supported-game-tracks [:retail]
                     :installed-version "1.2.3"}]
@@ -219,6 +307,7 @@
                     :label "SomeAddon"
                     :description "asdf"
                     :interface-version 80300
+                    :interface-version-list [80300]
 
                      ;; shared between toc and nfo, nfo wins out
                     :installed-version "1.2.3"
@@ -261,6 +350,7 @@
                     :label "SomeAddon",
                     :description "asdf",
                     :interface-version 80300,
+                    :interface-version-list [80300]
                     :installed-version "1.2.3"
                     :supported-game-tracks [:retail]}]
       (is (= expected (addon/load-installed-addon some-addon-path :retail)))
@@ -286,6 +376,7 @@
                     :label "SomeAddon",
                     :description "asdf",
                     :interface-version 80300
+                    :interface-version-list [80300]
                     :supported-game-tracks [:retail]
                     :installed-version "@project-version@"
                     :source "wowinterface"
@@ -305,6 +396,7 @@
                    :dirsize 0
                    :installed-version "1.2.3",
                    :interface-version 11307,
+                   :interface-version-list [11307]
                    :label "EveryAddon 1.2.3",
                    :name "everyaddon",
                    :supported-game-tracks [:classic :classic-tbc :retail]}]
@@ -405,6 +497,7 @@
                  :label "Every Addon",
                  :description ""
                  :interface-version 80300
+                 :interface-version-list [80300]
                  :installed-version "1.2.3"
                  :supported-game-tracks [:retail]
                  :group-id "foo"
