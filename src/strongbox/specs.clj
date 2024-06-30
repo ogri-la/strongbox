@@ -44,6 +44,7 @@
 
 (s/def ::gte-zero #(and (number? %) (>= % 0)))
 
+(s/def ::list-of-ints (s/coll-of int?))
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -121,6 +122,7 @@
 (s/def ::update? boolean?)
 (s/def ::interface-version (and int? (fn [interface-version]
                                        (>= interface-version 10000)))) ;; 90005, 11307, 20501
+(s/def ::interface-version-list (s/coll-of ::interface-version))
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
 (s/def ::release-label ::label)
@@ -290,14 +292,16 @@
                    ::label
                    ::description
                    ::dirname
-                   ::interface-version
+                   ::interface-version ;; deprecated, to be replaced with interface-version-list
                    ::installed-version
                    :addon/supported-game-tracks]
           :opt-un [::dirsize ;; not present on error during calculation. zero during testing.
                    ;; toc file may contain addon host information but it's not guaranteed.
                    :addon/source
                    :addon/source-id
-                   :addon/source-map-list]))
+                   :addon/source-map-list
+                   ::interface-version-list ;; todo: make required
+                   ]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof

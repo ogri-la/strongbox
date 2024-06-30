@@ -91,6 +91,7 @@ SomeAddon.lua")
                      :label "Addon Name"
                      :description "Description of the addon here"
                      :interface-version 80205
+                     :interface-version-list [80205]
                      :-toc/game-track :retail
                      :supported-game-tracks [:retail]
                      :installed-version "1.6.1"
@@ -109,6 +110,7 @@ SomeAddon.lua")
                      :label "EveryAddon *"
                      :description nil
                      :interface-version constants/default-interface-version
+                     :interface-version-list [constants/default-interface-version]
                      :-toc/game-track :retail
                      :supported-game-tracks [:retail]
                      :installed-version nil}
@@ -120,6 +122,7 @@ SomeAddon.lua")
                  ;; classic interface version gets a :classic game-track
                  [{:interface constants/default-interface-version-classic}
                   (merge base-case {:interface-version constants/default-interface-version-classic
+                                    :interface-version-list [constants/default-interface-version-classic]
                                     :supported-game-tracks [:classic]
                                     :-toc/game-track :classic})]
 
@@ -139,6 +142,7 @@ SomeAddon.lua")
                     :description nil
                     :installed-version nil
                     :interface-version constants/default-interface-version
+                    :interface-version-list [constants/default-interface-version]
                     :supported-game-tracks [:retail]
                     :-toc/game-track :retail}
           cases [;; wowinterface
@@ -259,3 +263,48 @@ SomeAddon.lua")
     (let [fixture (helper/fixture-path "questie--invalid.toc")
           raw-data (toc/read-toc-file fixture)]
       (is (nil? (toc/parse-addon-toc raw-data))))))
+
+(deftest parse-addon-toc--multiple-interface-versions
+  (testing "multiple interface versions are supported"
+    (let [fixture {:title "foo"
+                   :label "Foo"
+                   :description "Foo Bar"
+                   :dirname "Baz"
+                   :interface "100206, 40400, 11502"
+                   :installed-version "1.2.3"
+                   :supported-game-tracks []}
+
+          expected {:description "Foo Bar",
+                    :dirname "Baz",
+                    :installed-version nil,
+                    :interface-version 100206
+                    :interface-version-list [100206 40400 11502],
+                    :label "foo",
+                    :name "foo",
+                    :supported-game-tracks [:retail :classic-cata :classic],
+                    :-toc/game-track :retail}]
+      (is (= expected (toc/parse-addon-toc fixture))))))
+
+(deftest parse-interface-value
+  (testing "interface values can be parsed into a set of game tracks"
+    (let [cases [[nil nil]
+
+                 ;; ---
+
+                 ["", nil]
+                 ["1", [1]]
+                 ["1,2", [1,2]]
+                 ["1, 2", [1,2]]
+                 ["1,2, 3", [1,2,3]]
+                 ["1,2,3,", [1,2,3]]
+                 [",1,2,3,", [1,2,3]]
+                 ["100206, 40400, 11502", [100206, 40400, 11502]]
+
+                 ;; ---
+
+                 [0, [0]]
+                 [1, [1]]
+                 [100206, [100206]]]]
+
+      (doseq [[given expected] cases]
+        (is (= expected (toc/parse-interface-value given)))))))

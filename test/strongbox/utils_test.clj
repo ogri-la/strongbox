@@ -713,3 +713,11 @@
                [false "False"]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/pretty-print-value given))))))
+
+(deftest to-int
+  (let [cases [["1" 1]
+               ["1,2,3", nil]
+               ["1, 2, 3", nil]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/to-int given))))))
+
