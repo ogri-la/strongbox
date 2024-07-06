@@ -1594,6 +1594,7 @@
                  ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
                  :interface-version constants/default-interface-version
+                 :interface-version-list [constants/default-interface-version]
                  :toc/game-track :retail
                  :supported-game-tracks []
                  :installed-version "0"}

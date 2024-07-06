@@ -192,20 +192,11 @@
 (defn-spec -find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)
   "returns a set of game tracks after inspecting .toc file contents"
   [toc-data map?]
-  (->> (-> toc-data
-           ;; hrm: this only allows for two possible game tracks, one normal and one hiding in the template area
-           ;; 2021-06-10: see release.json
-           (select-keys [:interface :#interface])
-           vals)
-
-       (map utils/to-int)
-       (map utils/interface-version-to-game-track)
-
-       ;; 2021-05-02: unknown game versions of 2.x (that are now considered "Classic (TBC)") were returning `nil` as the game track.
-       (remove nil?)
-       set
-       vec
-       utils/nilable))
+  (let [use-defaults false]
+    (-> toc-data
+        (toc/-parse-addon-toc use-defaults)
+        :supported-game-tracks
+        utils/nilable)))
 
 (defn-spec find-gametracks-toc-data (s/or :ok ::sp/game-track-list, :error nil?)
   "returns a set of game tracks after inspecting the .toc file contents"

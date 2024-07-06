@@ -91,7 +91,7 @@ SomeAddon.lua")
                      :label "Addon Name"
                      :description "Description of the addon here"
                      :interface-version 80205
-                     :interface-version-list [80205]
+                     :interface-version-list [80205 11302]
                      :-toc/game-track :retail
                      :supported-game-tracks [:retail]
                      :installed-version "1.6.1"
@@ -287,11 +287,11 @@ SomeAddon.lua")
 
 (deftest parse-interface-value
   (testing "interface values can be parsed into a set of game tracks"
-    (let [cases [[nil nil]
+    (let [cases [[nil []]
 
                  ;; ---
 
-                 ["", nil]
+                 ["", []]
                  ["1", [1]]
                  ["1,2", [1,2]]
                  ["1, 2", [1,2]]
