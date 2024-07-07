@@ -104,6 +104,8 @@
           syn (if (= (:source toc) "wowinterface")
                 (cond
                   (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
+                  ;; todo: can we expect :interface-version-list here?
+                  ;;(:interface-version-list) (assoc syn :game-track-list (mapv utils/interface-version-to-game-track (:interface-version-list toc)))
                   (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
                   :else sink)
                 syn)

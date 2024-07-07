@@ -170,7 +170,8 @@
                                  interface-version-list)
         interface-version (first interface-version-list)
 
-        game-track-list (mapv utils/interface-version-to-game-track interface-version-list)
+        ;; note: even after the `distinct` above, it's still possible for the derived game tracks to be duplicates
+        game-track-list (vec (distinct (mapv utils/interface-version-to-game-track interface-version-list)))
         game-track (first game-track-list)
 
         _ (when (and (some? (:-filename-game-track keyvals))

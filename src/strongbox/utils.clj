@@ -305,7 +305,7 @@
   ;; the below code should only be considered unambigous for versions of WoW between 2.x and 8.x
   ;; (and 9.x if that series follows the behaviour of all other patch levels since 2.x)
   ;; see: https://wow.gamepedia.com/Patches
-  (let [iface-regex #"(?<major>\d0|\d{1})\d(?<minor>\d{1})\d(?<patch>\d{1}\w?)"
+  (let [iface-regex #"(?<major>\d{1,2}|\d)\d(?<minor>\d)\d(?<patch>\d\w?)"
         matcher (re-matcher iface-regex (str iface-version))
         major-minor-patch (rest (re-find matcher))]
     (when-not (empty? major-minor-patch)

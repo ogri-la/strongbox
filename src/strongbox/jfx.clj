@@ -1351,11 +1351,14 @@
                          :cell-value-factory cli/available-versions-v2}
 
       :game-version {:text "WoW" :menu-label "game version (WoW)"
-                     :min-width 70 :pref-width 70 :max-width 100
+                     :min-width 70 :pref-width 140 :max-width 200
                      :cell-value-factory identity
                      :cell-factory {:fx/cell-type :tree-table-cell
                                     :describe (fn [row]
-                                                (let [text (some-> row :interface-version str utils/interface-version-to-game-version)
+                                                (let [text (some->> row
+                                                                   :interface-version-list ;; [80000, 100000]
+                                                                   (map utils/interface-version-to-game-version) ;; [8.0, 10.0]
+                                                                   (clojure.string/join " | ")) ;; "8.0 | 10.0"
                                                       text (if-not (string? text) "" text)]
                                                   {:graphic {:fx/type fx.ext.node/with-tooltip-props
                                                              :props {:tooltip {:fx/type :tooltip
