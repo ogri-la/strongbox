@@ -99,16 +99,17 @@
   (-> label lower-case rm-trailing-version utils/slugify))
 
 (defn-spec parse-interface-value (s/or :ok ::sp/list-of-ints)
+  "parses a '# Interface' value which may be a single integer or a comma separated list of integers."
   [val (s/or :ok string?, :supported int?, :noop nil?)]
-  (if-not val
-    []
-    (if (int? val)
-      [val]
-      (some->> (clojure.string/split val #",")
-               (map clojure.string/trim)
-               (map utils/to-int)
-               (remove nil?)
-               vec))))
+  (cond
+    (nil? val) []
+    (int? val) [val]
+    :else (some->> (clojure.string/split val #",")
+                   (map clojure.string/trim)
+                   (map utils/to-int)
+                   (remove nil?)
+                   distinct
+                   vec)))
 
 ;;
 

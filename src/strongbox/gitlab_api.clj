@@ -202,8 +202,6 @@
 
 (defn-spec guess-game-track-list (s/or :ok ::sp/game-track-list, :error nil?)
   "attempts to guess the game tracks an addon may support.
-  if multiple toc files exist it assumes they are being used for classic versions of the game.
-  if only a single toc file exists, it downloads and inspects the `:interface` value in the toc file.
   if no toc files are found it returns `nil`."
   [source-id :addon/source-id]
   (->> source-id

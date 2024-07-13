@@ -285,28 +285,27 @@
 (defn-spec to-int (s/or :ok int?, :error nil?)
   "given any value `x`, converts it to an integer or returns `nil` if it can't be converted."
   [x any?]
-  (if (int? x)
-    x
-    (try (Integer/valueOf (str x))
-         (catch NumberFormatException nfe
-           nil))))
+  (cond
+    (nil? x) x
+    (int? x) x
+    :else (try (Integer/valueOf (str x))
+               (catch NumberFormatException nfe
+                 nil))))
 
 (defn-spec slugify string?
   [string string?]
   (sluglib/slugify string))
 
 (defn-spec interface-version-to-game-version (s/or :ok string?, :no-match nil?)
+  "'10000' => 1.0.0, '100000' => 10.0.0, '102010' => 10.2.1"
   [iface-version (s/or :deprecated string?, :ok int?)]
-  ;; revisit
-  ;; warning! there is no way to convert *unambiguously* between the 'patch level' and the 'interface version'
-  ;; for example, patch "1.2.0" => "10200", but so does "1.20.0" => "10200"
-  ;; there haven't been any minor versions >4 since MOP
-  ;; we'll hit 10.0 soon enough (we're at 8.x at time of writing) so what then? "10.0.1" => "10000" is another collision
-  ;; the below code should only be considered unambigous for versions of WoW between 2.x and 8.x
-  ;; (and 9.x if that series follows the behaviour of all other patch levels since 2.x)
-  ;; see: https://wow.gamepedia.com/Patches
-  (let [iface-regex #"(?<major>\d{1,2}|\d)\d(?<minor>\d)\d(?<patch>\d\w?)"
-        matcher (re-matcher iface-regex (str iface-version))
+  (let [iface-version (if (int? iface-version)
+                        (str iface-version)
+                        iface-version)
+        iface-regex (if (= (.length iface-version) 5)
+                      #"(?<major>\d{1})\d(?<minor>\d{1})\d(?<patch>\d)"
+                      #"(?<major>\d{2})\d(?<minor>\d{1})\d(?<patch>\d)")
+        matcher (re-matcher iface-regex iface-version)
         major-minor-patch (rest (re-find matcher))]
     (when-not (empty? major-minor-patch)
       (clojure.string/join "." major-minor-patch))))

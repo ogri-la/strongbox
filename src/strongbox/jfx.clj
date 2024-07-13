@@ -1223,6 +1223,15 @@
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
 
+(defn-spec addon-game-version-list-string (s/or :ok string?, :err nil?)
+  "returns the list of game versions an addon supports as a string."
+  [row (s/nilable map?)]
+  (some->> row
+           :interface-version-list ;; [80000, 100000]
+           (map utils/interface-version-to-game-version) ;; [8.0, 10.0]
+           distinct
+           (clojure.string/join " | "))) ;; "8.0 | 10.0"
+
 (defn gui-column-map
   "list of columns for the installed-addons-table that needs to be separately defined so a menu can be built.
   called with no arguments, the various attached functions will probably fail."
@@ -1355,10 +1364,7 @@
                      :cell-value-factory identity
                      :cell-factory {:fx/cell-type :tree-table-cell
                                     :describe (fn [row]
-                                                (let [text (some->> row
-                                                                   :interface-version-list ;; [80000, 100000]
-                                                                   (map utils/interface-version-to-game-version) ;; [8.0, 10.0]
-                                                                   (clojure.string/join " | ")) ;; "8.0 | 10.0"
+                                                (let [text (addon-game-version-list-string row)
                                                       text (if-not (string? text) "" text)]
                                                   {:graphic {:fx/type fx.ext.node/with-tooltip-props
                                                              :props {:tooltip {:fx/type :tooltip

@@ -38,7 +38,7 @@
            "10000" "1.0.0" ;; first release
            "20001" "2.0.1" ;; Burning Crusade, Before The Storm
            "30002" "3.0.2" ;; WotLK, Echos of Doom
-           "30008a" "3.0.8a" ;; 'a' ?? supported, but eh ...
+           ;;"30008a" "3.0.8a" ;; 'a' ?? supported, but eh ... ;; 2024-07-14: case no longer supported
 
            ;; six digit cases
            "100000" "10.0.0"
@@ -717,7 +717,11 @@
       (is (= expected (utils/pretty-print-value given))))))
 
 (deftest to-int
-  (let [cases [["1" 1]
+  (let [cases [[nil nil]
+               [{} nil]
+               ["asdf" nil]
+               ["" nil]
+               ["1" 1]
                ["1,2,3", nil]
                ["1, 2, 3", nil]]]
     (doseq [[given expected] cases]

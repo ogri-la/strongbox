@@ -292,6 +292,7 @@ SomeAddon.lua")
                  ;; ---
 
                  ["", []]
+                 ["asdf", []]
                  ["1", [1]]
                  ["1,2", [1,2]]
                  ["1, 2", [1,2]]
@@ -300,11 +301,17 @@ SomeAddon.lua")
                  [",1,2,3,", [1,2,3]]
                  ["100206, 40400, 11502", [100206, 40400, 11502]]
 
-                 ;; ---
-
+                 ;; integers are used by tests but not encouraged.
                  [0, [0]]
                  [1, [1]]
-                 [100206, [100206]]]]
+                 [100206, [100206]]
+
+                 ;; dupes
+                 ["1,1", [1]],
+                 ["1, 1, 1", [1]],
+                 ["1,1,2,2,3", [1,2,3]]
+                 
+                 ]]
 
       (doseq [[given expected] cases]
         (is (= expected (toc/parse-interface-value given)))))))
