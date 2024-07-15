@@ -1593,9 +1593,8 @@
                  ;; 2020-06: dirname must be a non-empty string
                  ;; todo: why is dirname needed here?
                  :dirname addon/dummy-dirname
-                 :interface-version constants/default-interface-version
                  :interface-version-list [constants/default-interface-version]
-                 :toc/game-track :retail
+                 :-toc/game-track-list [:retail]
                  :supported-game-tracks []
                  :installed-version "0"}
         addon-list (map #(merge padding %) addon-list)

@@ -480,7 +480,6 @@
                     :group-id "https://www.wowinterface.com/downloads/info25079",
                     :installed-game-track :retail,
                     :installed-version "1.2.3",
-                    :interface-version 70000,
                     :interface-version-list [70000]
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
@@ -611,7 +610,7 @@
                     :group-id "https://www.tukui.org/addons.php?id=98",
                     :installed-game-track :retail,
                     :installed-version "0.960",
-                    :interface-version 70000,
+                    :interface-version-list [70000],
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "-rp-tags",
@@ -846,7 +845,7 @@
                    :installed-version "5.6.20210831"
                    :name "the-undermine-journal"
                    :source "wowinterface"
-                   :interface-version 90100
+                   :interface-version-list [90100]
                    :game-track :retail
                    :installed-game-track :retail
                    :label "The Undermine Journal"
@@ -934,7 +933,7 @@
                                            :dirname "EveryAddon",
                                            :group-id "everyaddon-aaaaaaaa",
                                            :installed-version "1.2.3",
-                                           :interface-version 70000,
+                                           :interface-version-list [70000],
                                            :label "EveryAddon 1.2.3",
                                            :name "everyaddon",
                                            :primary? true,
@@ -943,14 +942,14 @@
                                            :dirname "EveryAddon-BundledAddon",
                                            :group-id "everyaddon-aaaaaaaa",
                                            :installed-version "a.b.c",
-                                           :interface-version 80000,
+                                           :interface-version-list [80000],
                                            :label "BundledAddon a.b.c",
                                            :name "bundledaddon-a-b-c",
                                            :primary? false,
                                            :supported-game-tracks [:retail]}],
                            :group-id "everyaddon-aaaaaaaa",
                            :installed-version "1.2.3",
-                           :interface-version 70000,
+                           :interface-version-list [70000],
                            :label "EveryAddon 1.2.3",
                            :name "everyaddon",
                            :primary? true,

@@ -273,7 +273,6 @@
                      :group-id "https://www.wowinterface.com/downloads/info3",
                      :installed-game-track :retail,
                      :installed-version "1.2.3",
-                     :interface-version 70000,
                      :interface-version-list [70000],
                      :label "Addon3",
                      :matched? true,
@@ -301,7 +300,6 @@
                      :group-id "https://github.com/author/addon5",
                      :installed-game-track :classic-tbc,
                      :installed-version "v0.6",
-                     :interface-version 70000,
                      :interface-version-list [70000],
                      :label "Addon5",
                      :matched? true,
@@ -394,7 +392,6 @@
                      :group-id "https://www.wowinterface.com/downloads/info3",
                      :installed-game-track :classic, ;; imported game track
                      :installed-version "1.2.3",
-                     :interface-version 70000,
                      :interface-version-list [70000]
                      :label "Addon3",
                      :matched? true,
@@ -422,7 +419,6 @@
                      :group-id "https://github.com/author/addon5",
                      :installed-game-track :classic-tbc,
                      :installed-version "v0.6",
-                     :interface-version 70000,
                      :interface-version-list [70000]
                      :label "Addon5",
                      :matched? true,
@@ -467,7 +463,7 @@
           dummy-catalogue (catalogue/new-catalogue catalogue)
 
           ;; this is a subset of the data the remote addon host (like wowinterface) serves us
-          api-result [{:game-track :retail,
+          api-result [{:game-track :retail, ;; todo: be careful here. it's game-track from source updates, not anything else
                        :UIVersion "v8.10.00"}]
 
           alt-api-result (assoc-in api-result [0 :UIVersion] "v8.20.00")
@@ -493,7 +489,7 @@
                      :label "Every Addon"
                      :description "foo"
                      :dirname "EveryAddon"
-                     :interface-version 70000
+                     :interface-version-list [70000]
                      :installed-version "v8.10.00"
                      :supported-game-tracks [:retail]}
 
@@ -768,10 +764,12 @@
   (testing "installing an addon with a single invalid toc is possible, but loading it's toc data is not."
     (with-running-app
       (let [install-dir (helper/install-dir)
-            [[addon] downloaded-file] (helper/gen-addon! install-dir {:override {:interface-version 0}})
+            [[addon] downloaded-file] (helper/gen-addon! install-dir {:override {:interface-version-list [0]}})
+            install-path (->> addon :toc :dirname (fs/file install-dir) str)
             expected (-> addon :derived-nfo)]
         (core/install-addon (:installable addon) install-dir downloaded-file)
-        (is (= expected (core/load-installed-addon (str (fs/file install-dir (-> addon :toc :dirname))))))
+
+        (is (= expected (core/load-installed-addon install-path)))
         (is (= [expected] (core/get-state :installed-addon-list)))))))
 
 ;;
@@ -1162,7 +1160,7 @@
                :label "EveryAddon"
                :description "Toc Description"
                :dirname "EveryAddon"
-               :interface-version 70000
+               :interface-version-list [70000]
                :installed-version "1.2.3"
                :supported-game-tracks [:retail]}
 
@@ -1184,7 +1182,7 @@
                     :label "EveryAddon"
                     :description "Toc Description"
                     :dirname "EveryAddon"
-                    :interface-version 70000
+                    :interface-version-list [70000]
                     :installed-version "1.2.3"
                     :supported-game-tracks [:retail]
 
@@ -1221,7 +1219,6 @@
                       :group-id "https://group.id/never/fetched",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
-                      :interface-version 70000,
                       :interface-version-list [70000],
                       :supported-game-tracks [:retail]
                       :label "EveryAddon 1.2.3",
@@ -1257,7 +1254,6 @@
                       :group-id "https://group.id/never/fetched",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
-                      :interface-version 70000,
                       :interface-version-list [70000],
                       :supported-game-tracks [:retail]
                       :label "EveryAddon 1.2.3",
@@ -1308,7 +1304,6 @@
 
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
-                                        :interface-version 80000,
                                         :interface-version-list [80000],
                                         :supported-game-tracks [:retail]
                                         :label "BundledAddon a.b.c",
@@ -1324,7 +1319,6 @@
                                         :group-id "https://group.id/also/never/fetched",
                                         :installed-game-track :retail,
                                         :installed-version "5.6.7",
-                                        :interface-version 70000,
                                         :interface-version-list [70000],
                                         :supported-game-tracks [:retail]
                                         :label "EveryOtherAddon 5.6.7",
@@ -1337,7 +1331,6 @@
                         :ignore? true,
                         :installed-game-track :retail,
                         :installed-version "5.6.7",
-                        :interface-version 80000,
                         :interface-version-list [80000],
                         :supported-game-tracks [:retail]
                         :label "fetched (group)",
@@ -1386,7 +1379,6 @@
                         :group-id "https://group.id/never/fetched",
                         :installed-game-track :retail,
                         :installed-version "1.2.3",
-                        :interface-version 70000,
                         :interface-version-list [70000],
                         :supported-game-tracks [:retail]
                         :label "EveryAddon 1.2.3",
@@ -1746,7 +1738,6 @@
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
-                                      :interface-version 70000,
                                       :interface-version-list [70000],
                                       :label "EveryAddon",
                                       :name "everyaddon",
@@ -1762,7 +1753,6 @@
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
-                                      :interface-version 70000,
                                       :interface-version-list [70000],
                                       :label "EveryAddon",
                                       :name "everyaddon",
@@ -1778,7 +1768,6 @@
                                       :group-id "https://example.com/EveryAddonThree",
                                       :installed-game-track :retail,
                                       :installed-version "1.2.3",
-                                      :interface-version 70000,
                                       :interface-version-list [70000],
                                       :label "EveryAddon",
                                       :name "everyaddon",
@@ -1791,7 +1780,6 @@
                       :group-id "https://example.com/EveryAddonThree",
                       :installed-game-track :retail,
                       :installed-version "1.2.3",
-                      :interface-version 70000,
                       :interface-version-list [70000],
                       :label "EveryAddonThree (group)",
                       :name "everyaddon",
@@ -1838,8 +1826,8 @@
                :label "Every Addon"
                :description "foo"
                :dirname "EveryAddon"
-               :interface-version 70000
-               :toc/game-track :retail
+               :interface-version-list [70000]
+               :-toc/game-track-list [:retail]
                :supported-game-tracks [:retail]
                :installed-version "v8.10.00"}
           installed-addon-list [toc]
@@ -1872,8 +1860,8 @@
                :label "Every Addon"
                :description "foo"
                :dirname "EveryAddon"
-               :interface-version 70000
-               :toc/game-track :retail
+               :interface-version-list [70000]
+               :-toc/game-track-list [:retail]
                :supported-game-tracks [:retail]
                :installed-version "v8.10.00"
                :ignore? true}

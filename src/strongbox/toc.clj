@@ -169,33 +169,22 @@
                                    [constants/default-interface-version]
                                    [])
                                  interface-version-list)
-        interface-version (first interface-version-list)
 
         ;; note: even after the `distinct` above, it's still possible for the derived game tracks to be duplicates
         game-track-list (vec (distinct (mapv utils/interface-version-to-game-track interface-version-list)))
-        game-track (first game-track-list)
-
-        _ (when (and (some? (:-filename-game-track keyvals))
-                     (not= (:-filename-game-track keyvals) game-track))
-            (debug (format
-                    ;; 'classic' in .toc filename does not match 'retail' derived from it's 'Interface' value of '90200'.
-                    ;; see BigWigs_Classic for a false-positive
-                    "'%s' in .toc filename does not match '%s' derived from it's 'Interface' value of '%s'."
-                    (name (:-filename-game-track keyvals))
-                    (name game-track)
-                    interface-version)))
 
         addon {:name (when label (normalise-name label))
                :dirname dirname
                :label label
                ;; `:notes` is preferred but we'll fall back to `:description`
                :description (or (:notes keyvals) (:description keyvals))
-               :interface-version interface-version
                :interface-version-list interface-version-list
 
-               :-toc/game-track game-track ;; todo: investigate why :-toc/* values are being used again ...
+               ;; `:-toc/game-track-list` is used to group .toc files later to determine which set
+               ;; of data to use for the selected game track before being disassociated.
+               :-toc/game-track-list game-track-list
 
-               ;; expanded upon in `parse-addon-toc-guard` when it knows about *all* available toc files
+               ;; replaced in `parse-addon-toc-guard` when *all* .toc files have been parsed.
                :supported-game-tracks game-track-list
 
                :installed-version (:version keyvals)
@@ -244,7 +233,7 @@
   (when-not (blizzard-addon? addon-dir)
     (try
       (let [result (->> addon-dir read-addon-dir (map parse-addon-toc) (remove nil?))
-            supported-game-tracks (->> result (map :-toc/game-track) distinct sort vec)]
+            supported-game-tracks (->> result (map :-toc/game-track-list) flatten distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.

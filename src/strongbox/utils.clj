@@ -934,3 +934,12 @@
     (boolean? v) (-> v str clojure.string/capitalize)
     (keyword? v) (name v)
     :else (str v)))
+
+(defn group-by-coll
+  [kw coll]
+  (group-by kw
+            (apply concat ;; shallow flatten
+                   (for [row coll]
+                     (for [v (kw row)]
+                       (assoc row kw v))))))
+

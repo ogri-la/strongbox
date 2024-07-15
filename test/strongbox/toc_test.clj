@@ -90,10 +90,9 @@ SomeAddon.lua")
                      :dirsize 0
                      :label "Addon Name"
                      :description "Description of the addon here"
-                     :interface-version 80205
                      :interface-version-list [80205 11302]
-                     :-toc/game-track :retail
-                     :supported-game-tracks [:retail]
+                     :-toc/game-track-list [:retail :classic]
+                     :supported-game-tracks [:classic :retail]
                      :installed-version "1.6.1"
                      :source "wowinterface"
                      :source-id 12345
@@ -109,9 +108,8 @@ SomeAddon.lua")
                      :dirname "EveryAddon"
                      :label "EveryAddon *"
                      :description nil
-                     :interface-version constants/default-interface-version
                      :interface-version-list [constants/default-interface-version]
-                     :-toc/game-track :retail
+                     :-toc/game-track-list [:retail]
                      :supported-game-tracks [:retail]
                      :installed-version nil}
 
@@ -121,10 +119,9 @@ SomeAddon.lua")
 
                  ;; classic interface version gets a :classic game-track
                  [{:interface constants/default-interface-version-classic}
-                  (merge base-case {:interface-version constants/default-interface-version-classic
-                                    :interface-version-list [constants/default-interface-version-classic]
+                  (merge base-case {:interface-version-list [constants/default-interface-version-classic]
                                     :supported-game-tracks [:classic]
-                                    :-toc/game-track :classic})]
+                                    :-toc/game-track-list [:classic]})]
 
                  ;; addon is in development
                  [{:version "@project-version@"} (merge base-case
@@ -141,10 +138,9 @@ SomeAddon.lua")
           defaults {:dirname "dirname"
                     :description nil
                     :installed-version nil
-                    :interface-version constants/default-interface-version
                     :interface-version-list [constants/default-interface-version]
                     :supported-game-tracks [:retail]
-                    :-toc/game-track :retail}
+                    :-toc/game-track-list [:retail]}
           cases [;; wowinterface
                  [{:x-wowi-id "123"} {:label "dirname *" :name "dirname"
                                       :source "wowinterface" :source-id 123
@@ -277,12 +273,11 @@ SomeAddon.lua")
           expected {:description "Foo Bar",
                     :dirname "Baz",
                     :installed-version nil,
-                    :interface-version 100206
                     :interface-version-list [100206 40400 11502],
                     :label "foo",
                     :name "foo",
                     :supported-game-tracks [:retail :classic-cata :classic],
-                    :-toc/game-track :retail}]
+                    :-toc/game-track-list [:retail :classic-cata :classic]}]
       (is (= expected (toc/parse-addon-toc fixture))))))
 
 (deftest parse-interface-value
@@ -309,9 +304,7 @@ SomeAddon.lua")
                  ;; dupes
                  ["1,1", [1]],
                  ["1, 1, 1", [1]],
-                 ["1,1,2,2,3", [1,2,3]]
-                 
-                 ]]
+                 ["1,1,2,2,3", [1,2,3]]]]
 
       (doseq [[given expected] cases]
         (is (= expected (toc/parse-interface-value given)))))))

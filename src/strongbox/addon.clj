@@ -175,13 +175,13 @@
   (logging/with-addon {:dirname (-> addon-dir fs/base-name str)}
     (let [toc-data-list (toc/parse-addon-toc-guard addon-dir)]
       (if (= 1 (count toc-data-list))
-        ;; whatever toc data we have, we only have 1 of it (normal case), so return that
-        (-> toc-data-list first (dissoc :-toc/game-track))
+        ;; we only have 1 set of .toc data, so return that
+        (-> toc-data-list first (dissoc :-toc/game-track-list))
 
-        ;; we have multiple sets of toc data to choose from. which to choose?
+        ;; we have multiple sets of .toc data to choose from. which to choose?
         ;; prefer the one for the given `game-track`, if it exists, otherwise do as we do with
         ;; the catalogue and use a list of priorities.
-        (let [grouped-toc-data (group-by :-toc/game-track toc-data-list)
+        (let [grouped-toc-data (utils/group-by-coll :-toc/game-track-list toc-data-list)
               safe-fallback [game-track]
               priorities (get constants/game-track-priority-map game-track safe-fallback)
               group (utils/first-nn #(get grouped-toc-data %) priorities)]
@@ -193,7 +193,7 @@
                      (not (apply = group)))
             (debug (format "multiple sets of different toc data found for %s. using first." game-track)))
 
-          (-> group first (dissoc :-toc/game-track)))))))
+          (-> group first (dissoc :-toc/game-track-list)))))))
 
 (defn-spec load-all-installed-addons :addon/toc-list
   "reads and merges the toc data and the nfo data from *all* addons in the given `install-dir`, groups them and returns the grouped mooshed data."

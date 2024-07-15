@@ -292,16 +292,14 @@
                    ::label
                    ::description
                    ::dirname
-                   ::interface-version ;; deprecated, to be replaced with interface-version-list
+                   ::interface-version-list
                    ::installed-version
                    :addon/supported-game-tracks]
           :opt-un [::dirsize ;; not present on error during calculation. zero during testing.
                    ;; toc file may contain addon host information but it's not guaranteed.
                    :addon/source
                    :addon/source-id
-                   :addon/source-map-list
-                   ::interface-version-list ;; todo: make required
-                   ]))
+                   :addon/source-map-list]))
 (s/def :addon/toc-list (s/coll-of :addon/toc))
 
 ;; circular dependency? :addon/toc has an optional ::group-addons and ::group-addons is a list of :addon/toc ? oof
@@ -381,8 +379,8 @@
 (s/def :addon/source-updates
   (s/keys :req-un [::version
                    ::download-url
-                   ::game-track]
-          :opt-un [::interface-version
+                   ::game-track] ;; todo: does this need looking at?
+          :opt-un [::interface-version-list ;; todo: revisit
                    ::release-label]))
 
 (s/def :addon/release-list (s/coll-of :addon/source-updates))

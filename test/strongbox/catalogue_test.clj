@@ -543,8 +543,8 @@
                          {:group-id "https://example.org"
                           :source "wowinterface"
                           :source-id 123
-                          :interface-version constants/default-interface-version-classic
-                          :toc/game-track :classic
+                          :interface-version-list [constants/default-interface-version-classic]
+                          :-toc/game-track-list [:classic]
                           :supported-game-tracks [:classic]})
           expected {:label "EveryAddon 1.2.3",
                     :name "everyaddon",

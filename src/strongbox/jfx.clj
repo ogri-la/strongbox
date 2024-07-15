@@ -2317,7 +2317,7 @@
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
 
-        transformations {:interface-version str}
+        transformations {:interface-version-list #(clojure.string/join "|" %)}
         sanitised (apply (fn [[k vfn]]
                            (if (k addon) (update sanitised k vfn) addon))
                          transformations)

@@ -21,11 +21,11 @@
   does *not* support ignoring disabled hosts, see `expand-summary`.
   returns `nil` when no release found."
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [dispatch-map {"curse" curseforge-api/expand-summary
+  (let [dispatch-map {;;"curse" curseforge-api/expand-summary ;; 2024-07-15: removed
                       "wowin" wowinterface-api/expand-summary
                       "gitla" gitlab-api/expand-summary
                       "githu" github-api/expand-summary
-                      "tukui" tukui-api/expand-summary
+                      ;;"tukui" tukui-api/expand-summary ;; 2024-07-15: removed
                       nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
         key (utils/safe-subs (:source addon) 5)]
     (try
@@ -104,9 +104,10 @@
           syn (if (= (:source toc) "wowinterface")
                 (cond
                   (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
-                  ;; todo: can we expect :interface-version-list here?
-                  ;;(:interface-version-list) (assoc syn :game-track-list (mapv utils/interface-version-to-game-track (:interface-version-list toc)))
-                  (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
+
+                  (not (empty? (:interface-version-list toc)))
+                  (assoc syn :game-track-list (mapv utils/interface-version-to-game-track (:interface-version-list toc)))
+
                   :else sink)
                 syn)
 

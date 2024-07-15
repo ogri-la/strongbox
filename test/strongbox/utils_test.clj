@@ -727,3 +727,17 @@
     (doseq [[given expected] cases]
       (is (= expected (utils/to-int given))))))
 
+(deftest group-by-coll
+  (let [given [{:key "aaa" :foo [:a :b]}
+               {:key "bbb" :foo [:b :c]}]
+
+        ;; one entry for :a, grouped on :foo = :a
+        ;; two entries for :b, grouped on :foo = :b
+        ;; one entry for :c, grouped on :foo = :c
+        expected {:a [{:key "aaa" :foo :a}]
+                  :b [{:key "aaa" :foo :b}
+                      {:key "bbb" :foo :b}]
+                  :c [{:key "bbb" :foo :c}]}]
+
+    (is (= expected (utils/group-by-coll :foo given)))))
+

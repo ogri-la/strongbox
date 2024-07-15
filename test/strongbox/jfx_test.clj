@@ -195,8 +195,6 @@ Last updated  ()"]
                  [{:interface-version-list [10000, 100000]} "1.0.0 | 10.0.0"]
                  [{:interface-version-list [10000, 100000 110000]} "1.0.0 | 10.0.0 | 11.0.0"]
                  ;; duplicates are removed (11000 => 1.0.0)
-                 [{:interface-version-list [10000, 11000]} "1.0.0"]
-                 ]
-          ]
+                 [{:interface-version-list [10000, 11000]} "1.0.0"]]]
       (doseq [[given expected] cases]
         (is (= expected (jfx/addon-game-version-list-string given)))))))
