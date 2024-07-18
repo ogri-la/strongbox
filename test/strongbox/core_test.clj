@@ -222,7 +222,6 @@
           addon3-wowinterface-fixture (slurp (fixture-path "import-export--wowinterface-addon-details.json"))
           addon3-zip-file (fixture-path "addon3.zip")
 
-          addon4-tukui-addon-list-fixture (slurp (fixture-path "import-export--tukui-addon-list.json"))
           addon4-zip-file (fixture-path "addon4.zip")
 
           addon5-github-addon-fixture (slurp (fixture-path "import-export--github-addon-details.json"))
@@ -247,8 +246,7 @@
                        {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon3-zip-file)})}
 
                        ;; addon4, tukui
-                       "https://www.tukui.org/api.php?addons"
-                       {:get (fn [req] {:status 200 :body addon4-tukui-addon-list-fixture})}
+                       ;; disabled
 
                        ;; ... zip file
                        "https://www.tukui.org/addons.php?download=4"
@@ -341,7 +339,6 @@
           addon3-wowinterface-fixture (slurp (fixture-path "import-export--wowinterface-addon-details.json"))
           addon3-zip-file (fixture-path "addon3.zip")
 
-          addon4-tukui-addon-list-fixture (slurp (fixture-path "import-export--tukui-addon-list.json"))
           addon4-zip-file (fixture-path "addon4.zip")
 
           addon5-github-addon-fixture (slurp (fixture-path "import-export--github-addon-details.json"))
@@ -366,8 +363,7 @@
                        {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array addon3-zip-file)})}
 
                        ;; addon4, tukui
-                       "https://www.tukui.org/api.php?addons"
-                       {:get (fn [req] {:status 200 :body addon4-tukui-addon-list-fixture})}
+                       ;; disabled
 
                        ;; ... zip file
                        "https://www.tukui.org/addons.php?download=4"

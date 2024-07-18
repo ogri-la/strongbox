@@ -74,15 +74,6 @@ elif test "$cmd" = "update-test-fixtures"; then
         echo "$fname"
     }
 
-    # curseforge
-    dl "https://www.curseforge.com/wow/addons?filter-sort=name&page=1" "curseforge-addon-summary-listing.html"
-
-    # curseforge api
-    dl "https://addons-ecs.forgesvc.net/api/v2/addon/327019" "curseforge-api-addon--everyaddon.json"
-    cp "test/fixtures/curseforge-api-addon--everyaddon.json" "test/fixtures/curseforge-api-addon--everyotheraddon.json"
-    ## one search result
-    dl "https://addons-ecs.forgesvc.net/api/v2/addon/search?gameId=1&index=0&pageSize=1&searchFilter=&sort=2" "curseforge-api-search--truncated.json"
-
     # wowinterface
     dl "https://wowinterface.com/addons.php" "wowinterface-category-list.html"
     dl "https://www.wowinterface.com/downloads/cat19.html" "wowinterface-category-page.html"
@@ -106,12 +97,6 @@ elif test "$cmd" = "update-test-fixtures"; then
     dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/tree" "gitlab-repo-tree--woblight-nitro.json"
     dl "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector/repository/blobs/125c899d813d2e11c976879f28dccc2a36fd207b" "gitlab-repo-blobs--wowthing.json"
     dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro/repository/tree" "gitlab-repo-tree--woblight-nitro.json"
-
-    # tukui api
-    dl "https://www.tukui.org/api.php?addon=98" "tukui--addon-details.json"
-    dl "https://www.tukui.org/api.php?classic-addon=13" "tukui--classic-addon-details.json"
-    dl "https://www.tukui.org/api.php?ui=tukui" "tukui--tukui-addon-proper.json"
-    dl "https://www.tukui.org/api.php?ui=elvui" "tukui--elvui-addon-proper.json"
 
     # user-catalogue
     dl "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases" "user-catalogue--github.json"

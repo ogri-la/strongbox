@@ -534,7 +534,7 @@
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
 (deftest import-addon--curseforge
-  (testing "user curseforge addon is not added to the user catalogue if it's present in the catalogue"
+  (testing "user's curseforge addon is *not* added to the user-catalogue, even if it is present in the regular catalogue"
     (let [install-dir (helper/install-dir)
 
           match {:created-date "2010-05-07T18:48:16Z",
@@ -556,11 +556,14 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
-                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))})}
+                       ;; won't be hit
+                       ;;"https://addons-ecs.forgesvc.net/api/v2/addon/1"
+                       ;;{:get (fn [req] {:status 200 :body (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))})}
 
-                       "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
-                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       ;; won't be hit
+                       ;;"https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
+                       ;;{:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}
+                       }
 
           user-url (:url match)]
 
@@ -630,11 +633,14 @@
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
-                       "https://www.tukui.org/api.php?addons"
-                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "tukui--addon-details.json"))})}
+                       ;; won't be hit
+                       ;;"https://www.tukui.org/api.php?addons"
+                       ;;{:get (fn [req] {:status 200 :body (slurp (fixture-path "tukui--addon-details.json"))})}
 
-                       "https://www.tukui.org/addons.php?download=98"
-                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       ;; won't be hit
+                       ;;"https://www.tukui.org/addons.php?download=98"
+                       ;;{:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}
+                       }
 
           user-url (:url match)]
 
@@ -684,10 +690,6 @@
             ;; this is because regular catalogues are updated periodically and the user-catalogue is not.
             full-catalogue short-catalogue
 
-            tukui-fixture (slurp (fixture-path "user-catalogue--tukui.json"))
-            tukui-classic-fixture (slurp (fixture-path "user-catalogue--tukui-classic.json"))
-            tukui-classic-tbc-fixture (slurp (fixture-path "user-catalogue--tukui-classic-tbc.json"))
-            curseforge-fixture (slurp (fixture-path "user-catalogue--curseforge.json"))
             wowinterface-fixture (slurp (fixture-path "user-catalogue--wowinterface.json"))
             github-fixture (slurp (fixture-path "user-catalogue--github.json"))
             github-contents-fixture (slurp (fixture-path "user-catalogue--github-contents.json"))
@@ -705,15 +707,6 @@
                          "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                          {:get (fn [req] {:status 200 :body short-catalogue})}
 
-                         "https://www.tukui.org/api.php?addons"
-                         {:get (fn [req] {:status 200 :body tukui-fixture})}
-
-                         "https://www.tukui.org/api.php?classic-addons"
-                         {:get (fn [req] {:status 200 :body tukui-classic-fixture})}
-
-                         "https://www.tukui.org/api.php?classic-tbc-addons"
-                         {:get (fn [req] {:status 200 :body tukui-classic-tbc-fixture})}
-
                          "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases"
                          {:get (fn [req] {:status 200 :body github-fixture})}
 
@@ -728,9 +721,6 @@
 
                          "https://api.mmoui.com/v3/game/WOW/filedetails/24566.json"
                          {:get (fn [req] {:status 200 :body wowinterface-fixture})}
-
-                         "https://addons-ecs.forgesvc.net/api/v2/addon/13501"
-                         {:get (fn [req] {:status 200 :body curseforge-fixture})}
 
                          "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector"
                          {:get (fn [req] {:status 200 :body gitlab-repo-fixture})}
