@@ -125,7 +125,6 @@
 (s/def ::interface-version-list (s/coll-of ::interface-version))
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
-(s/def ::release-label ::label)
 
 (s/def ::latest-strongbox-release (s/or :set string? :not-set nil? :failed keyword?))
 
@@ -379,9 +378,7 @@
 (s/def :addon/source-updates
   (s/keys :req-un [::version
                    ::download-url
-                   ::game-track] ;; todo: does this need looking at?
-          :opt-un [::interface-version-list ;; todo: revisit
-                   ::release-label]))
+                   ::game-track]))
 
 (s/def :addon/release-list (s/coll-of :addon/source-updates))
 

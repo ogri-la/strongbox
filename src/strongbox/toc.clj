@@ -240,5 +240,3 @@
         (error e (utils/reportable-error
                   ;; "unexpected error parsing addon in directory '/path/to/addon': Some obscure exception message."
                   (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))
-
-;; --

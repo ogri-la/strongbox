@@ -1685,7 +1685,7 @@
   the release data for a selected release in `release-list`."
   [addon :addon/expanded]
   (mapv (fn [release]
-          (menu-item (or (:release-label release) (:version release))
+          (menu-item (:version release)
                      (async-handler (juxt (partial cli/set-version addon release) clear-table-selected-items))))
         (:release-list addon)))
 
@@ -2402,7 +2402,7 @@
                                     "install")
                                   (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
-                     {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
+                     {:text "name" :cell-value-factory :version}]
         row-list (or (:release-list addon) [])
         disabled? (not (addon/releases-visible? addon))]
     {:fx/type :border-pane

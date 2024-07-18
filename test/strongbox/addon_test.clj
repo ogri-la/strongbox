@@ -568,12 +568,10 @@
                  :release-list [{:download-url "https://example.org/path/to/addon.zip"
                                  :game-track :retail,
                                  :interface-version-list [90000],
-                                 :release-label "[WoW 9.0.1] Addon-1.2.3.zip",
                                  :version "1.2.3"}
                                 {:download-url "https://example.org/path/to/addon.zip"
                                  :game-track :retail,
                                  :interface-version-list [90000],
-                                 :release-label "[WoW 9.0.1] Addon-1.2.0.zip",
                                  :version "1.2.0"}]}]
       (is (addon/re-installable? addon)))))
 
@@ -587,12 +585,10 @@
                  :release-list [{:download-url "https://example.org/path/to/addon.zip"
                                  :game-track :retail,
                                  :interface-version-list [90000],
-                                 :release-label "[WoW 9.0.1] Addon-1.2.3.zip",
                                  :version "1.2.3"}
                                 {:download-url "https://example.org/path/to/addon.zip"
                                  :game-track :retail,
                                  :interface-version-list [90000],
-                                 :release-label "[WoW 9.0.1] Addon-1.2.0.zip",
                                  :version "1.2.0"}]}
           expected (get-in addon [:release-list 1])]
       (is (= expected (addon/find-release addon))))))
@@ -608,12 +604,10 @@
                  :release-list [{:download-url "https://example.org/path/to/addon.zip"
                                  :game-track :retail,
                                  :interface-version-list [90000],
-                                 :release-label "[WoW 9.0.1] Addon-1.2.3.zip",
                                  :version "1.2.3"}
                                 {:download-url "https://example.org/path/to/addon.zip"
                                  :game-track :retail,
                                  :interface-version-list [90000],
-                                 :release-label "[WoW 9.0.1] Addon-1.2.0.zip",
                                  :version "1.2.0"}]}
           expected (get-in addon [:release-list 0])]
       (is (= expected (addon/find-pinned-release addon))))))
