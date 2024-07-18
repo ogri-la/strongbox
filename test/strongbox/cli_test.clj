@@ -552,17 +552,14 @@
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
                        ;; won't be hit
                        ;;"https://addons-ecs.forgesvc.net/api/v2/addon/1"
-                       ;;{:get (fn [req] {:status 200 :body (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))})}
 
                        ;; won't be hit
                        ;;"https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
-                       ;;{:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}
                        }
 
           user-url (:url match)]
@@ -629,17 +626,14 @@
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
                        ;; won't be hit
                        ;;"https://www.tukui.org/api.php?addons"
-                       ;;{:get (fn [req] {:status 200 :body (slurp (fixture-path "tukui--addon-details.json"))})}
 
                        ;; won't be hit
                        ;;"https://www.tukui.org/addons.php?download=98"
-                       ;;{:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}
                        }
 
           user-url (:url match)]
