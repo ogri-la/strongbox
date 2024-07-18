@@ -106,7 +106,12 @@
                   (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
 
                   (not (empty? (:interface-version-list toc)))
-                  (assoc syn :game-track-list (mapv utils/interface-version-to-game-track (:interface-version-list toc)))
+                  (assoc syn :game-track-list
+                         (->> toc
+                              :interface-version-list
+                              (map utils/interface-version-to-game-track)
+                              distinct
+                              vec))
 
                   :else sink)
                 syn)
