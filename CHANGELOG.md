@@ -8,11 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* added support for parsing multiple interface version values from .toc file.
+    - a single .toc file may now yield multiple possible game tracks (retail, classic, wrath, etc)
+        - including duplicate game tracks, which has been accounted for.
+
 ### Changed
+
+* the WoW column in the GUI now supports displaying multiple game versions (like 8.0, 9.0, 10.0).
+    - these are dervied from interface versions (80000, 90000, 100000)
+* the raw data GUI widget in the addon details pane now supports displaying multiple interface versions
 
 ### Fixed
 
+* fixed a typo in a field name in the import/export logic.
+    - almost certainly didn't affect anybody.
+* fixed a bug in the interface-version => game-version logic where 110000 was returned as '1.0.00' instead of '11.0.0'.
+
 ### Removed
+
+* removed curseforge and tukui test fixtures and the fetching of test fixtures.
+* removed support for 'release labels' attached to addon source updates.
+    - these were only supported by curseforge and provided a friendlier label a release than the version number.
+* removed more curseforge and tukui logic that was disabled many releases ago
+    - including test fixtures for this removed logic.
+* removed support for interface versions contianing non-numeric values.
+    - for example, there is an interface version "30008a" which should return "3.0.8a"
+    - this is an exceedingly rare (and possibly an invalid) case and nobody should be affected.
 
 ## 7.3.0 - 2024-04-23
 

@@ -6,6 +6,8 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* support multiple interface values
+
 ## todo
 
 ## todo bucket (no particular order)
