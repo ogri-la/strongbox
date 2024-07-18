@@ -741,3 +741,26 @@
 
     (is (= expected (utils/group-by-coll :foo given)))))
 
+(deftest group-by-coll--game-tracks
+  (let [given [{:version "1.2.3" :-toc/game-track-list [:classic :retail]}
+               {:version "3.2.1" :-toc/game-track-list [:retail]}]
+
+        expected {:retail [{:version "1.2.3" :-toc/game-track-list :retail}
+                           {:version "3.2.1" :-toc/game-track-list :retail}]
+                  :classic [{:version "1.2.3" :-toc/game-track-list :classic}]}]
+    (is (= expected (utils/group-by-coll :-toc/game-track-list given)))))
+
+(deftest group-by-coll--empty
+  (let [cases [[nil {}]
+               [[] {}]
+               ['() {}]
+               [{} {}]
+               ["foo" {}]
+               [[[]] {}]
+               [[{}] {}]
+               [{:foo "bar"} {}]
+               [[{:foo "bar"}] {\a [{:foo \a}], \b [{:foo \b}], \r [{:foo \r}]}]
+               [[{:foo ["bar"]}] {"bar" [{:foo "bar"}]}]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/group-by-coll :foo given))))))

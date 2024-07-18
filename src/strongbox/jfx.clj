@@ -1360,7 +1360,7 @@
                          :cell-value-factory cli/available-versions-v2}
 
       :game-version {:text "WoW" :menu-label "game version (WoW)"
-                     :min-width 70 :pref-width 140 :max-width 200
+                     :min-width 70 :pref-width 140 :max-width 210
                      :cell-value-factory identity
                      :cell-factory {:fx/cell-type :tree-table-cell
                                     :describe (fn [row]
@@ -2317,7 +2317,7 @@
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
 
-        transformations {:interface-version-list #(clojure.string/join "|" %)}
+        transformations {:interface-version-list #(clojure.string/join ", " %)}
         sanitised (apply (fn [[k vfn]]
                            (if (k addon) (update sanitised k vfn) addon))
                          transformations)

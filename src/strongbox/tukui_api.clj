@@ -8,14 +8,6 @@
     [utils :as utils]
     [specs :as sp]]))
 
-;; todo: are these used anymore?
-(def summary-list-url "https://www.tukui.org/api.php?addons")
-(def classic-summary-list-url "https://www.tukui.org/api.php?classic-addons")
-(def classic-tbc-summary-list-url "https://www.tukui.org/api.php?classic-tbc-addons")
-(def classic-wotlk-summary-list-url "https://www.tukui.org/api.php?classic-wotlk-addons")
-
-(def proper-url "https://www.tukui.org/api.php?ui=%s")
-
 (defn-spec make-url (s/nilable ::sp/url)
   "given a map of addon data, returns a URL to the addon's tukui page or `nil`"
   [{:keys [name source-id interface-version-list]} map?]

@@ -208,6 +208,27 @@ SomeAddon.lua")
               :let [expected (merge expected defaults)]]
         (is (= expected (toc/parse-addon-toc given addon-dir)))))))
 
+(deftest parse-addon-toc--duplicate-interface-versions-removed
+  (let [case {:interface 10000 :#interface 10000}
+        expected [10000]
+        use-defaults false]
+    (is (= expected (:interface-version-list (toc/-parse-addon-toc case use-defaults))))))
+
+(deftest parse-addon-toc--use-defaults
+  (testing "with-defaults true"
+    (let [case {:title nil
+                :interface nil}
+          expected {:label " *"
+                    :interface-version-list [constants/default-interface-version]}]
+      (is (= expected (select-keys (toc/-parse-addon-toc case true) [:label :interface-version-list])))))
+
+  (testing "with-defaults false"
+    (let [case {:title nil
+                :interface nil}
+          expected {:label nil
+                    :interface-version-list []}]
+      (is (= expected (select-keys (toc/-parse-addon-toc case false) [:label :interface-version-list]))))))
+
 (deftest rm-trailing-version
   (testing "parsing of 'Title' attribute in toc file"
     (let [cases [["Grid" "Grid"] ;; no trailing version? no problems

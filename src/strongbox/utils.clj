@@ -936,10 +936,13 @@
     :else (str v)))
 
 (defn group-by-coll
-  [kw coll]
+  "groups a collection of maps by a collection within each map using the given `kw`,
+  replacing the map's `kw` with the grouped value.
+  for example, [{:a [1]}, {:b [1 2]}] => {:1 [{:a 1} {:b 1}] :2 [{:b 2}]}"
+  [kw coll-of-maps]
   (group-by kw
             (apply concat ;; shallow flatten
-                   (for [row coll]
+                   (for [row coll-of-maps]
                      (for [v (kw row)]
                        (assoc row kw v))))))
 
