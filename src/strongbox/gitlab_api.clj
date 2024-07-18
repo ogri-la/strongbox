@@ -190,20 +190,18 @@
   "attempts to guess the game track of a [filename blob-url] pair.
   if the game track can't be guessed from the filename, it downlads the blob and inspects the interface version."
   [[filename blob-url] (s/coll-of string?)]
-  (if-let [game-track (utils/guess-game-track filename)]
-    [game-track]
-    (do (debug "couldn't guess game track, downloading toc file and inspecting interface version:" filename)
-        (some->> blob-url
-                 download-decode-blob
-                 (select-keys* [:interface :#interface])
-                 vals
-                 (map utils/to-int)
-                 (mapv utils/interface-version-to-game-track)))))
+  (let [game-track (utils/guess-game-track filename)
+        use-defaults false]
+    (if game-track
+      [game-track]
+      (do (debug "couldn't guess game track, downloading toc file and inspecting interface version:" filename)
+          (some-> blob-url
+                  download-decode-blob
+                  (toc/-parse-addon-toc use-defaults)
+                  :supported-game-tracks)))))
 
 (defn-spec guess-game-track-list (s/or :ok ::sp/game-track-list, :error nil?)
   "attempts to guess the game tracks an addon may support.
-  if multiple toc files exist it assumes they are being used for classic versions of the game.
-  if only a single toc file exists, it downloads and inspects the `:interface` value in the toc file.
   if no toc files are found it returns `nil`."
   [source-id :addon/source-id]
   (->> source-id

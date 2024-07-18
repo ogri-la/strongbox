@@ -98,105 +98,129 @@
   [label string?]
   (-> label lower-case rm-trailing-version utils/slugify))
 
+(defn-spec parse-interface-value (s/or :ok ::sp/list-of-ints)
+  "parses a '# Interface' value which may be a single integer or a comma separated list of integers."
+  [val (s/or :ok string?, :supported int?, :noop nil?)]
+  (cond
+    (nil? val) []
+    (int? val) [val]
+    :else (some->> (clojure.string/split val #",")
+                   (map clojure.string/trim)
+                   (map utils/to-int)
+                   (remove nil?)
+                   distinct
+                   vec)))
+
 ;;
+
+(defn-spec -parse-addon-toc map?
+  "parses raw `keyvals` map, interpreting and extrapolating values, issuing warnings, etc"
+  [keyvals map?, use-defaults boolean?]
+  (let [dirname (:dirname keyvals)
+        no-label-label (str dirname " *") ;; "EveryAddon *"
+        label (:title keyvals)
+        label (if (empty? label)
+                (do (warn "addon with no \"Title\" value found:" dirname)
+                    (when use-defaults
+                      no-label-label))
+                label)
+
+        wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
+                      {:source "wowinterface"
+                       :source-id x-wowi-id})
+
+        ;;curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
+        ;;               {:source "curseforge"
+        ;;                :source-id x-curse-id})
+
+        ;;tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
+        ;;               {:source "tukui"
+        ;;                :source-id x-tukui-id})
+
+        github-source (when-let [x-github (-> keyvals :x-github)]
+                        {:source "github"
+                         :source-id (utils/github-url-to-source-id x-github)})
+
+        github-website-source (when-let [x-website (-> keyvals :x-website)]
+                                (when (and (not github-source)
+                                           (.startsWith x-website "https://github.com"))
+                                  {:source "github"
+                                   :source-id (utils/github-url-to-source-id x-website)}))
+
+        source-map-list (when-let [items (->> [wowi-source github-source github-website-source
+                                               ;;curse-source tukui-source 
+                                               ]
+                                              utils/items
+                                              utils/nilable)]
+                          {:source-map-list items})
+
+        ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
+                      (debug (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
+                      {:ignore? true})
+
+        ;; todo: warning when interface version not defined.
+
+        interface-version-list (vec
+                                (distinct
+                                 (into (some-> keyvals :interface parse-interface-value)
+                                       (some-> keyvals :#interface parse-interface-value))))
+        interface-version-list (if (empty? interface-version-list)
+                                 (if use-defaults
+                                   [constants/default-interface-version]
+                                   [])
+                                 interface-version-list)
+
+        ;; note: even after the `distinct` above, it's still possible for the derived game tracks to be duplicates
+        game-track-list (vec (distinct (mapv utils/interface-version-to-game-track interface-version-list)))
+
+        addon {:name (when label (normalise-name label))
+               :dirname dirname
+               :label label
+               ;; `:notes` is preferred but we'll fall back to `:description`
+               :description (or (:notes keyvals) (:description keyvals))
+               :interface-version-list interface-version-list
+
+               ;; `:-toc/game-track-list` is used to group .toc files later to determine which set
+               ;; of data to use for the selected game track before being disassociated.
+               :-toc/game-track-list game-track-list
+
+               ;; replaced in `parse-addon-toc-guard` when *all* .toc files have been parsed.
+               :supported-game-tracks game-track-list
+
+               :installed-version (:version keyvals)
+
+               ;; toc file dependency values describe *load order*, not *packaging*
+               ;;:dependencies (:dependencies keyvals)
+               ;;:optional-dependencies (:optionaldependencies keyvals)
+               ;;:required-dependencies (:requireddeps keyvals)
+               }
+
+        addon (if-let [dirsize (:dirsize keyvals)]
+                (assoc addon :dirsize dirsize)
+                addon)
+
+        ;; prefers wowi over github and github over github-via-website.
+        ;; I'd like to prefer github over wowi, but github requires API calls to interact with and these are limited unless authenticated.
+        addon (merge addon
+                     github-website-source github-source wowi-source
+                     ;; curse-source tukui-source
+                     ignore-flag source-map-list)]
+    addon))
 
 (defn-spec parse-addon-toc (s/or :ok :addon/toc, :invalid nil?)
   "coerces raw `keyvals` map into a valid `:addon/toc` map or returns `nil` if toc data is invalid."
   ([keyvals map?, addon-dir ::sp/dir]
    (parse-addon-toc (assoc keyvals :dirname (fs/base-name addon-dir))))
   ([keyvals map?]
-   (let [dirname (:dirname keyvals)
-         no-label-label (str dirname " *") ;; "EveryAddon *"
-         label (:title keyvals)
-         label (if (empty? label)
-                 (do (warn "addon with no \"Title\" value found:" dirname)
-                     no-label-label)
-                 label)
-
-         wowi-source (when-let [x-wowi-id (-> keyvals :x-wowi-id utils/to-int)]
-                       {:source "wowinterface"
-                        :source-id x-wowi-id})
-
-         ;;curse-source (when-let [x-curse-id (-> keyvals :x-curse-project-id utils/to-int)]
-         ;;               {:source "curseforge"
-         ;;                :source-id x-curse-id})
-
-         ;;tukui-source (when-let [x-tukui-id (-> keyvals :x-tukui-projectid utils/to-int)]
-         ;;               {:source "tukui"
-         ;;                :source-id x-tukui-id})
-
-         github-source (when-let [x-github (-> keyvals :x-github)]
-                         {:source "github"
-                          :source-id (utils/github-url-to-source-id x-github)})
-
-         github-website-source (when-let [x-website (-> keyvals :x-website)]
-                                 (when (and (not github-source)
-                                            (.startsWith x-website "https://github.com"))
-                                   {:source "github"
-                                    :source-id (utils/github-url-to-source-id x-website)}))
-
-         source-map-list (when-let [items (->> [wowi-source github-source github-website-source
-                                                ;;curse-source tukui-source 
-                                                ]
-                                               utils/items
-                                               utils/nilable)]
-                           {:source-map-list items})
-
-         ignore-flag (when (some->> keyvals :version (clojure.string/includes? "@project-version@"))
-                       (debug (format "ignoring '%s': 'Version' field in .toc file is unrendered" dirname))
-                       {:ignore? true})
-
-         ;; todo: warning when interface version not defined.
-         interface-version (or (some-> keyvals :interface utils/to-int)
-                               constants/default-interface-version)
-
-         game-track (utils/interface-version-to-game-track interface-version)
-
-         _ (when (and (some? (:-filename-game-track keyvals))
-                      (not= (:-filename-game-track keyvals) game-track))
-             (debug (format
-                    ;; 'classic' in .toc filename does not match 'retail' derived from it's 'Interface' value of '90200'.
-                    ;; see BigWigs_Classic for a false-positive
-                     "'%s' in .toc filename does not match '%s' derived from it's 'Interface' value of '%s'."
-                     (name (:-filename-game-track keyvals)) (name game-track) interface-version)))
-
-         addon {:name (normalise-name label)
-                :dirname dirname
-                :label label
-                ;; `:notes` is preferred but we'll fall back to `:description`
-                :description (or (:notes keyvals) (:description keyvals))
-                :interface-version interface-version
-                :-toc/game-track game-track
-
-                ;; expanded upon in `parse-addon-toc-guard` when it knows about *all* available toc files
-                :supported-game-tracks [game-track]
-
-                :installed-version (:version keyvals)
-
-                ;; toc file dependency values describe *load order*, not *packaging*
-                ;;:dependencies (:dependencies keyvals)
-                ;;:optional-dependencies (:optionaldependencies keyvals)
-                ;;:required-dependencies (:requireddeps keyvals)
-                }
-
-         addon (if-let [dirsize (:dirsize keyvals)]
-                 (assoc addon :dirsize dirsize)
-                 addon)
-
-         ;; prefers wowi over github and github over github-via-website.
-         ;; I'd like to prefer github over wowi, but github requires API calls to interact with and these are limited unless authenticated.
-         addon (merge addon
-                      github-website-source github-source wowi-source
-                      ;; curse-source tukui-source
-                      ignore-flag source-map-list)]
-
-     (if-not (s/valid? :addon/toc addon)
+   (let [use-defaults true
+         addon (-parse-addon-toc keyvals use-defaults)]
+     (if (s/valid? :addon/toc addon)
+       addon
        (do (warn (utils/reportable-error
                   ;; "ignoring data in 'EveryAddon.toc', invalid values found."
                   (format "ignoring data in '%s', invalid values found." (:-filename keyvals))
                   "feel free to report this!"))
-           (debug (s/explain :addon/toc addon)))
-       addon))))
+           (debug (s/explain :addon/toc addon)))))))
 
 (defn-spec blizzard-addon? boolean?
   "returns `true` if given path looks like an official Blizzard addon"
@@ -209,12 +233,10 @@
   (when-not (blizzard-addon? addon-dir)
     (try
       (let [result (->> addon-dir read-addon-dir (map parse-addon-toc) (remove nil?))
-            supported-game-tracks (->> result (map :-toc/game-track) distinct sort vec)]
+            supported-game-tracks (->> result (map :-toc/game-track-list) flatten distinct sort vec)]
         (mapv #(assoc % :supported-game-tracks supported-game-tracks) result))
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.
         (error e (utils/reportable-error
                   ;; "unexpected error parsing addon in directory '/path/to/addon': Some obscure exception message."
                   (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))
-
-;; --

@@ -72,9 +72,9 @@
    :description "Does what no other addon does, slightly differently"
    :dirname "EveryAddon",
    :label "EveryAddon 1.2.3",
-   :interface-version 70000,
+   :interface-version-list [70000],
    :installed-version "1.2.3"
-   :toc/game-track :retail
+   :-toc/game-track-list [:retail]
    :supported-game-tracks [:retail]})
 
 (def nfo-data
@@ -109,7 +109,7 @@
 
 (def source-updates
   "updates to the addon data fetched from remote source"
-  {:interface-version  70000,
+  {:interface-version-list [70000],
    :download-url  "https://www.example.org/wow/addons/everyaddon/download/123456/file",
    :version  "1.2.3"
    :game-track :retail})
@@ -237,11 +237,19 @@
         (fn [string]
           (clojure.string/join "" (map clojure.string/capitalize (clojure.string/split string #"-"))))
 
+        interface-value-list-formatter
+        (fn [vs]
+          (clojure.string/join ", " vs))
+
+        format-map {:interface interface-value-list-formatter}
+
         render-line
         (fn [[key val]]
-          (format "## %s: %s" (unslug (name key)) val))
+          (format "## %s: %s"
+                  (unslug (name key))
+                  ((get format-map key identity) val)))
 
-        rename-map {:interface-version :interface
+        rename-map {:interface-version-list :interface
                     :label :title
                     :installed-version :version}
         toc (clojure.set/rename-keys addon rename-map)
@@ -269,7 +277,7 @@
         nom (get override :label "EveryAddon")
         version (get override :version "1.2.3")
         description (get override :description "Does what no other addon does, slightly differently.")
-        interface-version (get override :interface-version 70000)
+        interface-version-list (get override :interface-version-list [70000])
 
         source "wowinterface"
         source-id (get override :source-id "999")
@@ -297,7 +305,7 @@
                      :version version
                      :description description
                      :dirname dirname
-                     :interface-version interface-version
+                     :interface-version-list interface-version-list
                      :installed-version version
                      :supported-game-tracks [game-track]}
 
@@ -379,5 +387,3 @@
   "convenience. just like `gen-addon`, but also writes the generated zip file to the given `output-dir`."
   [output-dir & [opts]]
   (mk-addon! output-dir (gen-addon-data opts)))
-
-;;

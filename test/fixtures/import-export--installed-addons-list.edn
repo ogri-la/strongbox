@@ -7,8 +7,8 @@
     :dirname "AdiBags",
     :label "AdiBags",
     :description "Adirelle's bag addon.",
-    :interface-version 80200,
-    :toc/game-track :retail
+    :interface-version-list [80200],
+    :-toc/game-track-list [:retail]
     :supported-game-tracks [:retail]
     :installed-version "v1.9.17",
     :group-id "https://www.curseforge.com/wow/addons/adibags",
@@ -18,8 +18,8 @@
     :dirname "AdiBags_Config",
     :label "AdiBags Configuration",
     :description "Adirelle's bag addon.",
-    :interface-version 80200,
-    :toc/game-track :retail
+    :interface-version-list [80200],
+    :-toc/game-track-list [:retail]
     :supported-game-tracks [:retail]
     :installed-version "v1.9.17",
     :group-id "https://www.curseforge.com/wow/addons/adibags",
@@ -31,8 +31,8 @@
   :installed-game-track :retail,
   :name "adibags",
   :source "curseforge",
-  :interface-version 80200,
-  :toc/game-track :retail
+  :interface-version-list [80200],
+  :-toc/game-track-list [:retail]
   :supported-game-tracks [:retail]
   :download-url
   "https://www.curseforge.com/wow/addons/adibags/download/2738272/file",
@@ -47,9 +47,9 @@
   :label "No Name"
   :description "An addon with no match in the catalogue"
   :dirname "noname"
-  :interface-version 80200
+  :interface-version-list [80200]
   :installed-version "7.8.9"
-  :toc/game-track :retail
+  :-toc/game-track-list :retail
   :supported-game-tracks [:retail]}
  {:created-date "2011-01-04T05:42:23Z",
   :description
@@ -62,8 +62,8 @@
   :installed-game-track :retail,
   :name "carbonite",
   :source "curseforge",
-  :interface-version 80200,
-  :toc/game-track :retail
+  :interface-version-list [80200],
+  :-toc/game-track-list :retail
   :supported-game-tracks [:retail]
   :download-url
   "https://www.curseforge.com/wow/addons/carbonite/download/2732714/file",

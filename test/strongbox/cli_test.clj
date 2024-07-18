@@ -480,7 +480,7 @@
                     :group-id "https://www.wowinterface.com/downloads/info25079",
                     :installed-game-track :retail,
                     :installed-version "1.2.3",
-                    :interface-version 70000,
+                    :interface-version-list [70000]
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "rotation-master",
@@ -534,7 +534,7 @@
                  (:addon-summary-list (catalogue/read-catalogue (core/paths :user-catalogue-file))))))))))
 
 (deftest import-addon--curseforge
-  (testing "user curseforge addon is not added to the user catalogue if it's present in the catalogue"
+  (testing "user's curseforge addon is *not* added to the user-catalogue, even if it is present in the regular catalogue"
     (let [install-dir (helper/install-dir)
 
           match {:created-date "2010-05-07T18:48:16Z",
@@ -552,15 +552,15 @@
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
-                       "https://addons-ecs.forgesvc.net/api/v2/addon/1"
-                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "curseforge-api-addon--everyaddon.json"))})}
+                       ;; won't be hit
+                       ;;"https://addons-ecs.forgesvc.net/api/v2/addon/1"
 
-                       "https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
-                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       ;; won't be hit
+                       ;;"https://edge.forgecdn.net/files/1/1/EveryAddon.zip"
+                       }
 
           user-url (:url match)]
 
@@ -610,7 +610,7 @@
                     :group-id "https://www.tukui.org/addons.php?id=98",
                     :installed-game-track :retail,
                     :installed-version "0.960",
-                    :interface-version 70000,
+                    :interface-version-list [70000],
                     :supported-game-tracks [:retail]
                     :label "EveryAddon 1.2.3",
                     :name "-rp-tags",
@@ -626,15 +626,15 @@
 
           catalogue (utils/to-json (catalogue/new-catalogue [match]))
 
-          every-addon-zip-file (fixture-path "everyaddon--1-2-3.zip")
           fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                        {:get (fn [req] {:status 200 :body catalogue})}
 
-                       "https://www.tukui.org/api.php?addons"
-                       {:get (fn [req] {:status 200 :body (slurp (fixture-path "tukui--addon-details.json"))})}
+                       ;; won't be hit
+                       ;;"https://www.tukui.org/api.php?addons"
 
-                       "https://www.tukui.org/addons.php?download=98"
-                       {:get (fn [req] {:status 200 :body (helper/file-to-lazy-byte-array every-addon-zip-file)})}}
+                       ;; won't be hit
+                       ;;"https://www.tukui.org/addons.php?download=98"
+                       }
 
           user-url (:url match)]
 
@@ -684,10 +684,6 @@
             ;; this is because regular catalogues are updated periodically and the user-catalogue is not.
             full-catalogue short-catalogue
 
-            tukui-fixture (slurp (fixture-path "user-catalogue--tukui.json"))
-            tukui-classic-fixture (slurp (fixture-path "user-catalogue--tukui-classic.json"))
-            tukui-classic-tbc-fixture (slurp (fixture-path "user-catalogue--tukui-classic-tbc.json"))
-            curseforge-fixture (slurp (fixture-path "user-catalogue--curseforge.json"))
             wowinterface-fixture (slurp (fixture-path "user-catalogue--wowinterface.json"))
             github-fixture (slurp (fixture-path "user-catalogue--github.json"))
             github-contents-fixture (slurp (fixture-path "user-catalogue--github-contents.json"))
@@ -705,15 +701,6 @@
                          "https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
                          {:get (fn [req] {:status 200 :body short-catalogue})}
 
-                         "https://www.tukui.org/api.php?addons"
-                         {:get (fn [req] {:status 200 :body tukui-fixture})}
-
-                         "https://www.tukui.org/api.php?classic-addons"
-                         {:get (fn [req] {:status 200 :body tukui-classic-fixture})}
-
-                         "https://www.tukui.org/api.php?classic-tbc-addons"
-                         {:get (fn [req] {:status 200 :body tukui-classic-tbc-fixture})}
-
                          "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases"
                          {:get (fn [req] {:status 200 :body github-fixture})}
 
@@ -728,9 +715,6 @@
 
                          "https://api.mmoui.com/v3/game/WOW/filedetails/24566.json"
                          {:get (fn [req] {:status 200 :body wowinterface-fixture})}
-
-                         "https://addons-ecs.forgesvc.net/api/v2/addon/13501"
-                         {:get (fn [req] {:status 200 :body curseforge-fixture})}
 
                          "https://gitlab.com/api/v4/projects/thing-engineering%2Fwowthing%2Fwowthing-collector"
                          {:get (fn [req] {:status 200 :body gitlab-repo-fixture})}
@@ -845,7 +829,7 @@
                    :installed-version "5.6.20210831"
                    :name "the-undermine-journal"
                    :source "wowinterface"
-                   :interface-version 90100
+                   :interface-version-list [90100]
                    :game-track :retail
                    :installed-game-track :retail
                    :label "The Undermine Journal"
@@ -933,7 +917,7 @@
                                            :dirname "EveryAddon",
                                            :group-id "everyaddon-aaaaaaaa",
                                            :installed-version "1.2.3",
-                                           :interface-version 70000,
+                                           :interface-version-list [70000],
                                            :label "EveryAddon 1.2.3",
                                            :name "everyaddon",
                                            :primary? true,
@@ -942,14 +926,14 @@
                                            :dirname "EveryAddon-BundledAddon",
                                            :group-id "everyaddon-aaaaaaaa",
                                            :installed-version "a.b.c",
-                                           :interface-version 80000,
+                                           :interface-version-list [80000],
                                            :label "BundledAddon a.b.c",
                                            :name "bundledaddon-a-b-c",
                                            :primary? false,
                                            :supported-game-tracks [:retail]}],
                            :group-id "everyaddon-aaaaaaaa",
                            :installed-version "1.2.3",
-                           :interface-version 70000,
+                           :interface-version-list [70000],
                            :label "EveryAddon 1.2.3",
                            :name "everyaddon",
                            :primary? true,

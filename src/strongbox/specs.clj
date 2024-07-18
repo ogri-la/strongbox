@@ -44,6 +44,7 @@
 
 (s/def ::gte-zero #(and (number? %) (>= % 0)))
 
+(s/def ::list-of-ints (s/coll-of int?))
 (s/def ::list-of-strings (s/coll-of string?))
 (s/def ::list-of-maps (s/coll-of map?))
 (s/def ::list-of-keywords (s/coll-of keyword?))
@@ -121,9 +122,9 @@
 (s/def ::update? boolean?)
 (s/def ::interface-version (and int? (fn [interface-version]
                                        (>= interface-version 10000)))) ;; 90005, 11307, 20501
+(s/def ::interface-version-list (s/coll-of ::interface-version))
 (s/def ::name string?) ;; normalised name of the addon, shared between toc file and curseforge
 (s/def ::label string?) ;; name of the addon without normalisation
-(s/def ::release-label ::label)
 
 (s/def ::latest-strongbox-release (s/or :set string? :not-set nil? :failed keyword?))
 
@@ -290,7 +291,7 @@
                    ::label
                    ::description
                    ::dirname
-                   ::interface-version
+                   ::interface-version-list
                    ::installed-version
                    :addon/supported-game-tracks]
           :opt-un [::dirsize ;; not present on error during calculation. zero during testing.
@@ -377,9 +378,7 @@
 (s/def :addon/source-updates
   (s/keys :req-un [::version
                    ::download-url
-                   ::game-track]
-          :opt-un [::interface-version
-                   ::release-label]))
+                   ::game-track]))
 
 (s/def :addon/release-list (s/coll-of :addon/source-updates))
 

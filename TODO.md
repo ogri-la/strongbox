@@ -6,9 +6,12 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
+* support multiple interface values
+
 ## todo
 
 ## todo bucket (no particular order)
+* remove support for parsing templated .toc keyvals: '# ## Key: Value'
 
 * gui, 'set-icon' is taking a long time to do it's thing.
 
