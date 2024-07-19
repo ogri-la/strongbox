@@ -1,10 +1,8 @@
 (ns strongbox.tukui-api-test
   (:require
    [clojure.test :refer [deftest testing is use-fixtures]]
-   ;;[taoensso.timbre :as log :refer [debug info warn error spy]]
    [strongbox
-    [tukui-api :as tukui-api]
-    [test-helper :as helper :refer [fixture-path]]]))
+    [tukui-api :as tukui-api]]))
 
 (deftest parse-user-string
   (let [cases [;; retail
