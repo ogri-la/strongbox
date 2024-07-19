@@ -1223,6 +1223,15 @@
      :on-action (handler #(utils/browse-to (format "%s/%s" (core/selected-addon-dir) dirname)))
      :text "↪ browse local files"}))
 
+(defn-spec addon-game-version-list-string (s/or :ok string?, :err nil?)
+  "returns the list of game versions an addon supports as a string."
+  [row (s/nilable map?)]
+  (some->> row
+           :interface-version-list ;; [80000, 100000]
+           (map utils/interface-version-to-game-version) ;; [8.0, 10.0]
+           distinct
+           (clojure.string/join " | "))) ;; "8.0 | 10.0"
+
 (defn gui-column-map
   "list of columns for the installed-addons-table that needs to be separately defined so a menu can be built.
   called with no arguments, the various attached functions will probably fail."
@@ -1351,11 +1360,11 @@
                          :cell-value-factory cli/available-versions-v2}
 
       :game-version {:text "WoW" :menu-label "game version (WoW)"
-                     :min-width 70 :pref-width 70 :max-width 100
+                     :min-width 70 :pref-width 140 :max-width 210
                      :cell-value-factory identity
                      :cell-factory {:fx/cell-type :tree-table-cell
                                     :describe (fn [row]
-                                                (let [text (some-> row :interface-version str utils/interface-version-to-game-version)
+                                                (let [text (addon-game-version-list-string row)
                                                       text (if-not (string? text) "" text)]
                                                   {:graphic {:fx/type fx.ext.node/with-tooltip-props
                                                              :props {:tooltip {:fx/type :tooltip
@@ -1676,7 +1685,7 @@
   the release data for a selected release in `release-list`."
   [addon :addon/expanded]
   (mapv (fn [release]
-          (menu-item (or (:release-label release) (:version release))
+          (menu-item (:version release)
                      (async-handler (juxt (partial cli/set-version addon release) clear-table-selected-items))))
         (:release-list addon)))
 
@@ -2308,7 +2317,7 @@
         blacklist [:group-addons :release-list :source-map-list]
         sanitised (apply dissoc addon blacklist)
 
-        transformations {:interface-version str}
+        transformations {:interface-version-list #(clojure.string/join ", " %)}
         sanitised (apply (fn [[k vfn]]
                            (if (k addon) (update sanitised k vfn) addon))
                          transformations)
@@ -2393,7 +2402,7 @@
                                     "install")
                                   (async-handler #(cli/set-version addon release)))))
         column-list [{:text "" :style-class ["wide-button-column"] :min-width 120 :pref-width 120 :max-width 120 :resizable false :cell-value-factory install-button}
-                     {:text "name" :cell-value-factory #(or (:release-label %) (:version %))}]
+                     {:text "name" :cell-value-factory :version}]
         row-list (or (:release-list addon) [])
         disabled? (not (addon/releases-visible? addon))]
     {:fx/type :border-pane

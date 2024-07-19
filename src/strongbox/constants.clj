@@ -4,18 +4,18 @@
 
 (def release-of-previous-expansion
   "'Shadowlands', released October 13, 2020. Used to shorten the 'full' catalogue.
-  https://wowpedia.fandom.com/wiki/Public_client_builds"
+  https://warcraft.wiki.gg/wiki/Public_client_builds"
   "2018-08-14T00:00:00Z")
 
 (def release-of-wow-classic
   "the date wow classic went live (addon development may have started before that). Used to guess possible game tracks when it's ambiguous.
-  https://wowpedia.fandom.com/wiki/Public_client_builds
+  https://warcraft.wiki.gg/wiki/Public_client_builds
   https://worldofwarcraft.com/en-us/news/22990080/mark-your-calendars-wow-classic-launch-and-testing-schedule"
   "2019-08-26T00:00:00Z")
 
 ;; used as a placeholder for an addon's supported version when we're forced to guess.
 ;; don't fret too much about patch versions. These values don't affect much.
-;; https://wowpedia.fandom.com/wiki/Public_client_builds
+;; https://warcraft.wiki.gg/wiki/Public_client_builds
 (def latest-retail-game-version "10.0.0")
 (def latest-classic-game-version "1.14.3")
 (def latest-classic-tbc-game-version "2.5.4")
@@ -87,9 +87,14 @@
 (def tukui-cutoff-label "June 1st, 2023")
 
 (def releases
-  "https://wowpedia.fandom.com/wiki/Patch"
+  "https://warcraft.wiki.gg/wiki/Patch"
 
-  {"10.2" "Dragonflight: Guardians of the Dream"
+  {"11.0.0" "The War Within"
+
+   "10.2.7" "Dragonflight: Dark Heart"
+   "10.2.6" "Dragonflight: Plunderstorm"
+   "10.2.5" "Dragonflight: Seeds of Renewal"
+   "10.2" "Dragonflight: Guardians of the Dream"
    "10.1" "Dragonflight: Embers of Neltharion"
    "10.0" "Dragonflight"
 
@@ -108,7 +113,6 @@
    "7" "Legion"
 
    "6.2" "Warlords of Draenor: Fury of Hellfire"
-   ;; "6.1" "'Garrisons Update'" ?
    "6" "Warlords of Draenor"
 
    "5.4" "Mists of Pandaria: Siege of Orgrimmar"
@@ -129,7 +133,6 @@
 
    "2.4" "The Burning Crusade: Fury of the Sunwell"
    "2.3" "The Burning Crusade: The Gods of Zul'Aman"
-   ;; "2.2" "'Voice Chat!'" ?
    "2.1" "The Burning Crusade: Black Temple"
    "2" "The Burning Crusade"
 

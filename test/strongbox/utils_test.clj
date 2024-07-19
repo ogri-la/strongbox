@@ -38,12 +38,13 @@
            "10000" "1.0.0" ;; first release
            "20001" "2.0.1" ;; Burning Crusade, Before The Storm
            "30002" "3.0.2" ;; WotLK, Echos of Doom
-           "30008a" "3.0.8a" ;; 'a' ?? supported, but eh ...
+           ;;"30008a" "3.0.8a" ;; 'a' ?? supported, but eh ... ;; 2024-07-14: case no longer supported
 
            ;; six digit cases
            "100000" "10.0.0"
            "100002" "10.0.2"
            "100102" "10.1.2" ;; just guessing
+           "110000" "11.0.0"
            "200102" "20.1.2"
            "300102" "30.1.2"
            ;; first three digits are now the major, second two minor and remaining is patch (I think ...)
@@ -307,6 +308,7 @@
                ;; ...etc
                ["9.0.1" :retail]
                ["10.0.2" :retail]
+               ["11.0.0" :retail]
 
                [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
@@ -618,7 +620,8 @@
   (let [cases [["" nil]
                ["foo" nil]
                ["a.b" nil]
-               ["1.2" "World of Warcraft: Mysteries of Maraudon"]]]
+               ["1.2" "World of Warcraft: Mysteries of Maraudon"]
+               ["10.2.7" "Dragonflight: Dark Heart"]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
 
@@ -713,3 +716,52 @@
                [false "False"]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/pretty-print-value given))))))
+
+(deftest to-int
+  (let [cases [[nil nil]
+               [{} nil]
+               ["asdf" nil]
+               ["" nil]
+               ["1" 1]
+               ["1,2,3", nil]
+               ["1, 2, 3", nil]]]
+    (doseq [[given expected] cases]
+      (is (= expected (utils/to-int given))))))
+
+(deftest group-by-coll
+  (let [given [{:key "aaa" :foo [:a :b]}
+               {:key "bbb" :foo [:b :c]}]
+
+        ;; one entry for :a, grouped on :foo = :a
+        ;; two entries for :b, grouped on :foo = :b
+        ;; one entry for :c, grouped on :foo = :c
+        expected {:a [{:key "aaa" :foo :a}]
+                  :b [{:key "aaa" :foo :b}
+                      {:key "bbb" :foo :b}]
+                  :c [{:key "bbb" :foo :c}]}]
+
+    (is (= expected (utils/group-by-coll :foo given)))))
+
+(deftest group-by-coll--game-tracks
+  (let [given [{:version "1.2.3" :-toc/game-track-list [:classic :retail]}
+               {:version "3.2.1" :-toc/game-track-list [:retail]}]
+
+        expected {:retail [{:version "1.2.3" :-toc/game-track-list :retail}
+                           {:version "3.2.1" :-toc/game-track-list :retail}]
+                  :classic [{:version "1.2.3" :-toc/game-track-list :classic}]}]
+    (is (= expected (utils/group-by-coll :-toc/game-track-list given)))))
+
+(deftest group-by-coll--empty
+  (let [cases [[nil {}]
+               [[] {}]
+               ['() {}]
+               [{} {}]
+               ["foo" {}]
+               [[[]] {}]
+               [[{}] {}]
+               [{:foo "bar"} {}]
+               [[{:foo "bar"}] {\a [{:foo \a}], \b [{:foo \b}], \r [{:foo \r}]}]
+               [[{:foo ["bar"]}] {"bar" [{:foo "bar"}]}]]]
+
+    (doseq [[given expected] cases]
+      (is (= expected (utils/group-by-coll :foo given))))))

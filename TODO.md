@@ -6,22 +6,15 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* rename `strongbox` release to `strongbox.AppImage`
-    - re-submit
-    - update release scripts
-    - done
-        - https://appimage.github.io/strongbox/
-
-* update release script
-    - update references from 'strongbox' to 'strongbox.AppImage'
-    - done
-
-* cataclysm classic support
-    - done
+* support multiple interface values
+* bump any game versions
+* bump any deps
 
 ## todo
 
+
 ## todo bucket (no particular order)
+* remove support for parsing templated .toc keyvals: '# ## Key: Value'
 
 * gui, 'set-icon' is taking a long time to do it's thing.
 

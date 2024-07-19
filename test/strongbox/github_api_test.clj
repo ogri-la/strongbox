@@ -193,7 +193,10 @@
                  [{:interface constants/default-interface-version} [:retail]]
                  [{:interface constants/default-interface-version
                    :#interface constants/default-interface-version-classic} [:retail :classic]]
-                 [{:interface 20501 :#interface 90000} [:retail :classic-tbc]]]]
+                 [{:interface 20501 :#interface 90000} [:classic-tbc :retail]]
+
+                 ;; ordering is regular `:interface` first, templated `:#interface` second
+                 [{:#interface 20501 :interface 90000} [:retail :classic-tbc]]]]
 
       (doseq [[given expected] cases]
         (is (= expected (github-api/-find-gametracks-toc-data given)))))))

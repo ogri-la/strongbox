@@ -21,11 +21,11 @@
   does *not* support ignoring disabled hosts, see `expand-summary`.
   returns `nil` when no release found."
   [addon :addon/expandable, game-track ::sp/game-track]
-  (let [dispatch-map {"curse" curseforge-api/expand-summary
+  (let [dispatch-map {;;"curse" curseforge-api/expand-summary ;; 2024-07-15: removed
                       "wowin" wowinterface-api/expand-summary
                       "gitla" gitlab-api/expand-summary
                       "githu" github-api/expand-summary
-                      "tukui" tukui-api/expand-summary
+                      ;;"tukui" tukui-api/expand-summary ;; 2024-07-15: removed
                       nil (fn [_ _] (error "malformed addon:" (utils/pprint addon)))}
         key (utils/safe-subs (:source addon) 5)]
     (try
@@ -38,9 +38,7 @@
                                (strongbox.addon/find-pinned-release (assoc addon :release-list release-list)))
               source-updates (or pinned-release latest-release)]
           (when source-updates
-            (-> addon
-                (merge source-updates {:release-list release-list})
-                (dissoc :release-label)))))
+            (merge addon source-updates {:release-list release-list}))))
       (catch Exception e
         (error e (utils/reportable-error "unexpected error attempting to expand addon summary"))))))
 
@@ -104,7 +102,15 @@
           syn (if (= (:source toc) "wowinterface")
                 (cond
                   (:installed-game-track toc) (assoc syn :game-track-list [(:installed-game-track toc)])
-                  (:interface-version toc) (assoc syn :game-track-list [(utils/interface-version-to-game-track (:interface-version toc))])
+
+                  (not (empty? (:interface-version-list toc)))
+                  (assoc syn :game-track-list
+                         (->> toc
+                              :interface-version-list
+                              (map utils/interface-version-to-game-track)
+                              distinct
+                              vec))
+
                   :else sink)
                 syn)
 

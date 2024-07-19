@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.4.0 - 2024-07-19
+
+### Added
+
+* added support for parsing multiple interface version values from .toc file.
+    - a single .toc file may now yield multiple possible game tracks (retail, classic, wrath, etc).
+* added entries to the known patch list for the recent major Dragonflight patches and The War Within.
+
+### Changed
+
+* the WoW column in the GUI now supports displaying multiple game versions (like 8.0, 9.0, 10.0).
+    - these are derived from interface versions (80000, 90000, 100000).
+* the raw data GUI widget in the addon details pane now supports displaying multiple interface versions.
+* replaced references to the old wiki with the new wiki (warcraft.wiki.gg).
+* bumped dependencies.
+
+### Fixed
+
+* fixed a typo in a field name in the import/export logic.
+* fixed a bug in the interface-version => game-version logic where 110000 was returned as '1.0.000' instead of '11.0.0'.
+
+### Removed
+
+* removed curseforge and tukui test fixtures and the fetching of test fixtures.
+* removed support for 'release labels' attached to addon source updates.
+    - only supported by curseforge and provided a friendlier label for a release than a version number.
+* removed more curseforge and tukui logic that was disabled many releases ago.
+* removed support for interface versions in .toc files containing non-numeric values.
+    - for example, "30008a" which used to parse to "3.0.8a".
+    - the interface version for these alpha and beta releases don't actually have 'a' and 'b' suffixes.
+        - https://warcraft.wiki.gg/wiki/Patch_3.0.8a
+        - https://warcraft.wiki.gg/wiki/Patch_8.1.0a
+
 ## 7.3.0 - 2024-04-23
 
 ### Added
