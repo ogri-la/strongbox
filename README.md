@@ -194,7 +194,7 @@ the same addon directory. If an addon is available for multiple addon systems it
 * `classic (Cata)` will prefer `classic (Cata)` addons, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
 
 If uncertain which addon system an installed addon supports, look at the `WoW` column value on the `installed` tab and 
-compare it to the `Version` value in the list of WoW [public client builds](https://warcraft.wiki.gg/wiki/Public_client_builds").
+compare it to the `Version` value in the list of WoW [public client builds](https://warcraft.wiki.gg/wiki/Public_client_builds).
 
 ### install addons from URL
 
