@@ -808,15 +808,17 @@
              (recur (+ waited# -with-lock-wait-retry-time)))))))
 
 (defn-spec patch-name (s/or :ok string?, :not-found nil?)
-  "returns the 'patch' name for the given `game-version`, considering only the major and minor values.
-  if a precise match is not found, the major version is then considered.
-  if a major version is not found, nil is returned.
+  "returns the 'patch' name for the given `game-version`.
+  if an exact match for `major.minor.patch` is not found then `major.minor` is considered.
+  if a match for `major.minor` is not found, then only `major` is considered.
+  if a match for `major` is not found, `nil` is returned.
   For example, 9.2.5 has no patch name, but 9.2 is 'Shadowlands: Eternity's End'"
   [game-version string?]
-  (let [[major, minor] (clojure.string/split game-version #"\.")
-        major-minor (clojure.string/join "." [major minor])]
-    (or (get constants/releases major-minor)
-        (get constants/releases major))))
+  (or (get constants/releases game-version)
+      (let [[major, minor] (clojure.string/split game-version #"\.")
+            major-minor (clojure.string/join "." [major minor])]
+        (or (get constants/releases major-minor)
+            (get constants/releases major)))))
 
 (defmacro compile-time-slurp
   "slurps given `resource` file at macro-expansion (compile) time."

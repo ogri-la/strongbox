@@ -620,7 +620,8 @@
   (let [cases [["" nil]
                ["foo" nil]
                ["a.b" nil]
-               ["1.2" "World of Warcraft: Mysteries of Maraudon"]]]
+               ["1.2" "World of Warcraft: Mysteries of Maraudon"]
+               ["10.2.7" "Dragonflight: Dark Heart"]]]
     (doseq [[given expected] cases]
       (is (= expected (utils/patch-name given))))))
 
