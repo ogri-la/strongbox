@@ -9,14 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * added support for parsing multiple interface version values from .toc file.
-    - a single .toc file may now yield multiple possible game tracks (retail, classic, wrath, etc)
-        - including duplicate game tracks, which has been accounted for.
+    - a single .toc file may now yield multiple possible game tracks (retail, classic, wrath, etc).
+* added entries to the known patch list for the recent major Dragonflight patches and The War Within.
 
 ### Changed
 
 * the WoW column in the GUI now supports displaying multiple game versions (like 8.0, 9.0, 10.0).
-    - these are dervied from interface versions (80000, 90000, 100000)
-* the raw data GUI widget in the addon details pane now supports displaying multiple interface versions
+    - these are dervied from interface versions (80000, 90000, 100000).
+* the raw data GUI widget in the addon details pane now supports displaying multiple interface versions.
+* replaced references to the old wiki with the new wiki (warcraft.wiki.gg).
+* bumped dependencies.
 
 ### Fixed
 
@@ -31,9 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - these were only supported by curseforge and provided a friendlier label a release than the version number.
 * removed more curseforge and tukui logic that was disabled many releases ago
     - including test fixtures for this removed logic.
-* removed support for interface versions contianing non-numeric values.
-    - for example, there is an interface version "30008a" which should return "3.0.8a"
-    - this is an exceedingly rare (and possibly an invalid) case and nobody should be affected.
+* removed support for interface versions in .toc files containing non-numeric values.
+    - for example, "30008a" which used to parse to "3.0.8a"
+    - the interface version for these alpha and beta releases don't actually have 'a' and 'b' suffixes
+        - https://warcraft.wiki.gg/wiki/Patch_3.0.8a
+        - https://warcraft.wiki.gg/wiki/Patch_8.1.0a
 
 ## 7.3.0 - 2024-04-23
 
