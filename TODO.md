@@ -7,11 +7,10 @@ see CHANGELOG.md for a more formal list of changes by release
 ## done
 
 * support multiple interface values
-
-## todo
-
 * bump any game versions
 * bump any deps
+
+## todo
 
 
 ## todo bucket (no particular order)
