@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* fixed bug in emergency 'short' catalogue generation.
+    - it would include addons from BFA instead of stopping at Shadowlands.
+
 ### Removed
 
 ## 7.4.0 - 2024-07-19

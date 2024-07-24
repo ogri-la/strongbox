@@ -2,10 +2,11 @@
 
 (def mascot "ᕙ[°▿°]ᕗ")
 
+;; 
 (def release-of-previous-expansion
-  "'Shadowlands', released October 13, 2020. Used to shorten the 'full' catalogue.
-  https://warcraft.wiki.gg/wiki/Public_client_builds"
-  "2018-08-14T00:00:00Z")
+  "'Shadowlands', released November 23rd 2020. Used to shorten the 'full' catalogue.
+  https://warcraft.wiki.gg/wiki/Expansion#World_of_Warcraft"
+  "2020-10-23T00:00:00Z")
 
 (def release-of-wow-classic
   "the date wow classic went live (addon development may have started before that). Used to guess possible game tracks when it's ambiguous.
