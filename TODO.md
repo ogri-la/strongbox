@@ -8,7 +8,36 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## todo
 
+* issue 433: preserve ignore and pin flags when addon updated manually via strongbox
+    - usecase: 
+        - old addon exists on wowi
+        - new addon exists on curse
+        - user installs new addon from curse and then 'ignores' it so nothing affects it
+        - user installs updated addon from curse and ignore flag is lost
+    - problems:
+        - if the addon was ignored, it shouldn't have been possible to overwrite it to begin with
+        - it seems reasonable to update addons in this way
+
+bug:
+    - attempting to overwrite ignored addon results in "refusing to delete ignored addon: /path/to/addon/dir" with no addon name
+    - it looks like it installed it anyway
+    
+
 ## todo bucket (no particular order)
+
+bug: clear button isn't clearing search
+
+bug: 
+    select github + wowi
+    search for 'alto'
+        - 3 results, 2 github, 1 wowi
+    deselect 'github'
+        - no results
+    select gitlab (so wowi and gitlab are selected)
+        - wowi result
+
+bug: search, next and previous buttons should take me to top of search results
+
 
 * patch tooltip, support multiple game versions
 
