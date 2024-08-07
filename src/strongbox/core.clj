@@ -536,12 +536,6 @@
             (fs/delete downloaded-file)
             (warn "removed bad addon."))
 
-        (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
-        (error "refusing to install addon that will overwrite an ignored addon.")
-
-        (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
-        (error "refusing to install addon that will overwrite a pinned addon.")
-
         :else downloaded-file))))
 
 (def download-addon-guard-affective
@@ -552,7 +546,29 @@
   [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file)]
   (when downloaded-file
     (try
-      (addon/install-addon addon install-dir downloaded-file)
+
+      ;; because addons can enter strongbox via downloading or via the user,
+      ;; we can't rely on all checks having happened at download time.
+      ;; this means some checks will be duplicated for downloaded files
+      ;; with different consequences for failing.
+      ;; for example, if the addon is invalid at download time, delete it.
+      ;; if the addon is invalid at install time, ignore it.
+
+      (cond
+        (not (zip/valid-zip-file? downloaded-file))
+        (error "failed to read addon zip file, possibly corrupt or not a zip file.")
+
+        (not (zip/valid-addon-zip-file? downloaded-file))
+        (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
+
+        (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+        (error "refusing to install addon that will overwrite an ignored addon.")
+
+        (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+        (error "refusing to install addon that will overwrite a pinned addon.")
+
+        :else (addon/install-addon addon install-dir downloaded-file))
+
       (finally
         (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))))))
 
