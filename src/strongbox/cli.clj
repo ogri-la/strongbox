@@ -389,7 +389,7 @@
                      (let [error-messages
                            (logging/buffered-log
                             :warn
-                            (let [results (addon/install-addon addon install-dir downloaded-file)]
+                            (let [results (core/install-addon addon install-dir downloaded-file)]
                               (when-let [installed-addon-dir (some-> results first fs/parent str)]
                                 (core/refresh-addon* installed-addon-dir))))]
 
