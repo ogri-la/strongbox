@@ -23,6 +23,9 @@ bug:
     - it looks like it installed it anyway
     
 
+* Desktop Entry Name should not include "(Flatpak)" 
+    - https://github.com/flathub/la.ogri.strongbox/issues/7
+
 ## todo bucket (no particular order)
 
 bug: clear button isn't clearing search

@@ -543,7 +543,7 @@
 
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it, bypassing checks. see `install-addon-guard`."
-  [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file)]
+  [addon (s/or :ok :addon/installable, :also-ok :addon/nfo-input-minimum), install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file)]
   (when downloaded-file
     (try
 
@@ -570,7 +570,11 @@
         :else (addon/install-addon addon install-dir downloaded-file))
 
       (finally
-        (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))))))
+        ;; todo: we need a handle on the newly installed addon here to pass it to post-install,
+        ;; or we need to munge a prefix
+        ;; or something. we can't skip post-install
+        (when (:name addon) 
+          (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep)))))))
 
 (def install-addon-affective
   (affects-addon-wrapper install-addon))
