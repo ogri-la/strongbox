@@ -573,7 +573,7 @@
         ;; todo: we need a handle on the newly installed addon here to pass it to post-install,
         ;; or we need to munge a prefix
         ;; or something. we can't skip post-install
-        (when (:name addon) 
+        (when (:name addon)
           (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep)))))))
 
 (def install-addon-affective

@@ -79,7 +79,7 @@
   (if (:ignore? addon)
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
-    (error "refusing to delete ignored addon:" install-dir)
+    (error "refusing to delete ignored addon:" (:label addon))
 
     (doseq [grouped-addon (flatten-addon addon)]
       (-remove-addon! install-dir (:dirname grouped-addon) (:group-id addon)))))
@@ -276,7 +276,12 @@
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files.
-  returns a list of nfo files that were written to disk."
+
+  relies on `core/install-addon` to block installations that would overwrite ignored or pinned addons.
+  if it's gotten this far it won't delete ignored/pinned addon directories,
+  but the new addon will be unzipped over the top of them.
+
+  returns a list of nfo files that were written to disk, if any."
   [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         version (:version addon)
@@ -288,6 +293,15 @@
 
         zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
+
+        toplevel-nfo (->> toplevel-dirs
+                          (map :path)
+                          (map fs/base-name)
+                          (map #(nfo/read-nfo-file install-dir %)))
+
+        contains-nfo-with-ignored-flag (utils/any (map :ignore? toplevel-nfo))
+        contains-nfo-with-pinned-version (utils/any (map :pinned-version toplevel-nfo))
+
         primary-dirname (determine-primary-subdir toplevel-dirs)
 
         ;; let the user know if there are bundled addons and they don't share a common prefix
@@ -306,10 +320,26 @@
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))
                               new-nfo-data (nfo/derive addon primary?)
+                              ;; if any of the addons this addon is replacing are being ignored,
+                              ;; the new nfo will be ignored too.
+                              new-nfo-data (if contains-nfo-with-ignored-flag
+                                             (assoc new-nfo-data :ignore? true)
+                                             new-nfo-data)
+
+                              new-nfo-data (if contains-nfo-with-pinned-version
+                                             ;; `nfo/update-nfo` will dissoc this field if it's value is nil.
+                                             (assoc new-nfo-data :pinned-version nil)
+                                             new-nfo-data)
+
                               new-nfo-data (nfo/add-nfo install-dir addon-dirname new-nfo-data)]
                           (nfo/write-nfo! install-dir addon-dirname new-nfo-data)))
 
         ;; write the nfo files, return a list of all nfo files written
+        ;; todo: if a zip file is being installed then we can't rely on `remove-addon!` having been called,
+        ;; but `remove-completely-overwritten-addons` *may* have been called.
+        ;; this leads to the possibility of an updated addon that has dropped a subdir and added a new one (like a rename),
+        ;; skipping the `remove-completely-overwritten-addons` and orphaning the original subdir.
+        ;; this means we could hit `unzip-addon` with the original addon still fully intact.
         update-nfo-files (fn []
                            (mapv update-nfo-fn toplevel-dirs))
 
@@ -343,12 +373,16 @@
     (suspicious-bundle-check)
 
     ;; todo: remove support for v1 addons in 2.0.0 ;; todo!
-    ;; when is it not valid? when importing v1 addons. v2 addons need 'padding' as well :(
+    ;; when is it not valid?
+    ;; * when importing v1 addons. v2 addons need 'padding' as well :(
+    ;; * when installing from a file and we have nothing more than a generated ID value
     (when (s/valid? :addon/toc addon)
       (remove-addon! install-dir addon))
 
     (remove-completely-overwritten-addons)
 
+    ;; `addon/install-addon` is all about installing an addon, not checking whether it's safe to do so.
+    ;; use `core/install-addon` for safety checks
     (unzip-addon)
     (update-nfo-files)))
 
