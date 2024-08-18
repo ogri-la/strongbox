@@ -543,7 +543,7 @@
 
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it, bypassing checks. see `install-addon-guard`."
-  [addon (s/or :ok :addon/installable, :also-ok :addon/nfo-input-minimum), install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file)]
+  [addon (s/or :ok :addon/installable, :also-ok :addon/nfo-input-minimum), install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file), opts map?]
   (when downloaded-file
     (try
 
@@ -567,7 +567,7 @@
         (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
         (error "refusing to install addon that will overwrite a pinned addon.")
 
-        :else (addon/install-addon addon install-dir downloaded-file))
+        :else (addon/install-addon addon install-dir downloaded-file opts))
 
       (finally
         ;; todo: we need a handle on the newly installed addon here to pass it to post-install,
@@ -582,18 +582,19 @@
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it, handling http and non-http errors, bad zip files, bad addons, bad directories."
   ([addon :addon/installable]
-   (install-addon-guard addon (selected-addon-dir) false))
+   (install-addon-guard addon (selected-addon-dir) {}))
 
   ([addon :addon/installable, install-dir ::sp/extant-dir]
-   (install-addon-guard addon install-dir false))
+   (install-addon-guard addon install-dir {}))
 
-  ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
-   (when-let [downloaded-file (download-addon-guard addon install-dir)]
-     (if test-only?
-       ;; addon was successfully downloaded and verified as being sound. stop here.
-       true
-       ;; else, install addon
-       (install-addon addon install-dir downloaded-file)))))
+  ([addon :addon/installable, install-dir ::sp/extant-dir, opts map?]
+   (let [{:keys [test-only?]} opts]
+     (when-let [downloaded-file (download-addon-guard addon install-dir)]
+       (if test-only?
+         ;; addon was successfully downloaded and verified as being sound. stop here.
+         true
+         ;; else, install addon
+         (install-addon addon install-dir downloaded-file opts))))))
 
 (def install-addon-guard-affective
   (affects-addon-wrapper install-addon-guard))
@@ -1271,7 +1272,7 @@
               ;; not necessary when updating the user-catalogue.
               _ (if-not attempt-dry-run?
                   true
-                  (or (install-addon-guard addon (selected-addon-dir) true)
+                  (or (install-addon-guard addon (selected-addon-dir) {:test-only? true})
                       (error "failed dry-run installation")))]
 
              ;; if-let* was successful!

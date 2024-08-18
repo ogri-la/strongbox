@@ -282,7 +282,7 @@
   but the new addon will be unzipped over the top of them.
 
   returns a list of nfo files that were written to disk, if any."
-  [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
+  [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, opts map?]
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         version (:version addon)
 

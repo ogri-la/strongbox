@@ -568,8 +568,7 @@
             ;; move dummy addon file into place so there is no cache miss
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             _ (helper/cp (fixture-path fname) install-dir)
-            test-only? false
-            file-list (core/install-addon-guard helper/addon install-dir test-only?)]
+            file-list (core/install-addon-guard helper/addon install-dir {:test-only? false})]
         (testing "addon directory created, single file written (.strongbox.json nfo file)"
           (is (= (count file-list) 1))
           (is (fs/exists? (first file-list))))))))
@@ -581,8 +580,7 @@
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             dest (helper/cp (fixture-path fname) install-dir)
             addon (assoc helper/addon :-testing-zipfile dest)
-            test-only? true
-            result (core/install-addon-guard addon install-dir test-only?)]
+            result (core/install-addon-guard addon install-dir {:test-only? true})]
         (is result) ;; success
 
         ;; ensure nothing was actually unzipped
@@ -596,8 +594,7 @@
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             _ (fs/copy (fixture-path "bad-truncated.zip") (utils/join install-dir fname))
 
-            test-only? true
-            result (core/install-addon-guard helper/addon install-dir test-only?)]
+            result (core/install-addon-guard helper/addon install-dir {:test-only? true})]
         (is (not result)) ;; failure
 
         ;; ensure nothing was actually unzipped
@@ -610,8 +607,9 @@
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
             dest (utils/join install-dir fname)
             _ (fs/copy (fixture-path "bad-truncated.zip") dest)
-            addon (assoc helper/addon :-testing-zipfile dest)]
-        (is (nil? (core/install-addon-guard addon install-dir)))
+            addon (assoc helper/addon :-testing-zipfile dest)
+            opts {}]
+        (is (nil? (core/install-addon-guard addon install-dir opts)))
         ;; bad zip file deleted
         (is (= 0 (count (fs/list-dir install-dir))))))))
 
@@ -762,8 +760,9 @@
       (let [install-dir (helper/install-dir)
             [[addon] downloaded-file] (helper/gen-addon! install-dir {:override {:interface-version-list [0]}})
             install-path (->> addon :toc :dirname (fs/file install-dir) str)
-            expected (-> addon :derived-nfo)]
-        (core/install-addon (:installable addon) install-dir downloaded-file)
+            expected (-> addon :derived-nfo)
+            opts {}]
+        (core/install-addon (:installable addon) install-dir downloaded-file opts)
 
         (is (= expected (core/load-installed-addon install-path)))
         (is (= [expected] (core/get-state :installed-addon-list)))))))
@@ -1793,14 +1792,16 @@
              :primary? false,
              :source "wowinterface",
              :source-id "999",
-             :source-map-list [{:source "wowinterface", :source-id "999"}]}]
+             :source-map-list [{:source "wowinterface", :source-id "999"}]}
+
+            opts {}]
 
         ;; A and B can live happily side by side
-        (core/install-addon (:installable addon-a) install-dir downloaded-file-a)
-        (core/install-addon (:installable addon-b) install-dir downloaded-file-b)
+        (core/install-addon (:installable addon-a) install-dir downloaded-file-a opts)
+        (core/install-addon (:installable addon-b) install-dir downloaded-file-b opts)
 
         ;; C wipes out both A and B
-        (core/install-addon (:installable addon-c3) install-dir downloaded-file-c)
+        (core/install-addon (:installable addon-c3) install-dir downloaded-file-c opts)
 
         ;; because C *completely* replaces both A and B, A and B should be uninstalled by C rather
         ;; than overwritten and turned into mutual dependencies of C.

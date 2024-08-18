@@ -784,9 +784,11 @@
                        :source-map-list [{:source "curseforge", :source-id 2}]}]
 
         updates {:group-id "foobar"}
-        expected-nfo (mapv #(merge % updates) original-nfo)]
+        expected-nfo (mapv #(merge % updates) original-nfo)
 
-    (addon/install-addon addon (helper/install-dir) zipfile)
+        opts {}]
+
+    (addon/install-addon addon (helper/install-dir) zipfile opts)
 
     ;; sanity checks
     (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))
