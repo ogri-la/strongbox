@@ -422,7 +422,7 @@
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
   "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
   [addon-list (s/nilable :addon/installed-list)]
-  (->> addon-list (filter :ignore?) (map :group-addons) flatten (map :dirname) (remove nil?) set))
+  (->> addon-list (filter :ignore?) (map flatten-addon) flatten (map :dirname) (remove nil?) set))
 
 (defn-spec overwrites-ignored? boolean?
   "returns `true` if given archive file would unpack over *any* ignored addon.

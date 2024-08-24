@@ -490,6 +490,24 @@
       (is (addon/overwrites-pinned? downloaded-file [pinned-addon]))
       (is (not (addon/overwrites-pinned? downloaded-file [addon]))))))
 
+(deftest test-overwrites-ignored?
+  (testing "addon zip files that would extract over an ignored addon are correctly detected"
+    (let [downloaded-file (fixture-path "everyaddon--1-2-3.zip") ;; ./EveryAddon
+          addon {:name "EveryAddon",
+                 :dirname "EveryAddon",
+                 :label "Every Addon",
+                 :description ""
+                 :interface-version-list [80300]
+                 :installed-version "1.2.3"
+                 :supported-game-tracks [:retail]
+                 :group-id "foo"
+                 :primary? true}
+          ignored-addon (assoc addon :ignore? true)
+          ]
+      (is (addon/overwrites-ignored? downloaded-file [ignored-addon]))
+      (is (not (addon/overwrites-pinned? downloaded-file [addon]))))))
+
+
 (deftest test-updateable?
   (testing "an addon's 'updateable' states"
     (let [cases [;; no update available
