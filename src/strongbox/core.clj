@@ -536,6 +536,14 @@
             (fs/delete downloaded-file)
             (warn "removed bad addon."))
 
+        ;; test is duplicated in `install-addon` as it's possible to just download and check addon without installing it.
+        (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+        (error "refusing to install addon that will overwrite an ignored addon.")
+
+        ;; test is duplicated in `install-addon` as it's possible to just download and check addon without installing it.
+        (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+        (error "refusing to install addon that will overwrite a pinned addon.")
+
         :else downloaded-file))))
 
 (def download-addon-guard-affective
@@ -561,10 +569,12 @@
         (not (zip/valid-addon-zip-file? downloaded-file))
         (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
 
-        (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+        (and (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+             (not (:overwrite-ignored? opts)))
         (error "refusing to install addon that will overwrite an ignored addon.")
 
-        (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+        (and (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+             (not (:unpin-pinned? opts)))
         (error "refusing to install addon that will overwrite a pinned addon.")
 
         :else (addon/install-addon addon install-dir downloaded-file opts))
@@ -1761,21 +1771,15 @@
       (refresh))))
 
 ;; todo: move to ui.cli
-#_(defn-spec remove-addon nil?
-    "removes given installed addon"
-    [installed-addon :addon/installed]
-    (logging/with-addon installed-addon
-      (addon/remove-addon! (selected-addon-dir) installed-addon))
-    (refresh))
-
-;; todo: move to ui.cli
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [installed-addon-list :addon/toc-list]
   (let [addon-dir (selected-addon-dir)]
     (doseq [installed-addon installed-addon-list]
       (logging/with-addon installed-addon
-        (addon/remove-addon! addon-dir installed-addon)))
+        (if (:ignore? installed-addon)
+          (error "refusing to delete ignored addon:" (:label installed-addon))
+          (addon/remove-addon! addon-dir installed-addon))))
     (refresh)))
 
 ;;

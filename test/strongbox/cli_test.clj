@@ -912,6 +912,7 @@
       (with-running-app
         (let [install-dir (helper/install-dir)
               fixture (helper/fixture-path "everyaddon--0-1-2.zip")
+              opts {}
               expected [{:description "Does what no other addon does, slightly differently",
                          :dirname "EveryAddon",
                          :dirsize 0
@@ -944,7 +945,7 @@
                          :supported-game-tracks [:retail]}]
 
               expected-nfo {:group-id "everyaddon-aaaaaaaa", :primary? true}]
-          (cli/install-addons-from-file-in-parallel [fixture])
+          (cli/install-addons-from-file-in-parallel [fixture] opts)
           (is (= expected (core/get-state :installed-addon-list)))
           (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon"))))))))
 
@@ -977,7 +978,8 @@
       (with-global-fake-routes-in-isolation fake-routes
         (with-running-app
           (let [install-dir (helper/install-dir)
-                _ (cli/install-addons-from-file-in-parallel [fixture])
+                opts {}
+                _ (cli/install-addons-from-file-in-parallel [fixture] opts)
                 _ (core/refresh)
                 addon (first (core/get-state :installed-addon-list))]
 
@@ -998,11 +1000,12 @@
         (addon/ignore! (helper/install-dir) addon)
         (core/refresh)
         (let [addon (first (core/get-state :installed-addon-list))
-              update (helper/fixture-path "everyaddon--7-8-9.zip")]
+              update (helper/fixture-path "everyaddon--7-8-9.zip")
+              opts {}]
 
           (is (:ignore? addon))
 
-          (cli/install-addons-from-file-in-parallel [update])
+          (cli/install-addons-from-file-in-parallel [update] opts)
           (let [addon (first (core/get-state :installed-addon-list))]
             (is (:ignore? addon))))))))
 

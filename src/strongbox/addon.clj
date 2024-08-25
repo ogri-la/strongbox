@@ -79,10 +79,13 @@
   (if (:ignore? addon)
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
-    (error "refusing to delete ignored addon:" (:label addon))
+    ;; 2024-08-25: behaviour changed. this is not the place to prevent ignored addons from being removed.
+    ;; see `core/install-addon`, `core/remove-many-addons`
+    ;;(error "refusing to delete ignored addon:" (:label addon))
+    (warn "deleting ignored addon:" (:label addon)))
 
-    (doseq [grouped-addon (flatten-addon addon)]
-      (-remove-addon! install-dir (:dirname grouped-addon) (:group-id addon)))))
+  (doseq [grouped-addon (flatten-addon addon)]
+    (-remove-addon! install-dir (:dirname grouped-addon) (:group-id addon))))
 
 ;;
 
@@ -323,12 +326,11 @@
                               ;; if any of the addons this addon is replacing are being ignored,
                               ;; the new nfo will be ignored too.
                               new-nfo-data (if contains-nfo-with-ignored-flag
-                                             (assoc new-nfo-data :ignore? true)
+                                             (nfo/ignore new-nfo-data)
                                              new-nfo-data)
 
                               new-nfo-data (if contains-nfo-with-pinned-version
-                                             ;; `nfo/update-nfo` will dissoc this field if it's value is nil.
-                                             (assoc new-nfo-data :pinned-version nil)
+                                             (nfo/unpin new-nfo-data)
                                              new-nfo-data)
 
                               new-nfo-data (nfo/add-nfo install-dir addon-dirname new-nfo-data)]

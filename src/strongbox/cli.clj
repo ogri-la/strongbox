@@ -372,7 +372,7 @@
   "installs/updates a list of addon zip files in parallel.
   does a clever refresh check afterwards to try and prevent a full refresh from happening.
   very similar code to `install-update-these-in-parallel`."
-  [download-file-list (s/coll-of ::sp/extant-archive-file)]
+  [download-file-list (s/coll-of ::sp/extant-archive-file), opts map?]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
         current-locks (atom #{})
@@ -389,8 +389,7 @@
                      (let [error-messages
                            (logging/buffered-log
                             :warn
-                            (let [opts {}
-                                  results (core/install-addon addon install-dir downloaded-file opts)]
+                            (let [results (core/install-addon addon install-dir downloaded-file opts)]
                               (when-let [installed-addon-dir (some-> results first fs/parent str)]
                                 (core/refresh-addon* installed-addon-dir))))]
 

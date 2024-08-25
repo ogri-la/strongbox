@@ -502,11 +502,9 @@
                  :supported-game-tracks [:retail]
                  :group-id "foo"
                  :primary? true}
-          ignored-addon (assoc addon :ignore? true)
-          ]
+          ignored-addon (assoc addon :ignore? true)]
       (is (addon/overwrites-ignored? downloaded-file [ignored-addon]))
       (is (not (addon/overwrites-pinned? downloaded-file [addon]))))))
-
 
 (deftest test-updateable?
   (testing "an addon's 'updateable' states"

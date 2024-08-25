@@ -261,6 +261,10 @@
 
 ;; ignoring
 
+(defn-spec ignore :addon/nfo
+  [nfo :addon/nfo]
+  (assoc nfo :ignore? true))
+
 (defn-spec ignore! nil?
   "prevent any changes made by strongbox to this addon. 
   explicitly ignores this addon by setting the `ignore?` flag to `true`."
@@ -285,6 +289,10 @@
   "'pins' the given `version` of a specific addon"
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, version :addon/pinned-version]
   (update-nfo! install-dir addon-dirname {:pinned-version version}))
+
+(defn-spec unpin :addon/nfo
+  [nfo :addon/nfo]
+  (dissoc nfo :pinned-version))
 
 (defn-spec unpin! nil?
   "removes `:pinned-version` from a specific addon's nfo file, if it exists"
