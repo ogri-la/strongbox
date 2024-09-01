@@ -312,10 +312,11 @@
                  (let [downloaded-file (core/download-addon-guard-affective addon install-dir)
                        existing-dirs (addon/dirname-set addon)
                        updated-dirs (zipfile-locks downloaded-file)
-                       locks-needed (clojure.set/union existing-dirs updated-dirs)]
+                       locks-needed (clojure.set/union existing-dirs updated-dirs)
+                       opts {}]
                    (swap! new-dirs into updated-dirs)
                    (utils/with-lock current-locks locks-needed
-                     (core/install-addon-affective addon install-dir downloaded-file)
+                     (core/install-addon-guard-affective addon install-dir opts downloaded-file)
                      (core/refresh-addon addon))))]
     (run! #(joblib/create-addon-job! queue-atm % job-fn) updateable-addon-list)
     (joblib/run-jobs! queue-atm core/num-concurrent-downloads)
@@ -363,7 +364,7 @@
           error-messages
           (logging/buffered-log
            :warn
-           (addon/install-addon addon (core/selected-addon-dir) downloaded-file))]
+           (core/install-addon addon (core/selected-addon-dir) downloaded-file))]
       (core/refresh)
       {:label (fs/base-name downloaded-file)
        :error-messages error-messages}))
@@ -372,7 +373,7 @@
   "installs/updates a list of addon zip files in parallel.
   does a clever refresh check afterwards to try and prevent a full refresh from happening.
   very similar code to `install-update-these-in-parallel`."
-  [download-file-list (s/coll-of ::sp/extant-archive-file)]
+  [download-file-list (s/coll-of ::sp/extant-archive-file), opts ::sp/install-opts]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
         current-locks (atom #{})
@@ -389,7 +390,7 @@
                      (let [error-messages
                            (logging/buffered-log
                             :warn
-                            (let [results (addon/install-addon addon install-dir downloaded-file)]
+                            (let [results (core/install-addon addon install-dir downloaded-file opts)]
                               (when-let [installed-addon-dir (some-> results first fs/parent str)]
                                 (core/refresh-addon* installed-addon-dir))))]
 

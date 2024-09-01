@@ -1007,10 +1007,12 @@
   (when-let [abs-path-list (file-chooser {:filters [{:description "ZIP files" :extensions ["*.zip"]}]
                                           :type :open-multi
                                           :initial-dir (core/selected-addon-dir)})]
-    (doseq [{:keys [error-messages label]} (cli/install-addons-from-file-in-parallel abs-path-list)]
-      (when-not (empty? error-messages)
-        (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
-          (alert :warning msg {:wait? false})))))
+    (let [opts {:overwrite-ignored? true
+                :unpin-pinned? true}]
+      (doseq [{:keys [error-messages label]} (cli/install-addons-from-file-in-parallel abs-path-list opts)]
+        (when-not (empty? error-messages)
+          (let [msg (message-list (format "warnings/errors while installing \"%s\"" label) error-messages)]
+            (alert :warning msg {:wait? false}))))))
   nil)
 
 (defn exit-handler

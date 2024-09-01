@@ -490,6 +490,8 @@
       (try
         (logging/with-addon addon
           (apply wrapped-fn addon args))
+        (catch Exception ex
+          (error ex "uncaught error calling wrapped function"))
         (finally
           (-stop-affecting-addon))))))
 
@@ -536,9 +538,11 @@
             (fs/delete downloaded-file)
             (warn "removed bad addon."))
 
+        ;; test is duplicated in `install-addon` as it's possible to just download and check addon without installing it.
         (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
         (error "refusing to install addon that will overwrite an ignored addon.")
 
+        ;; test is duplicated in `install-addon` as it's possible to just download and check addon without installing it.
         (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
         (error "refusing to install addon that will overwrite a pinned addon.")
 
@@ -549,31 +553,66 @@
 
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it, bypassing checks. see `install-addon-guard`."
-  [addon :addon/installable, install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file)]
+  [addon (s/or :ok :addon/installable, :also-ok :addon/nfo-input-minimum), install-dir ::sp/extant-dir, downloaded-file (s/nilable ::sp/extant-archive-file), opts ::sp/install-opts]
   (when downloaded-file
     (try
-      (addon/install-addon addon install-dir downloaded-file)
-      (finally
-        (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep))))))
 
-(def install-addon-affective
-  (affects-addon-wrapper install-addon))
+      ;; because addons can enter strongbox via downloading or via the user,
+      ;; we can't rely on all checks having happened at download time.
+      ;; this means some checks will be duplicated for downloaded files
+      ;; with different consequences for failing.
+      ;; for example, if the addon is invalid at download time, delete it.
+      ;; if the addon is invalid at install time, ignore it.
+
+      (cond
+        (not (zip/valid-zip-file? downloaded-file))
+        (error "failed to read addon zip file, possibly corrupt or not a zip file.")
+
+        (not (zip/valid-addon-zip-file? downloaded-file))
+        (error "refusing to install, addon zip file contains top-level files or a top-level directory missing a .toc file.")
+
+        (and (addon/overwrites-ignored? downloaded-file (get-state :installed-addon-list))
+             (not (:overwrite-ignored? opts)))
+        (error "refusing to install addon that will overwrite an ignored addon.")
+
+        (and (addon/overwrites-pinned? downloaded-file (get-state :installed-addon-list))
+             (not (:unpin-pinned? opts)))
+        (error "refusing to install addon that will overwrite a pinned addon.")
+
+        :else (addon/install-addon addon install-dir downloaded-file opts))
+
+      (catch Exception ex
+        (error ex "Uncaught exception installing addon"))
+
+      (finally
+        ;; future: post-install steps for addons installed manually are skipped because there is no `:name` value,
+        ;; only a `grouped-id` value.
+        (when (:name addon)
+          (addon/post-install addon install-dir (get-state :cfg :preferences :addon-zips-to-keep)))))))
+
+;; 2024-09-01: disabled, I want all installation to go through `install-addon-guard`
+#_(def install-addon-affective
+    (affects-addon-wrapper install-addon))
 
 (defn-spec install-addon-guard (s/or :ok (s/coll-of ::sp/extant-file), :passed-tests true?, :error nil?)
   "downloads an addon and installs it, handling http and non-http errors, bad zip files, bad addons, bad directories."
   ([addon :addon/installable]
-   (install-addon-guard addon (selected-addon-dir) false))
+   (install-addon-guard addon (selected-addon-dir) {}))
 
   ([addon :addon/installable, install-dir ::sp/extant-dir]
-   (install-addon-guard addon install-dir false))
+   (install-addon-guard addon install-dir {}))
 
-  ([addon :addon/installable, install-dir ::sp/extant-dir, test-only? boolean?]
-   (when-let [downloaded-file (download-addon-guard addon install-dir)]
-     (if test-only?
-       ;; addon was successfully downloaded and verified as being sound. stop here.
-       true
-       ;; else, install addon
-       (install-addon addon install-dir downloaded-file)))))
+  ([addon :addon/installable, install-dir ::sp/extant-dir, opts ::sp/install-opts]
+   (install-addon-guard addon install-dir opts (download-addon-guard addon install-dir)))
+
+  ([addon :addon/installable, install-dir ::sp/extant-dir, opts ::sp/install-opts, downloaded-file (s/nilable ::sp/extant-archive-file)]
+   (let [{:keys [test-only?]} opts]
+     (when downloaded-file
+       (if test-only?
+         ;; addon was successfully downloaded and verified as being sound. stop here.
+         true
+         ;; else, install addon
+         (install-addon addon install-dir downloaded-file opts))))))
 
 (def install-addon-guard-affective
   (affects-addon-wrapper install-addon-guard))
@@ -1251,7 +1290,7 @@
               ;; not necessary when updating the user-catalogue.
               _ (if-not attempt-dry-run?
                   true
-                  (or (install-addon-guard addon (selected-addon-dir) true)
+                  (or (install-addon-guard addon (selected-addon-dir) {:test-only? true})
                       (error "failed dry-run installation")))]
 
              ;; if-let* was successful!
@@ -1739,22 +1778,15 @@
       ;; todo: could this be a half-refresh instead?
       (refresh))))
 
-;; todo: move to ui.cli
-#_(defn-spec remove-addon nil?
-    "removes given installed addon"
-    [installed-addon :addon/installed]
-    (logging/with-addon installed-addon
-      (addon/remove-addon! (selected-addon-dir) installed-addon))
-    (refresh))
-
-;; todo: move to ui.cli
 (defn-spec remove-many-addons nil?
   "deletes each of the addons in the given `toc-list` and then calls `refresh`"
   [installed-addon-list :addon/toc-list]
   (let [addon-dir (selected-addon-dir)]
     (doseq [installed-addon installed-addon-list]
       (logging/with-addon installed-addon
-        (addon/remove-addon! addon-dir installed-addon)))
+        (if (addon/ignored? installed-addon)
+          (error "refusing to delete ignored addon:" (:label installed-addon))
+          (addon/remove-addon! addon-dir installed-addon))))
     (refresh)))
 
 ;;
