@@ -101,15 +101,39 @@
                           unclassified-assets (->> asset-list (map :game-track) (filter nil?))
                           classified-assets (->> asset-list (map :game-track) (remove nil?) set)
                           diff (clojure.set/difference sp/game-tracks classified-assets)] ;; #{:classic :classic-bc :retail} #{:classic :classic-bc} => #{:retail}
-                      (if (and (= (count unclassified-assets) 1)
-                               (= (count diff) 1))
-                        (->> asset-list
-                             (mapv #(if (nil? (:game-track %))
-                                      (assoc % :game-track (first diff))
-                                      %)))
-                        asset-list)))
 
-        ;; finally, try downloading the release.json file, if it exists, otherwise just use 'all' game tracks originally detected.
+                      (if (or (= (count diff) 0) ;; already entirely classified!
+                              (> (count unclassified-assets) 1)) ;; too many unclassified for this logic
+                        asset-list
+
+                        (cond
+                          ;; best case: 1 unclassified asset and exactly 1 available game track.
+                          ;; 2024-09-01: lots of addons still support the full set of classic versions,
+                          ;; but I've noticed many addons dropping tbc in favour of wotlk, then dropping wotlk in favour of cata.
+                          ;; this cond wouldn't fit those.
+                          (= (count diff) 1)
+                          (->> asset-list
+                               (mapv #(if (nil? (:game-track %))
+                                        (assoc % :game-track (first diff))
+                                        %)))
+
+                          ;; next case: 1 unclassified asset, multiple available game tracks and 
+                          ;; *if* we have no retail asset thus far and *if* we have 1 or more assets classified as classic,
+                          ;; assume addon only supports some classic game tracks and asset is retail.
+                          ;; it is a common case but it's also not good to guess.
+                          (and (> (count diff) 1) ;; many possible game tracks available...
+                               (utils/in? :retail diff) ;; ... and retail is among them.
+                               (>= (count classified-assets) 1)) ;; we've already classified at least one other asset as not-retail.
+                          (->> asset-list
+                               (mapv #(if (nil? (:game-track %))
+                                        (assoc % :game-track :retail)
+                                        %)))
+
+                          ;; we tried but no luck. return what we were given.
+                          :else asset-list))))
+
+        ;; finally, try downloading the release.json file if it exists.
+        ;; this is not an api call but it is 1 of N http requests for N releases.
         classify3 (fn [asset]
                     (if (:game-track asset)
                       [asset]
@@ -158,8 +182,13 @@
   returns the list of releases appropriate for the given `game-track`."
   [release-list vector?, addon :addon/expandable, game-track ::sp/game-track]
   (let [game-track-list (cond
+                          ;; did the catalogue specify a list of supported game tracks?
                           (not (empty? (:game-track-list addon))) (:game-track-list addon)
+
+                          ;; if not, was the addon installed with a specific game track?
                           (:installed-game-track addon) [(:installed-game-track addon)]
+
+                          ;; if not, ...
                           :else [])]
     (->> release-list
          (remove :prerelease)

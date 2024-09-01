@@ -605,3 +605,29 @@
                [{:source-id "foo/bar"} "https://github.com/foo/bar"]]]
     (doseq [[given expected] cases]
       (is (= expected (github-api/make-url given))))))
+
+;; ---
+
+(deftest auctioneer
+  (let [addon-summary
+        {:url "https://github.com/curseforge-mirror/auctioneer"
+         :updated-date "2019-10-09T17:40:04Z"
+         :source "github"
+         :source-id "curseforge-mirror/auctioneer"
+         :label "Auctioneer"
+         :name "auctioneer"
+         :download-count 30946
+         :game-track-list [] ;; 'no game tracks'
+         :tag-list []}
+
+        fixture (slurp-fixture "github-repo-releases--auctioneer.json")
+        game-track :retail
+
+        ;; todo: test each game track in turn
+        expected
+        [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/Auctioneer.11.x.BETA.4.zip",
+          :game-track :retail,
+          :version "v2024.09.01.00.28"}]]
+
+    (with-fake-routes-in-isolation {}
+      (is (= expected (github-api/parse-github-release-data fixture addon-summary game-track))))))
