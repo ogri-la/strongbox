@@ -405,6 +405,22 @@
           (is (= expected (helper/install-dir-contents)))
           (is (clojure.string/starts-with? error-message error-prefix)))))))
 
+(deftest remove-addon--ignored-addon
+  (testing "removing an ignored addon with addon/remove-addon! emits a warning but otherwise removes addon"
+    (let [install-dir (helper/install-dir)
+          addon {:name "nom" :label "Nom" :description ""
+                 :interface-version-list [90100]
+                 :installed-version "0.1"
+                 :supported-game-tracks [:retail]
+                 :dirname "./EveryAddon"
+                 :ignore? true}
+          _ (fs/mkdir (utils/join install-dir "EveryAddon"))
+          messages (logging/buffered-log
+                    :warn
+                    (addon/remove-addon! install-dir addon))
+          expected-messages ["deleting ignored addon: Nom"]]
+      (is (= expected-messages messages)))))
+
 ;;
 
 (deftest test-pinned-dir-list

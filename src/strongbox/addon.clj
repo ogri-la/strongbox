@@ -281,11 +281,11 @@
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files.
 
   relies on `core/install-addon` to block installations that would overwrite ignored or pinned addons.
-  if it's gotten this far it won't delete ignored/pinned addon directories,
-  but the new addon will be unzipped over the top of them.
+  if it's gotten this far ignored/pinned addons will be deleted
+  and the new addon will be unzipped over the top.
 
   returns a list of nfo files that were written to disk, if any."
-  [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, opts map?]
+  [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, opts ::sp/install-opts]
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         version (:version addon)
 
@@ -297,10 +297,10 @@
         zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
 
-        toplevel-nfo (->> toplevel-dirs
-                          (map :path)
-                          (map fs/base-name)
-                          (map #(nfo/read-nfo-file install-dir %)))
+        toplevel-nfo (->> toplevel-dirs ;; [{:path "EveryAddon/", ...}, ...]
+                          (map :path) ;; ["EveryAddon/", ...]
+                          (map fs/base-name) ;; ["EveryAddon", ...]
+                          (map #(nfo/read-nfo-file install-dir %))) ;; [`(read-nfo-file install-dir "EveryAddon"), ...]
 
         contains-nfo-with-ignored-flag (utils/any (map :ignore? toplevel-nfo))
         contains-nfo-with-pinned-version (utils/any (map :pinned-version toplevel-nfo))
@@ -338,9 +338,10 @@
 
         ;; write the nfo files, return a list of all nfo files written
         ;; todo: if a zip file is being installed then we can't rely on `remove-addon!` having been called,
-        ;; but `remove-completely-overwritten-addons` *may* have been called.
-        ;; this leads to the possibility of an updated addon that has dropped a subdir and added a new one (like a rename),
-        ;; skipping the `remove-completely-overwritten-addons` and orphaning the original subdir.
+        ;; but `remove-completely-overwritten-addons` will have been called and *may* have removed the
+        ;; addon *if* the new addon is a superset of the old one.
+        ;; this leads to the possibility of a new addon that has dropped a subdir or added a new one (like a rename)
+        ;; being skipped and orphaning the original subdir.
         ;; this means we could hit `unzip-addon` with the original addon still fully intact.
         update-nfo-files (fn []
                            (mapv update-nfo-fn toplevel-dirs))
@@ -384,7 +385,7 @@
     (remove-completely-overwritten-addons)
 
     ;; `addon/install-addon` is all about installing an addon, not checking whether it's safe to do so.
-    ;; use `core/install-addon` for safety checks
+    ;; use `core/install-addon` for safety checks.
     (unzip-addon)
     (update-nfo-files)))
 

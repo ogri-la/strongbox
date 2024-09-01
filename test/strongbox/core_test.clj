@@ -600,8 +600,8 @@
         ;; ensure nothing was actually unzipped
         (is (not (fs/exists? (utils/join install-dir "EveryAddon"))))))))
 
-(deftest install-bad-addon
-  (testing "installing a bad addon"
+(deftest install-addon-guard--invalid-zip-file
+  (testing "installing a corrupted zip file"
     (with-global-fake-routes-in-isolation {}
       (let [install-dir (str fs/*cwd*)
             fname (downloaded-addon-fname (:name helper/addon) (:version helper/addon))
@@ -613,7 +613,7 @@
         ;; bad zip file deleted
         (is (= 0 (count (fs/list-dir install-dir))))))))
 
-(deftest install-bundled-addon
+(deftest install-addon-guard--bundled-addon
   (testing "installing a bundled addon"
     (with-running-app
       (let [install-dir (helper/install-dir)
@@ -641,7 +641,7 @@
         (is (= ["EveryAddon" "EveryAddon-BundledAddon" "everyaddon--0-1-2.zip"] directory-list))
         (is (= expected-nfo (nfo/read-nfo-file install-dir "EveryAddon-BundledAddon")))))))
 
-(deftest install-bundled-addon-overwriting-ignored-addon
+(deftest install-addon-guard--bundled-addon-overwriting-ignored-addon
   (testing "installing/unzipping an addon with a shared mutual dependency of an addon that is ignored isn't possible"
     (with-running-app
       (let [install-dir (helper/install-dir)
@@ -664,7 +664,7 @@
           (core/install-addon-guard addon2)
           (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents))))))))
 
-(deftest install-bundled-addon-overwriting-pinned-addon
+(deftest install-addon-guard--bundled-addon-overwriting-pinned-addon
   (testing "installing/unzipping an addon with a shared mutual dependency of an addon that is pinned isn't possible"
     (with-running-app
       (let [install-dir (helper/install-dir)
@@ -695,7 +695,7 @@
         (core/install-addon-guard addon2)
         (is (= ["EveryAddon" "EveryAddon-BundledAddon"] (helper/install-dir-contents)))))))
 
-(deftest install-addon--lenient-game-track
+(deftest install-addon-guard--lenient-game-track
   (testing "a classic addon can be installed into an addon directory by setting the non-strict (lenient) flag"
     (with-running-app
       (let [install-dir (helper/install-dir)
@@ -710,7 +710,7 @@
 
         (core/install-addon-guard addon install-dir)))))
 
-(deftest install-addon--remove-zip
+(deftest install-addon-guard--remove-zip
   (testing "installing an addon with the `:addon-zips-to-keep` preference set to `0` will delete the zip afterwards"
     (with-running-app
       (let [install-dir (helper/install-dir)
@@ -721,7 +721,7 @@
         (core/install-addon-guard helper/addon install-dir)
         (is (= ["EveryAddon"] (helper/install-dir-contents)))))))
 
-(deftest install-addon--remove-multiple-zips
+(deftest install-addon-guard--remove-multiple-zips
   (testing "installing an addon with the `:addon-zips-to-keep` preference set to `0` will delete the zip afterwards"
     (with-running-app
       (let [install-dir (helper/install-dir)

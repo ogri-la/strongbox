@@ -1007,8 +1007,7 @@
   (when-let [abs-path-list (file-chooser {:filters [{:description "ZIP files" :extensions ["*.zip"]}]
                                           :type :open-multi
                                           :initial-dir (core/selected-addon-dir)})]
-    (let [;; future: allow user to set these
-          opts {:overwrite-ignored? true
+    (let [opts {:overwrite-ignored? true
                 :unpin-pinned? true}]
       (doseq [{:keys [error-messages label]} (cli/install-addons-from-file-in-parallel abs-path-list opts)]
         (when-not (empty? error-messages)

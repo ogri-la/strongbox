@@ -28,6 +28,11 @@ bug:
 
 ## todo bucket (no particular order)
 
+* gui, when installing an addon from file, allow the following options
+    - test-only?
+    - unpin-pinned?
+    - overwrite-ignored?
+
 bug: clear button isn't clearing search
 
 bug: 

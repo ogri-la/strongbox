@@ -262,6 +262,7 @@
 ;; ignoring
 
 (defn-spec ignore :addon/nfo
+  "add a `ignore?` flag to given `nfo` data."
   [nfo :addon/nfo]
   (assoc nfo :ignore? true))
 
@@ -291,6 +292,7 @@
   (update-nfo! install-dir addon-dirname {:pinned-version version}))
 
 (defn-spec unpin :addon/nfo
+  "remove pin flag from given `nfo` data"
   [nfo :addon/nfo]
   (dissoc nfo :pinned-version))
 
