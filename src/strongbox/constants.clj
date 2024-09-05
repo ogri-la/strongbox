@@ -2,11 +2,10 @@
 
 (def mascot "ᕙ[°▿°]ᕗ")
 
-;; 
 (def release-of-previous-expansion
-  "'Shadowlands', released November 23rd 2020. Used to shorten the 'full' catalogue.
+  "'Dragonflight', released November 28th/29th 2022. Used to shorten the 'full' catalogue.
   https://warcraft.wiki.gg/wiki/Expansion#World_of_Warcraft"
-  "2020-10-23T00:00:00Z")
+  "2022-11-28T00:00:00Z")
 
 (def release-of-wow-classic
   "the date wow classic went live (addon development may have started before that). Used to guess possible game tracks when it's ambiguous.
@@ -17,7 +16,7 @@
 ;; used as a placeholder for an addon's supported version when we're forced to guess.
 ;; don't fret too much about patch versions. These values don't affect much.
 ;; https://warcraft.wiki.gg/wiki/Public_client_builds
-(def latest-retail-game-version "10.0.0")
+(def latest-retail-game-version "11.0.0")
 (def latest-classic-game-version "1.14.3")
 (def latest-classic-tbc-game-version "2.5.4")
 (def latest-classic-wotlk-game-version "3.4.0")
@@ -26,7 +25,7 @@
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).
 ;; these values need to match the latest-* values above.
-(def default-interface-version 100000)
+(def default-interface-version 110000)
 (def default-interface-version-classic 11400)
 
 ;; take all of the game tracks to the right of your position
