@@ -605,3 +605,39 @@
                [{:source-id "foo/bar"} "https://github.com/foo/bar"]]]
     (doseq [[given expected] cases]
       (is (= expected (github-api/make-url given))))))
+
+;; ---
+
+(deftest auctioneer
+  (let [addon-summary
+        {:url "https://github.com/curseforge-mirror/auctioneer"
+         :updated-date "2019-10-09T17:40:04Z"
+         :source "github"
+         :source-id "curseforge-mirror/auctioneer"
+         :label "Auctioneer"
+         :name "auctioneer"
+         :download-count 30946
+         :game-track-list [] ;; 'no game tracks'
+         :tag-list []}
+
+        fixture (slurp-fixture "github-repo-releases--auctioneer.json")
+        cases {:retail [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/Auctioneer.11.x.BETA.4.zip",
+                         :game-track :retail
+                         :version "v2024.09.01.00.28"}]
+
+               :classic [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/AuctioneerSuite-4.4.6991-classic.zip",
+                          :game-track :classic
+                          :version "v2024.09.01.00.28"}]
+
+               :classic-tbc [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/AuctioneerSuite-2.5.6774-bc.zip",
+                              :game-track :classic-tbc
+                              :version "v2024.09.01.00.28"}]
+
+               :classic-wotlk [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/AuctioneerSuite-3.4.6988-wrath.zip",
+                                :game-track :classic-wotlk
+                                :version "v2024.09.01.00.28"}]
+               :classic-cata nil}]
+
+    (with-fake-routes-in-isolation {}
+      (doseq [[game-track expected] cases]
+        (is (= expected (github-api/parse-github-release-data fixture addon-summary game-track)))))))

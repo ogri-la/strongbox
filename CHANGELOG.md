@@ -9,12 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 * error handling for a few cases where uncaught exceptions were being swallowed.
+* added another heuristic for guessing which asset in a Github release supports retail.
+    - in this case, if there is a single remaining unclassified asset, and there are other classified assets and nothing has been classified as retail yet, classify that asset as retail.
+        - yes, this is guessing, and it won't always be correct, but it's probably true most of the time.
 
 ### Changed
 
 * installing an addon by file now overwrites/updates ignored addons and unpins pinned addons.
     - this accommodates a use case where Strongbox is used to install a select few addons manually from unsupported sources (like Curseforge) but then the new addons match against older versions in the catalogue from wowi.
     - please open a feature request if you want this behaviour adjustable.
+* updated internal constants for The War Within.
+* updated internal constant for the date of the previous expansion.
+    - affects how much the emergency 'short' catalogue gets truncated from the 'full' catalogue.
+        - emergency catalogue is used when Github hosted catalogue is unavailable, which is rare.
 
 ### Fixed
 
