@@ -22,11 +22,14 @@ bug:
     - it looks like it installed it anyway
     - done
 
-
-## todo
-
 * import addon from github 
     - getting a 'no retail release' when there is a clear retail rfelease available
+    - done
+
+* update constants for war within
+    - done
+
+## todo
 
 * Desktop Entry Name should not include "(Flatpak)" 
     - https://github.com/flathub/la.ogri.strongbox/issues/7
