@@ -29,10 +29,11 @@ bug:
 * update constants for war within
     - done
 
-## todo
-
 * Desktop Entry Name should not include "(Flatpak)" 
     - https://github.com/flathub/la.ogri.strongbox/issues/7
+    - done
+
+## todo
 
 ## todo bucket (no particular order)
 

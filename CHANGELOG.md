@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * added another heuristic for guessing which asset in a Github release supports retail.
     - in this case, if there is a single remaining unclassified asset, and there are other classified assets and nothing has been classified as retail yet, classify that asset as retail.
         - yes, this is guessing, and it won't always be correct, but it's probably true most of the time.
+    - thanks @jake770321
 
 ### Changed
 
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * updated internal constant for the date of the previous expansion.
     - affects how much the emergency 'short' catalogue gets truncated from the 'full' catalogue.
         - emergency catalogue is used when Github hosted catalogue is unavailable, which is rare.
+* trimmed the '(Flatpak)' from the 'Strongbox (Flatpak)' on the `.desktop` files distributed by Flatpak.
+    - thanks @deadmeu
 
 ### Fixed
 
@@ -29,11 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - it would include addons from BFA instead of stopping at Shadowlands.
 * fixed bug where installing a file manually would bypass ignored and pinned addon checks.
     - it would tell you it was refusing to install, then install it anyway.
+    - thanks @akanouras
 * fixed bug where ignore check bypassed on ungrouped/single directory addons.
     - logic assumed all addons were grouped, but grouping only happens when an addon unzip to multiple directories.
     - pretty big bug!
-
-### Removed
 
 ## 7.4.0 - 2024-07-19
 
