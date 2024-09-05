@@ -102,7 +102,7 @@
                           classified-assets (->> asset-list (map :game-track) (remove nil?) set)
                           diff (clojure.set/difference sp/game-tracks classified-assets)] ;; #{:classic :classic-bc :retail} #{:classic :classic-bc} => #{:retail}
 
-                      (if (or (= (count diff) 0) ;; already entirely classified!
+                      (if (or (= (count diff) 0) ;; addon covers all game tracks!
                               (> (count unclassified-assets) 1)) ;; too many unclassified for this logic
                         asset-list
 
@@ -120,7 +120,9 @@
                           ;; next case: 1 unclassified asset, multiple available game tracks and 
                           ;; *if* we have no retail asset thus far and *if* we have 1 or more assets classified as classic,
                           ;; assume addon only supports some classic game tracks and asset is retail.
-                          ;; it is a common case but it's also not good to guess.
+                          ;; it is a common case and not a huge assumption but it *is* possible that
+                          ;; the addon *doesn't* support retail and only supports some classic game tracks and
+                          ;; we failed to guess a game track. would love to see a real world example here.
                           (and (> (count diff) 1) ;; many possible game tracks available...
                                (utils/in? :retail diff) ;; ... and retail is among them.
                                (>= (count classified-assets) 1)) ;; we've already classified at least one other asset as not-retail.

@@ -621,13 +621,23 @@
          :tag-list []}
 
         fixture (slurp-fixture "github-repo-releases--auctioneer.json")
-        game-track :retail
+        cases {:retail [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/Auctioneer.11.x.BETA.4.zip",
+                         :game-track :retail
+                         :version "v2024.09.01.00.28"}]
 
-        ;; todo: test each game track in turn
-        expected
-        [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/Auctioneer.11.x.BETA.4.zip",
-          :game-track :retail,
-          :version "v2024.09.01.00.28"}]]
+               :classic [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/AuctioneerSuite-4.4.6991-classic.zip",
+                          :game-track :classic
+                          :version "v2024.09.01.00.28"}]
+
+               :classic-tbc [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/AuctioneerSuite-2.5.6774-bc.zip",
+                              :game-track :classic-tbc
+                              :version "v2024.09.01.00.28"}]
+
+               :classic-wotlk [{:download-url "https://github.com/curseforge-mirror/auctioneer/releases/download/v2024.09.01.00.28/AuctioneerSuite-3.4.6988-wrath.zip",
+                                :game-track :classic-wotlk
+                                :version "v2024.09.01.00.28"}]
+               :classic-cata nil}]
 
     (with-fake-routes-in-isolation {}
-      (is (= expected (github-api/parse-github-release-data fixture addon-summary game-track))))))
+      (doseq [[game-track expected] cases]
+        (is (= expected (github-api/parse-github-release-data fixture addon-summary game-track)))))))
