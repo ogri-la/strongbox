@@ -329,6 +329,8 @@
                                              (nfo/ignore new-nfo-data)
                                              new-nfo-data)
 
+                              ;; if any of the addons this addon is replacing are pinned,
+                              ;; the pin is removed. We've just modified them and they are no longer at that version.
                               new-nfo-data (if contains-nfo-with-pinned-version
                                              (nfo/unpin new-nfo-data)
                                              new-nfo-data)

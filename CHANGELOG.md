@@ -4,15 +4,15 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## 7.5.0 - 2024-09-07
 
 ### Added
 
-* error handling for a few cases where uncaught exceptions were being swallowed.
 * added another heuristic for guessing which asset in a Github release supports retail.
     - in this case, if there is a single remaining unclassified asset, and there are other classified assets and nothing has been classified as retail yet, classify that asset as retail.
         - yes, this is guessing, and it won't always be correct, but it's probably true most of the time.
     - thanks @jake770321
+* error handling for a few cases where uncaught exceptions were being swallowed.
 
 ### Changed
 
