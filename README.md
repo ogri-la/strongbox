@@ -174,7 +174,7 @@ Running Strongbox with `--debug` will generate a file called `debug.log` that I 
 
 ### classic and retail addon support
 
-"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)" etc and "Retail" versions of WoW are all
+"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)", etc and "Retail" versions of WoW are all
 distinct addon systems.
 
 Some addon authors support all systems in a single download, some support classic as an alternate build of the same addon, 
@@ -221,8 +221,7 @@ When you search for an addon you are searching a list of thousands of addons tha
 Click `Catalogue` from the top menu and choose your preferred catalogue.
 
 The default catalogue is the 'short' catalogue. It contains all addons from all supported hosts that have been *updated* 
-since *the beginning of the [previous expansion](https://warcraft.wiki.gg/wiki/Expansion#World_of_Warcraft)*. 
-This is currently Shadowlands, released 2020-11-23 and the catalogue has approximately 2.8k addons.
+since *the beginning of the [previous expansion](https://warcraft.wiki.gg/wiki/Expansion#World_of_Warcraft)*.
 
 The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 7.2k addons large. It 
 contains many unmaintained addons.
