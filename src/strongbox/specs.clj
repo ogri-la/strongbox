@@ -503,3 +503,12 @@
                                             :github/requests-limit-reset-minutes
                                             :github/requests-remaining
                                             :github/requests-used]))
+
+;; addon/install-addon
+
+(s/def ::test-only? boolean?)
+(s/def ::overwrite-ignored? boolean?)
+(s/def ::unpin-pinned? boolean?)
+(s/def ::install-opts (s/keys :opt-un [::test-only?
+                                       ::overwrite-ignored?
+                                       ::unpin-pinned?]))

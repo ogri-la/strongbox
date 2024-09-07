@@ -71,7 +71,7 @@ Java users can run Strongbox using the `.jar` from the [releases](https://github
 
 ## Usage
 
-Strongbox works by matching installed addons to a catalogue of addons available online.
+Strongbox works by matching installed addons to a [catalogue of addons](https://github.com/ogri-la/strongbox-catalogue) available online.
 
 Some addons are matched directly to the catalogue but others may require you to search the catalogue and re-install them 
 before that match can be made.
@@ -144,7 +144,7 @@ This software interacts with the following remote hosts:
 
 These hosts *may* redirect requests to other hosts.
 
-These interactions use a HTTP user agent header unique to Strongbox so that it may be identified easily:
+These interactions use a HTTP user-agent header specific to Strongbox so that it may be identified easily:
 
     "strongbox/x.x (https://github.com/ogri-la/strongbox)"
 
@@ -174,11 +174,11 @@ Running Strongbox with `--debug` will generate a file called `debug.log` that I 
 
 ### classic and retail addon support
 
-"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)" and "Retail" versions of WoW are all
+"Classic", "Classic (The Burning Crusade)", "Classic (Wrath of the Lich King)", etc and "Retail" versions of WoW are all
 distinct addon systems.
 
-Some addons support all systems in a single download, some support classic as an alternate build of the same addon, 
-some addons support classic only, some addons have been split up into multiple addons. There is a lot of variation.
+Some addon authors support all systems in a single download, some support classic as an alternate build of the same addon, 
+some addons support classic only, some addons have been split up into separate addons. There is a lot of variation.
 
 Click the drop-down next to your addon directory and select either `retail`, `classic` or `classic (TBC)`.
 
@@ -193,7 +193,7 @@ the same addon directory. If an addon is available for multiple addon systems it
 * `classic (WotLK)` will prefer `classic (WotLK)` addons, then `classic (Cata)`, then `classic (TBC)`, then `classic` then `retail`
 * `classic (Cata)` will prefer `classic (Cata)` addons, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
 
-If uncertain which addon system an installed addon supports, look at the `WoW` column value on the `installed` tab and 
+If uncertain which addon systems an installed addon supports, look at the `WoW` column values on the `installed` tab and 
 compare it to the `Version` value in the list of WoW [public client builds](https://warcraft.wiki.gg/wiki/Public_client_builds).
 
 ### install addons from URL
@@ -202,7 +202,8 @@ Strongbox supports installing addons using URLs from addon hosts.
 
 Addons installed this way are always available regardless of the catalogue you've selected.
 
-For example, addons imported from Github will be available even if you otherwise use wowinterface.com addons exclusively.
+For example, addons installed directly from Github will be available even if you otherwise use wowinterface.com addons 
+exclusively.
 
 Click `File` from the top menu and select `Import addon` and paste the URL of the addon you want to install.
 
@@ -220,8 +221,7 @@ When you search for an addon you are searching a list of thousands of addons tha
 Click `Catalogue` from the top menu and choose your preferred catalogue.
 
 The default catalogue is the 'short' catalogue. It contains all addons from all supported hosts that have been *updated* 
-since *the beginning of the previous expansion*. This is currently Battle For Azeroth, released 2018-08-14 and the 
-catalogue has approximately 2.8k addons.
+since *the beginning of the [previous expansion](https://warcraft.wiki.gg/wiki/Expansion#World_of_Warcraft)*.
 
 The 'full' catalogue contains all addons from all supported hosts, ever, and is approximately 7.2k addons large. It 
 contains many unmaintained addons.
@@ -231,7 +231,7 @@ There are also per-host catalogues, like a 'wowinterface' catalogue, and Strongb
 Catalogues are updated weekly. New addons released during the week will not be present until the next week. Addons can 
 be installed using its URL in these cases.
 
-The 'user' catalogue is a little different. It's initially empty but grows as addons are starred while searching or 
+The 'user' catalogue is a little different. Its initially empty but grows as addons are starred while searching or 
 imported from addon hosts, like Github. 
 These addons also appear in search results. Individual addons from the user catalogue are checked for new releases 
 normally, but the catalogue itself can only be updated manually.

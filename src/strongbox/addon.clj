@@ -79,10 +79,13 @@
   (if (:ignore? addon)
     ;; if addon is being ignored, refuse to remove addon.
     ;; note: `group-addons` will add a top level `:ignore?` flag if any addon in a bundle is being ignored.
-    (error "refusing to delete ignored addon:" install-dir)
+    ;; 2024-08-25: behaviour changed. this is not the place to prevent ignored addons from being removed.
+    ;; see `core/install-addon`, `core/remove-many-addons`
+    ;;(error "refusing to delete ignored addon:" (:label addon))
+    (warn "deleting ignored addon:" (:label addon)))
 
-    (doseq [grouped-addon (flatten-addon addon)]
-      (-remove-addon! install-dir (:dirname grouped-addon) (:group-id addon)))))
+  (doseq [grouped-addon (flatten-addon addon)]
+    (-remove-addon! install-dir (:dirname grouped-addon) (:group-id addon))))
 
 ;;
 
@@ -276,8 +279,13 @@
 (defn-spec install-addon (s/or :ok (s/coll-of ::sp/extant-file), :error ::sp/empty-coll)
   "installs an addon given an addon description, a place to install the addon and the addon zip file itself.
   handles suspicious looking bundles, conflicts with other addons, uninstalling previous addon version and updating nfo files.
-  returns a list of nfo files that were written to disk."
-  [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file]
+
+  relies on `core/install-addon` to block installations that would overwrite ignored or pinned addons.
+  if it's gotten this far ignored/pinned addons will be deleted
+  and the new addon will be unzipped over the top.
+
+  returns a list of nfo files that were written to disk, if any."
+  [addon :addon/nfo-input-minimum, install-dir ::sp/writeable-dir, downloaded-file ::sp/archive-file, opts ::sp/install-opts]
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         version (:version addon)
 
@@ -288,6 +296,15 @@
 
         zipfile-entries (zip/zipfile-normal-entries downloaded-file)
         toplevel-dirs (zip/top-level-directories zipfile-entries)
+
+        toplevel-nfo (->> toplevel-dirs ;; [{:path "EveryAddon/", ...}, ...]
+                          (map :path) ;; ["EveryAddon/", ...]
+                          (map fs/base-name) ;; ["EveryAddon", ...]
+                          (map #(nfo/read-nfo-file install-dir %))) ;; [`(read-nfo-file install-dir "EveryAddon"), ...]
+
+        contains-nfo-with-ignored-flag (utils/any (map :ignore? toplevel-nfo))
+        contains-nfo-with-pinned-version (utils/any (map :pinned-version toplevel-nfo))
+
         primary-dirname (determine-primary-subdir toplevel-dirs)
 
         ;; let the user know if there are bundled addons and they don't share a common prefix
@@ -306,10 +323,28 @@
                         (let [addon-dirname (:path zipentry)
                               primary? (= addon-dirname (:path primary-dirname))
                               new-nfo-data (nfo/derive addon primary?)
+                              ;; if any of the addons this addon is replacing are being ignored,
+                              ;; the new nfo will be ignored too.
+                              new-nfo-data (if contains-nfo-with-ignored-flag
+                                             (nfo/ignore new-nfo-data)
+                                             new-nfo-data)
+
+                              ;; if any of the addons this addon is replacing are pinned,
+                              ;; the pin is removed. We've just modified them and they are no longer at that version.
+                              new-nfo-data (if contains-nfo-with-pinned-version
+                                             (nfo/unpin new-nfo-data)
+                                             new-nfo-data)
+
                               new-nfo-data (nfo/add-nfo install-dir addon-dirname new-nfo-data)]
                           (nfo/write-nfo! install-dir addon-dirname new-nfo-data)))
 
         ;; write the nfo files, return a list of all nfo files written
+        ;; todo: if a zip file is being installed then we can't rely on `remove-addon!` having been called,
+        ;; but `remove-completely-overwritten-addons` will have been called and *may* have removed the
+        ;; addon *if* the new addon is a superset of the old one.
+        ;; this leads to the possibility of a new addon that has dropped a subdir or added a new one (like a rename)
+        ;; being skipped and orphaning the original subdir.
+        ;; this means we could hit `unzip-addon` with the original addon still fully intact.
         update-nfo-files (fn []
                            (mapv update-nfo-fn toplevel-dirs))
 
@@ -343,12 +378,16 @@
     (suspicious-bundle-check)
 
     ;; todo: remove support for v1 addons in 2.0.0 ;; todo!
-    ;; when is it not valid? when importing v1 addons. v2 addons need 'padding' as well :(
+    ;; when is it not valid?
+    ;; * when importing v1 addons. v2 addons need 'padding' as well :(
+    ;; * when installing from a file and we have nothing more than a generated ID value
     (when (s/valid? :addon/toc addon)
       (remove-addon! install-dir addon))
 
     (remove-completely-overwritten-addons)
 
+    ;; `addon/install-addon` is all about installing an addon, not checking whether it's safe to do so.
+    ;; use `core/install-addon` for safety checks.
     (unzip-addon)
     (update-nfo-files)))
 
@@ -388,7 +427,7 @@
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
   "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
   [addon-list (s/nilable :addon/installed-list)]
-  (->> addon-list (filter :ignore?) (map :group-addons) flatten (map :dirname) (remove nil?) set))
+  (->> addon-list (filter :ignore?) (map flatten-addon) flatten (map :dirname) (remove nil?) set))
 
 (defn-spec overwrites-ignored? boolean?
   "returns `true` if given archive file would unpack over *any* ignored addon.

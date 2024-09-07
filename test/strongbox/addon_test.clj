@@ -405,6 +405,22 @@
           (is (= expected (helper/install-dir-contents)))
           (is (clojure.string/starts-with? error-message error-prefix)))))))
 
+(deftest remove-addon--ignored-addon
+  (testing "removing an ignored addon with addon/remove-addon! emits a warning but otherwise removes addon"
+    (let [install-dir (helper/install-dir)
+          addon {:name "nom" :label "Nom" :description ""
+                 :interface-version-list [90100]
+                 :installed-version "0.1"
+                 :supported-game-tracks [:retail]
+                 :dirname "./EveryAddon"
+                 :ignore? true}
+          _ (fs/mkdir (utils/join install-dir "EveryAddon"))
+          messages (logging/buffered-log
+                    :warn
+                    (addon/remove-addon! install-dir addon))
+          expected-messages ["deleting ignored addon: Nom"]]
+      (is (= expected-messages messages)))))
+
 ;;
 
 (deftest test-pinned-dir-list
@@ -488,6 +504,22 @@
                  :primary? true}
           pinned-addon (assoc addon :pinned-version "1.2.3")]
       (is (addon/overwrites-pinned? downloaded-file [pinned-addon]))
+      (is (not (addon/overwrites-pinned? downloaded-file [addon]))))))
+
+(deftest test-overwrites-ignored?
+  (testing "addon zip files that would extract over an ignored addon are correctly detected"
+    (let [downloaded-file (fixture-path "everyaddon--1-2-3.zip") ;; ./EveryAddon
+          addon {:name "EveryAddon",
+                 :dirname "EveryAddon",
+                 :label "Every Addon",
+                 :description ""
+                 :interface-version-list [80300]
+                 :installed-version "1.2.3"
+                 :supported-game-tracks [:retail]
+                 :group-id "foo"
+                 :primary? true}
+          ignored-addon (assoc addon :ignore? true)]
+      (is (addon/overwrites-ignored? downloaded-file [ignored-addon]))
       (is (not (addon/overwrites-pinned? downloaded-file [addon]))))))
 
 (deftest test-updateable?
@@ -784,9 +816,11 @@
                        :source-map-list [{:source "curseforge", :source-id 2}]}]
 
         updates {:group-id "foobar"}
-        expected-nfo (mapv #(merge % updates) original-nfo)]
+        expected-nfo (mapv #(merge % updates) original-nfo)
 
-    (addon/install-addon addon (helper/install-dir) zipfile)
+        opts {}]
+
+    (addon/install-addon addon (helper/install-dir) zipfile opts)
 
     ;; sanity checks
     (is (= ["EveryAddon-BundledAddon" "EveryOtherAddon"] (helper/install-dir-contents)))

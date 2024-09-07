@@ -4,6 +4,39 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.5.0 - 2024-09-07
+
+### Added
+
+* added another heuristic for guessing which asset in a Github release supports retail.
+    - in this case, if there is a single remaining unclassified asset, and there are other classified assets and nothing has been classified as retail yet, classify that asset as retail.
+        - yes, this is guessing, and it won't always be correct, but it's probably true most of the time.
+    - thanks @jake770321
+* error handling for a few cases where uncaught exceptions were being swallowed.
+
+### Changed
+
+* installing an addon by file now overwrites/updates ignored addons and unpins pinned addons.
+    - this accommodates a use case where Strongbox is used to install a select few addons manually from unsupported sources (like Curseforge) but then the new addons match against older versions in the catalogue from wowi.
+    - please open a feature request if you want this behaviour adjustable.
+* updated internal constants for The War Within.
+* updated internal constant for the date of the previous expansion.
+    - affects how much the emergency 'short' catalogue gets truncated from the 'full' catalogue.
+        - emergency catalogue is used when Github hosted catalogue is unavailable, which is rare.
+* trimmed the '(Flatpak)' from the 'Strongbox (Flatpak)' on the `.desktop` files distributed by Flatpak.
+    - thanks @deadmeu
+
+### Fixed
+
+* fixed bug in emergency 'short' catalogue generation.
+    - it would include addons from BFA instead of stopping at Shadowlands.
+* fixed bug where installing a file manually would bypass ignored and pinned addon checks.
+    - it would tell you it was refusing to install, then install it anyway.
+    - thanks @akanouras
+* fixed bug where ignore check bypassed on ungrouped/single directory addons.
+    - logic assumed all addons were grouped, but grouping only happens when an addon unzip to multiple directories.
+    - pretty big bug!
+
 ## 7.4.0 - 2024-07-19
 
 ### Added

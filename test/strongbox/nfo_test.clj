@@ -299,7 +299,20 @@
       (is (= expected-raw (nfo/read-nfo-file (install-dir) ignorable-addon-dir)))
       (is (= expected (nfo/read-nfo (install-dir) ignorable-addon-dir))))))
 
-(deftest pin-addon
+(deftest ignore
+  (let [nfo-data {:installed-version "1.2.1"
+                  :installed-game-track :classic
+                  :name "EveryAddon"
+                  :group-id "https://foo.bar"
+                  :primary? true
+                  :source "curseforge"
+                  :source-id 321
+                  :source-map-list [{:source "curseforge" :source-id 321}]
+                  :ignore? false} ;; explicit ignore flag
+        expected (merge nfo-data {:ignore? true})]
+    (is (= expected (nfo/ignore nfo-data)))))
+
+(deftest pin!
   (testing "a pinned addon can be pinned to a specific version"
     (let [nfo-data {:installed-version "1.2.1"
                     :installed-game-track :classic
@@ -314,7 +327,21 @@
       (nfo/pin! (install-dir) addon-dir "a.b.c")
       (is (= expected (nfo/read-nfo (install-dir) addon-dir))))))
 
-(deftest unpin-addon
+(deftest unpin
+  (let [nfo-data {:installed-version "1.2.1"
+                  :installed-game-track :classic
+                  :name "EveryAddon"
+                  :group-id "https://foo.bar"
+                  :primary? true
+                  :source "curseforge"
+                  :source-id 321
+                  :source-map-list [{:source "curseforge", :source-id 123}]
+                  :pinned-version "a.b.c"}
+        expected (dissoc nfo-data :pinned-version)]
+
+    (is (= expected (nfo/unpin nfo-data)))))
+
+(deftest unpin!
   (testing "a pinned addon can be 'unpinned'"
     (let [nfo-data {:installed-version "1.2.1"
                     :installed-game-track :classic
