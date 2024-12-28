@@ -14,34 +14,32 @@
   :dependencies [[org.clojure/clojure "1.11.3"]
                  [org.clojure/tools.cli "1.1.230"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.5.0"] ;; reload code
-                 [org.clojure/data.json "2.5.0"] ;; json handling
+                 [org.clojure/data.json "2.5.1"] ;; json handling
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
-                 [com.taoensso/timbre "6.5.0"] ;; logging
+                 [com.taoensso/timbre "6.6.1"] ;; logging
                  [clj-http "3.13.0"] ;; better http slurping
                  [clj-commons/fs "1.6.311"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
                  [org.flatland/ordered "1.15.12"] ;; better ordered map
-                 [clojure.java-time "1.4.2"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
+                 [clojure.java-time "1.4.3"] ;; date/time handling library, https://github.com/dm3/clojure.java-time
                  [envvar "1.1.2"] ;; environment variable wrangling
                  [tolitius/lasync "0.1.25"] ;; better parallel processing
 
-                 [cljfx "1.9.0" :exclusions [org.openjfx/javafx-web
+                 [cljfx "1.9.3" :exclusions [org.openjfx/javafx-web
                                              org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
-                 [org.openjfx/javafx-base "20-ea+1"]
-                 [org.openjfx/javafx-base "20-ea+1" :classifier "linux"]
-                 [org.openjfx/javafx-base "20-ea+1" :classifier "mac"]
-
-                 [org.openjfx/javafx-controls "20-ea+1"]
-                 [org.openjfx/javafx-controls "20-ea+1" :classifier "linux"]
-                 [org.openjfx/javafx-controls "20-ea+1" :classifier "mac"]
-
-                 [org.openjfx/javafx-graphics "20-ea+1"]
-                 [org.openjfx/javafx-graphics "20-ea+1" :classifier "linux"]
-                 [org.openjfx/javafx-graphics "20-ea+1" :classifier "mac"]
+                 [org.openjfx/javafx-base "22-ea+16"]
+                 [org.openjfx/javafx-base "22-ea+16" :classifier "linux"]
+                 [org.openjfx/javafx-base "22-ea+16" :classifier "mac"]
+                 [org.openjfx/javafx-controls "22-ea+16"]
+                 [org.openjfx/javafx-controls "22-ea+16" :classifier "linux"]
+                 [org.openjfx/javafx-controls "22-ea+16" :classifier "mac"]
+                 [org.openjfx/javafx-graphics "22-ea+16"]
+                 [org.openjfx/javafx-graphics "22-ea+16" :classifier "linux"]
+                 [org.openjfx/javafx-graphics "22-ea+16" :classifier "mac"]
 
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception in LICENCE.txt
