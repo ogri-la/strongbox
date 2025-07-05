@@ -58,7 +58,11 @@ elif test "$cmd" = "lint"; then
     echo "cljfmt lint"
     lein cljfmt fix
     echo "eastwood lint"
-    lein eastwood
+    if which xvfb-run; then
+        xvfb-run lein eastwood
+    else
+        lein eastwood
+    fi
     exit 0
 
 elif test "$cmd" = "update-test-fixtures"; then
@@ -102,6 +106,18 @@ elif test "$cmd" = "update-test-fixtures"; then
     dl "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases" "user-catalogue--github.json"
 
     exit 0
+
+elif test "$cmd" = "clean"; then
+    rm -rf ./jdk17-target
+    rm -rf ./target
+    exit 0
+
+elif test "$cmd" = "build-docker"; then
+    docker build --rm -f CircleCI/Dockerfile.22-04 .
+
+    exit 0
+
+
 
 # ...
 
