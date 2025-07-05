@@ -137,7 +137,7 @@
   [zipfile-entries]
   (let [;; what is happening here?
         ;; we create a set of all top-level directories, and a set of the parents of second-level toc files
-        ;; if there are any directories left after we diff them
+        ;; if there are any directories left after we diff them, that's an error
         toplevel-dirs (->> zipfile-entries top-level-directories (map :path) set)
         toplevel-tocfiles (filter #(and (-> % :level (= 2))
                                         (-> % :path (ends-with? ".toc"))) zipfile-entries)
