@@ -11,14 +11,14 @@
   ;; https://github.com/technomancy/leiningen/issues/2769
   :pedantic? false
 
-  :dependencies [[org.clojure/clojure "1.11.3"]
+  :dependencies [[org.clojure/clojure "1.12.1"]
                  [org.clojure/tools.cli "1.1.230"] ;; cli arg parsing
                  [org.clojure/tools.namespace "1.5.0"] ;; reload code
                  [org.clojure/data.json "2.5.1"] ;; json handling
                  [orchestra "2021.01.01-1"] ;; improved clojure.spec instrumentation
                  ;; see lein deps :tree
-                 [com.taoensso/timbre "6.6.1"] ;; logging
-                 [clj-http "3.13.0"] ;; better http slurping
+                 [com.taoensso/timbre "6.7.1"] ;; logging
+                 [clj-http "3.13.1"] ;; better http slurping
                  [clj-commons/fs "1.6.311"] ;; file system wrangling
                  [slugify "0.0.1"]
                  [trptcolin/versioneer "0.2.0"] ;; version number wrangling. it's more involved than you might suspect
@@ -27,7 +27,7 @@
                  [envvar "1.1.2"] ;; environment variable wrangling
                  [tolitius/lasync "0.1.25"] ;; better parallel processing
 
-                 [cljfx "1.9.3" :exclusions [org.openjfx/javafx-web
+                 [cljfx "1.9.5" :exclusions [org.openjfx/javafx-web
                                              org.openjfx/javafx-media]]
                  [cljfx/css "1.1.0"]
 
@@ -44,7 +44,7 @@
                  ;; GPLv3 compatible dependencies.
                  ;; these don't need an exception in LICENCE.txt
                  [org.ocpsoft.prettytime/prettytime "5.0.9.Final"] ;; Apache 2.0 licenced, pretty date formatting
-                 [org.controlsfx/controlsfx "11.2.1"] ;; BSD-3
+                 [org.controlsfx/controlsfx "11.2.2"] ;; BSD-3
                  
                  ;; remember to update the LICENCE.txt
                  ;; remember to update pom file (`lein pom`)
