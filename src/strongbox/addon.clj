@@ -552,9 +552,12 @@
 (defn-spec updateable? boolean?
   "returns `true` when given `addon` can be updated to a newer version."
   [addon map?] ;; deliberately lenient
-  (let [{:keys [installed-version pinned-version version
-                game-track installed-game-track
-                supported-game-tracks]} addon]
+  (let [{:keys [installed-version
+                pinned-version version
+                game-track ;; game track of update
+                installed-game-track ;; nfo game track
+                supported-game-tracks ;; toc file gametracks
+                ]}addon]
     (cond
       ;; not expanded
       (not version) false

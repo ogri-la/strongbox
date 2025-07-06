@@ -1,0 +1,25 @@
+# for debugging circle-ci
+
+FROM cimg/clojure:1.12.0-openjdk-17.0
+USER root
+
+RUN sudo apt update -y
+RUN sudo apt install libgtk-3-0 libxtst6 libxxf86vm1 libgl1 xvfb --no-install-recommends -y
+
+RUN mkdir strongbox
+RUN chown circleci:circleci strongbox
+COPY project.clj strongbox
+
+WORKDIR strongbox
+USER circleci
+RUN lein deps
+RUN lein cloverage -h > /dev/null
+
+COPY src src
+COPY resources resources
+COPY test test
+COPY cloverage.clj manage.sh ./
+
+RUN sudo chown circleci:circleci -R ./
+
+RUN ./manage.sh test
