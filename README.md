@@ -9,15 +9,17 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and
 
 ---
 
-***Notice***: The minimum required version of the JDK has been raised from 11 to 17 as of **2024-12-28**.k
+***Notice***: The minimum required version of the JDK has been raised from `11` to `17` as of release **7.6.0**.
 
-This will only affect those using the `.jar` file (Mac, Arm, and Flatback users).
+This *only* affects those using the `.jar` file (Mac, ARM, and Flatback users).
 
 AppImage users should not be affected. Flatpak users should see their dependencies updated automatically.
 
 This change is to accommodate [bug fixes](https://github.com/openjdk/jfx/blob/f06b15b6e6c60fba18b6452464e75b89cc7054f9/doc-files/release-notes-20.md?plain=1#L123) in JavaFX.
 
 JavaFX as of version 20 [requires JDK 17](https://github.com/openjdk/jfx/blob/f06b15b6e6c60fba18b6452464e75b89cc7054f9/doc-files/release-notes-20.md?plain=1#L11).
+
+OpenJDK 11, depending on your distribution, is probably [EOL](https://endoflife.date/tags/java-distribution) too.
 
 ---
 

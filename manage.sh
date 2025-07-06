@@ -7,9 +7,11 @@ if test ! "$cmd"; then
     echo "command required."
     echo
     echo "available commands:"
-    echo "  update-deps            update project dependencies"
-    echo "  test                   run application tests"
+    echo "  build-docker           build Docker container and run tests"
+    echo "  clean                  remove known temporary files"
     echo "  lint                   run linters"
+    echo "  test                   run application tests"
+    echo "  update-deps            update project dependencies"
     echo "  update-test-fixtures   update static files used during testing"
     exit 1
 fi
@@ -17,8 +19,29 @@ fi
 shift
 rest=$*
 
-if test "$cmd" = "update-deps"; then
-    lein ancient
+if test "$cmd" = "build-docker"; then
+    docker build --rm -f CircleCI/Dockerfile.22-04 .
+    exit 0
+
+elif test "$cmd" = "clean"; then
+    lein clean
+    rm -rf ./jdk17-target
+    rm -rf ./target
+    exit 0
+
+elif test "$cmd" = "lint"; then
+    if which joker > /dev/null; then
+        echo "joker lint"
+        joker --lint --working-dir ./
+    fi
+    echo "cljfmt lint"
+    lein cljfmt fix
+    echo "eastwood lint"
+    if command -v xvfb-run > /dev/null; then
+        xvfb-run lein eastwood
+    else
+        lein eastwood
+    fi
     exit 0
 
 elif test "$cmd" = "test"; then
@@ -50,19 +73,8 @@ elif test "$cmd" = "test"; then
     fi
     exit 0
 
-elif test "$cmd" = "lint"; then
-    if which joker > /dev/null; then
-        echo "joker lint"
-        joker --lint --working-dir ./
-    fi
-    echo "cljfmt lint"
-    lein cljfmt fix
-    echo "eastwood lint"
-    if command -v xvfb-run > /dev/null; then
-        xvfb-run lein eastwood
-    else
-        lein eastwood
-    fi
+elif test "$cmd" = "update-deps"; then
+    lein ancient
     exit 0
 
 elif test "$cmd" = "update-test-fixtures"; then
@@ -106,19 +118,6 @@ elif test "$cmd" = "update-test-fixtures"; then
     dl "https://api.github.com/repos/Stanzilla/AdvancedInterfaceOptions/releases" "user-catalogue--github.json"
 
     exit 0
-
-elif test "$cmd" = "clean"; then
-    lein clean
-    rm -rf ./jdk17-target
-    rm -rf ./target
-    exit 0
-
-elif test "$cmd" = "build-docker"; then
-    docker build --rm -f CircleCI/Dockerfile.22-04 .
-
-    exit 0
-
-
 
 # ...
 
