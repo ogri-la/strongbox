@@ -557,7 +557,7 @@
                 game-track ;; game track of update
                 installed-game-track ;; nfo game track
                 supported-game-tracks ;; toc file gametracks
-                ]} addon]
+                ]}addon]
     (cond
       ;; not expanded
       (not version) false

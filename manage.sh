@@ -28,7 +28,7 @@ elif test "$cmd" = "test"; then
     # so we copy it in and destroy it afterwards
     cp cloverage.clj src/strongbox/cloverage.clj
     rm -rf ./coverage/ # any coverage reports from previous run
-
+    # shellcheck disable=SC2317
     function finish {
         rm src/strongbox/cloverage.clj
 
@@ -41,7 +41,7 @@ elif test "$cmd" = "test"; then
         lein clean
     }
     trap finish EXIT
-    if which xvfb-run; then
+    if command -v xvfb-run > /dev/null; then
         # CI
         xvfb-run lein cloverage --runner "strongbox"
     else
@@ -58,7 +58,7 @@ elif test "$cmd" = "lint"; then
     echo "cljfmt lint"
     lein cljfmt fix
     echo "eastwood lint"
-    if which xvfb-run; then
+    if command -v xvfb-run > /dev/null; then
         xvfb-run lein eastwood
     else
         lein eastwood
@@ -108,6 +108,7 @@ elif test "$cmd" = "update-test-fixtures"; then
     exit 0
 
 elif test "$cmd" = "clean"; then
+    lein clean
     rm -rf ./jdk17-target
     rm -rf ./target
     exit 0
