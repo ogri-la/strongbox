@@ -333,6 +333,8 @@
       "3." :classic-wotlk
       ;; 4.x.x == classic (cataclysm)
       "4." :classic-cata
+      ;; 5.x.x == classic (mists of panderia)
+      "5." :classic-mists
       :retail)))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
@@ -350,7 +352,8 @@
     :classic constants/latest-classic-game-version
     :classic-tbc constants/latest-classic-tbc-game-version
     :classic-wotlk constants/latest-classic-wotlk-game-version
-    :classic-cata constants/latest-classic-cata-game-version))
+    :classic-cata constants/latest-classic-cata-game-version
+    :classic-mists constants/latest-classic-mists-game-version))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify
@@ -637,7 +640,9 @@
   returns `nil` if no game track found."
   [string (s/nilable string?)]
   (when string
-    (let [;; matches 'cata'. less variation this time around.
+    (let [;; matches 'mists'
+          classic-mists-regex #"(?i)[\W_]?mists([\W_]?|$)"
+          ;; matches 'cata'. less variation this time around.
           classic-cata-regex #"(?i)[\W_]?cata([\W_]?|$)"
           ;; matches 'classic-wotlk', 'classic_wotlk', 'classic-wrath', 'classic_wrath', 'wotlk', 'wrath'
           classic-wotlk-regex #"(?i)(classic[\W_])?(wrath|wotlk)([\W_]|$)?"
@@ -648,6 +653,7 @@
           classic-regex #"(?i)classic|vanilla"
           retail-regex #"(?i)retail|mainline"]
       (cond
+        (re-find classic-mists-regex string) :classic-mists
         (re-find classic-cata-regex string) :classic-cata
         (re-find classic-wotlk-regex string) :classic-wotlk
         (re-find classic-tbc-regex string) :classic-tbc
