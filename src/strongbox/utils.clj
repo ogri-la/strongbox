@@ -651,7 +651,7 @@
           ;; see tests.
           classic-tbc-regex #"(?i)classic[\W_]t?bcc?|[\W_]t?bcc?\W?|t?bcc?$"
           classic-regex #"(?i)classic|vanilla"
-          retail-regex #"(?i)retail|mainline"]
+          retail-regex #"(?i)standard|retail|mainline"]
       (cond
         (re-find classic-mists-regex string) :classic-mists
         (re-find classic-cata-regex string) :classic-cata
