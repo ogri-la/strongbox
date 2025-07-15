@@ -91,7 +91,8 @@
 (def releases
   "https://warcraft.wiki.gg/wiki/Patch"
 
-  {"11.0.0" "The War Within"
+  {"11.1.0" "The War Within: Undermine(d)"
+   "11.0.0" "The War Within"
 
    "10.2.7" "Dragonflight: Dark Heart"
    "10.2.6" "Dragonflight: Plunderstorm"
