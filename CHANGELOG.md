@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+* added 'clean' to manage.sh script to remove any temporary files
+* added 'build-docker' to manage.sh script to run the tests in an environment similar to CI
+
+### Changed
+
+* minimum version of JDK bumped from 11 to 17 to incorporate bug fixes in newer releases of OpenJFX 22
+* bumped dependencies in general
+* changes to CI to move off of legacy/unsupported container images
+
+### Fixed
+
+* issue #441 "Crash on new Mac OS and JRE install"
+    - thanks to @ffolkes for reporting the issue
+
+### Removed
+
+* some old Docker containers used for debugging CI
+
 ## 7.5.0 - 2024-09-07
 
 ### Added
