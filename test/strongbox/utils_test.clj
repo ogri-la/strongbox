@@ -307,7 +307,7 @@
                ["5.3.0" :classic-mists]
                ["5.foo.bar" :classic-mists]
                [constants/latest-classic-mists-game-version :classic-mists]
-               
+
                ;; everything else
                ["6.0.4" :retail]
 

@@ -46,7 +46,8 @@
    :classic [:classic :classic-tbc :classic-wotlk :classic-cata :classic-mists :retail]
    :classic-tbc [:classic-tbc :classic-wotlk :classic-cata :classic-mists :classic :retail]
    :classic-wotlk [:classic-wotlk :classic-cata :classic-mists :classic-tbc :classic :retail]
-   :classic-cata [:classic-cata :classic-mists :classic-wotlk :classic-tbc :classic :retail]})
+   :classic-cata [:classic-cata :classic-mists :classic-wotlk :classic-tbc :classic :retail]
+   :classic-mists [:classic-mists :classic-cata :classic-wotlk :classic-tbc :classic :retail]})
 
 (def bullet "\u2022") ;; •
 
