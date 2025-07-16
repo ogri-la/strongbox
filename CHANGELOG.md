@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* support for classic Mists of Pandaria
+* support for 'Standard' suffixed .toc file (retail)
 * added 'clean' to manage.sh script to remove any temporary files
 * added 'build-docker' to manage.sh script to run the tests in an environment similar to CI
 
 ### Changed
 
+* bumped versions of latest WoW releases
 * minimum version of JDK bumped from 11 to 17 to incorporate bug fixes in newer releases of OpenJFX 22
 * bumped dependencies in general
 * changes to CI to move off of legacy/unsupported container images

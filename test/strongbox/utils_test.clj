@@ -302,9 +302,15 @@
                ["4.foo.bar" :classic-cata]
                [constants/latest-classic-cata-game-version :classic-cata]
 
+               ;; mists
+               ["5." :classic-mists]
+               ["5.3.0" :classic-mists]
+               ["5.foo.bar" :classic-mists]
+               [constants/latest-classic-mists-game-version :classic-mists]
+
                ;; everything else
-               ["5.0.4" :retail]
                ["6.0.4" :retail]
+
                ;; ...etc
                ["9.0.1" :retail]
                ["10.0.2" :retail]
@@ -492,7 +498,8 @@
                [20123 :classic-tbc]
                [30123 :classic-wotlk]
                [40123 :classic-cata]
-               [50123 :retail] ;; for now
+               [50123 :classic-mists]
+               [60123 :retail] ;; for now
 
                ;; bad interface versions
                [0 nil]

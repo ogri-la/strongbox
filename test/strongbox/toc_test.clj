@@ -266,6 +266,7 @@ SomeAddon.lua")
                   [:classic-cata "EveryAddon-Cata.toc"]
                   [:classic "EveryAddon-Classic.toc"]
                   [:retail "EveryAddon-Mainline.toc"]
+                  [:classic-mists "EveryAddon-Mists.toc"]
                   [:classic-tbc "EveryAddon-TBC.toc"]
                   [:classic "EveryAddon-Vanilla.toc"]
                   [:classic-wotlk "EveryAddon-Wrath.toc"]

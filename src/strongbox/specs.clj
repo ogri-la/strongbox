@@ -89,7 +89,8 @@
                         [:classic "Classic"]
                         [:classic-tbc "Classic (TBC)"]
                         [:classic-wotlk "Classic (WotLK)"]
-                        [:classic-cata "Classic (Cata)"]])
+                        [:classic-cata "Classic (Cata)"]
+                        [:classic-mists "Classic (Mists)"]])
 
 (def game-track-labels-map (into {} game-track-labels)) ;; {:retail "WoW Retail", ...}
 (def game-track-labels-map-inv (map-invert game-track-labels-map)) ;; {"WoW Retail" :retail, ...}
