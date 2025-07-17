@@ -6,33 +6,6 @@ see CHANGELOG.md for a more formal list of changes by release
 
 ## done
 
-* issue 433: preserve ignore and pin flags when addon updated manually via strongbox
-    - usecase: 
-        - old addon exists on wowi
-        - new addon exists on curse
-        - user installs new addon from curse and then 'ignores' it so nothing affects it
-        - user installs updated addon from curse and ignore flag is lost
-    - problems:
-        - if the addon was ignored, it shouldn't have been possible to overwrite it to begin with
-        - it seems reasonable to update addons in this way
-    - done
-
-bug:
-    - attempting to overwrite ignored addon results in "refusing to delete ignored addon: /path/to/addon/dir" with no addon name
-    - it looks like it installed it anyway
-    - done
-
-* import addon from github 
-    - getting a 'no retail release' when there is a clear retail rfelease available
-    - done
-
-* update constants for war within
-    - done
-
-* Desktop Entry Name should not include "(Flatpak)" 
-    - https://github.com/flathub/la.ogri.strongbox/issues/7
-    - done
-
 ## todo
 
 ## todo bucket (no particular order)

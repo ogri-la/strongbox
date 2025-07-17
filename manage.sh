@@ -7,9 +7,11 @@ if test ! "$cmd"; then
     echo "command required."
     echo
     echo "available commands:"
-    echo "  update-deps            update project dependencies"
-    echo "  test                   run application tests"
+    echo "  build-docker           build Docker container and run tests"
+    echo "  clean                  remove known temporary files"
     echo "  lint                   run linters"
+    echo "  test                   run application tests"
+    echo "  update-deps            update project dependencies"
     echo "  update-test-fixtures   update static files used during testing"
     exit 1
 fi
@@ -17,8 +19,29 @@ fi
 shift
 rest=$*
 
-if test "$cmd" = "update-deps"; then
-    lein ancient
+if test "$cmd" = "build-docker"; then
+    docker build --rm -f CircleCI/Dockerfile.22-04 .
+    exit 0
+
+elif test "$cmd" = "clean"; then
+    lein clean
+    rm -rf ./jdk17-target
+    rm -rf ./target
+    exit 0
+
+elif test "$cmd" = "lint"; then
+    if which joker > /dev/null; then
+        echo "joker lint"
+        joker --lint --working-dir ./
+    fi
+    echo "cljfmt lint"
+    lein cljfmt fix
+    echo "eastwood lint"
+    if command -v xvfb-run > /dev/null; then
+        xvfb-run lein eastwood
+    else
+        lein eastwood
+    fi
     exit 0
 
 elif test "$cmd" = "test"; then
@@ -28,7 +51,7 @@ elif test "$cmd" = "test"; then
     # so we copy it in and destroy it afterwards
     cp cloverage.clj src/strongbox/cloverage.clj
     rm -rf ./coverage/ # any coverage reports from previous run
-
+    # shellcheck disable=SC2317
     function finish {
         rm src/strongbox/cloverage.clj
 
@@ -41,7 +64,7 @@ elif test "$cmd" = "test"; then
         lein clean
     }
     trap finish EXIT
-    if which xvfb-run; then
+    if command -v xvfb-run > /dev/null; then
         # CI
         xvfb-run lein cloverage --runner "strongbox"
     else
@@ -50,15 +73,8 @@ elif test "$cmd" = "test"; then
     fi
     exit 0
 
-elif test "$cmd" = "lint"; then
-    if which joker > /dev/null; then
-        echo "joker lint"
-        joker --lint --working-dir ./
-    fi
-    echo "cljfmt lint"
-    lein cljfmt fix
-    echo "eastwood lint"
-    lein eastwood
+elif test "$cmd" = "update-deps"; then
+    lein ancient
     exit 0
 
 elif test "$cmd" = "update-test-fixtures"; then

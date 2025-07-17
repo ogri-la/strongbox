@@ -89,7 +89,8 @@
                         [:classic "Classic"]
                         [:classic-tbc "Classic (TBC)"]
                         [:classic-wotlk "Classic (WotLK)"]
-                        [:classic-cata "Classic (Cata)"]])
+                        [:classic-cata "Classic (Cata)"]
+                        [:classic-mists "Classic (Mists)"]])
 
 (def game-track-labels-map (into {} game-track-labels)) ;; {:retail "WoW Retail", ...}
 (def game-track-labels-map-inv (map-invert game-track-labels-map)) ;; {"WoW Retail" :retail, ...}
@@ -99,7 +100,7 @@
 (def old-game-tracks #{:retail-classic, :classic-retail})
 
 (s/def ::old-game-track old-game-tracks)
-(s/def ::game-track game-tracks)
+(s/def ::game-track game-tracks) ;; more like `::game-track-set`
 (s/def ::installed-game-track ::game-track) ;; alias
 (s/def ::game-track-list (s/coll-of ::game-track :kind vector? :distinct true))
 
@@ -176,27 +177,42 @@
 ;; default set of columns
 (def default-column-list--v1
   [:source
-   :name :description
-   :installed-version :available-version :game-version
+   :name
+   :description
+   :installed-version
+   :available-version
+   :game-version
    :uber-button])
 (def default-column-list--v2
   [:source
-   :name :description
-   :combined-version :game-version
+   :name
+   :description
+   :combined-version
+   :game-version
    :uber-button])
 (def default-column-list default-column-list--v2)
 
 (def skinny-column-list
   [:name
-   :version :combined-version :game-version
+   :version
+   :combined-version
+   :game-version
    :uber-button])
 
 (def fat-column-list
-  [:starred :browse-local
-   :source :source-id
-   :name :description :tag-list
-   :created-date :updated-date :dirsize
-   :installed-version :available-version :game-version
+  [:starred
+   :browse-local
+   :source
+   :source-id
+   :name
+   :description
+   :tag-list
+   :created-date
+   :updated-date
+   :dirsize
+   :installed-version
+   :available-version
+   :game-version
    :uber-button])
 
 (def column-preset-list [[:default default-column-list]

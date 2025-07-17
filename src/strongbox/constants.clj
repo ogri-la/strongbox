@@ -16,17 +16,18 @@
 ;; used as a placeholder for an addon's supported version when we're forced to guess.
 ;; don't fret too much about patch versions. These values don't affect much.
 ;; https://warcraft.wiki.gg/wiki/Public_client_builds
-(def latest-retail-game-version "11.0.0")
-(def latest-classic-game-version "1.14.3")
+(def latest-retail-game-version "11.1.0")
+(def latest-classic-game-version "1.15.7")
 (def latest-classic-tbc-game-version "2.5.4")
-(def latest-classic-wotlk-game-version "3.4.0")
-(def latest-classic-cata-game-version "4.0.1")
+(def latest-classic-wotlk-game-version "3.4.4")
+(def latest-classic-cata-game-version "4.4.2")
+(def latest-classic-mists-game-version "5.5.0")
 
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).
 ;; these values need to match the latest-* values above.
-(def default-interface-version 110000)
-(def default-interface-version-classic 11400)
+(def default-interface-version 110107)
+(def default-interface-version-classic 11400) ;; 2025-07: not really used anymore
 
 ;; take all of the game tracks to the right of your position
 ;; then all to the left.
@@ -41,11 +42,12 @@
   the strategy is to assume the next-best game tracks are the ones 'closest' to the given `game-track`, newest to oldest.
   for example, if a release for wotlk classic is not available and releases for cata, bcc and vanilla are, which to choose?
   this strategy prioritises cata, then bcc and finally vanilla."
-  {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata]
-   :classic [:classic :classic-tbc :classic-wotlk :classic-cata :retail]
-   :classic-tbc [:classic-tbc :classic-wotlk :classic-cata :classic :retail]
-   :classic-wotlk [:classic-wotlk :classic-cata :classic-tbc :classic :retail]
-   :classic-cata [:classic-cata :classic-wotlk :classic-tbc :classic :retail]})
+  {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata :classic-mists]
+   :classic [:classic :classic-tbc :classic-wotlk :classic-cata :classic-mists :retail]
+   :classic-tbc [:classic-tbc :classic-wotlk :classic-cata :classic-mists :classic :retail]
+   :classic-wotlk [:classic-wotlk :classic-cata :classic-mists :classic-tbc :classic :retail]
+   :classic-cata [:classic-cata :classic-mists :classic-wotlk :classic-tbc :classic :retail]
+   :classic-mists [:classic-mists :classic-cata :classic-wotlk :classic-tbc :classic :retail]})
 
 (def bullet "\u2022") ;; •
 
@@ -89,7 +91,8 @@
 (def releases
   "https://warcraft.wiki.gg/wiki/Patch"
 
-  {"11.0.0" "The War Within"
+  {"11.1.0" "The War Within: Undermine(d)"
+   "11.0.0" "The War Within"
 
    "10.2.7" "Dragonflight: Dark Heart"
    "10.2.6" "Dragonflight: Plunderstorm"

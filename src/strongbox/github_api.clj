@@ -78,11 +78,11 @@
                                       :-name (:name asset)}
                          game-track-list
                          (cond
-                           ;; game track present in file name, prefer that over `:game-track-list` and any game-track in release name
+                           ;; game track present in file name, prefer that over any game-track in release name
                            asset-game-track [asset-game-track]
 
-                           ;; I imagine there were classic addons published prior to it's release.
-                           ;; If we can use the asset name, brilliant, if not and it's before the cut off then it's retail.
+                           ;; I imagine there were classic addons published prior to the release of WoW Classic.
+                           ;; If we can use the asset name, brilliant, if not, and it's before the cut off, then it's retail.
                            published-before-classic? [:retail]
 
                            ;; game track present in release name, prefer that over `:game-track-list`
@@ -96,8 +96,7 @@
         ;; if we have a telltale single unclassified asset in a set of classified assets, use that.
         classify2 (fn [asset-list]
                     (let [;; it's possible for `nil` game tracks to still exist.
-                          ;; either the release.json file was incomplete or we simply couldn't
-                          ;; guess the game track from the asset name and had nothing to fall back on.
+                          ;;  we couldn't guess the game track from the asset name and had nothing to fall back on.
                           unclassified-assets (->> asset-list (map :game-track) (filter nil?))
                           classified-assets (->> asset-list (map :game-track) (remove nil?) set)
                           diff (clojure.set/difference sp/game-tracks classified-assets)] ;; #{:classic :classic-bc :retail} #{:classic :classic-bc} => #{:retail}

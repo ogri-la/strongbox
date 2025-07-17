@@ -1,0 +1,7 @@
+*
+!src/
+!test/
+!cloverage.clj
+!manage.sh
+!project.clj
+!resources/
