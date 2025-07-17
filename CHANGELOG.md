@@ -22,8 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* issue #440 "JNI error when launching on Endeavouros"
+    - thanks to @FourRand0m for reporting this
 * issue #441 "Crash on new Mac OS and JRE install"
-    - thanks to @ffolkes for reporting the issue
+    - thanks to @ffolkes for reporting this
 
 ### Removed
 
