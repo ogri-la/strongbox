@@ -73,10 +73,17 @@
           (is (= expected (utils/interface-version-to-game-version case))))))))
 
 (deftest semver-sort
-  (testing "basic sort"
-    (let [given ["1.2.3" "4.11.6" "4.2.0" "1.5.19" "1.5.5" "4.1.3" "1.2" "2.3.1" "10.5.5" "1.6.0" "1.2.3" "11.3.0" "1.2.3.4" "1.6.0-unstable" "1.6.0-aaaaaa"]
-          ;; sort order for the '-something' cases are unspecified. depends entirely on input order
-          expected '("1.2" "1.2.3" "1.2.3" "1.2.3.4" "1.5.5" "1.5.19" "1.6.0" "1.6.0-unstable" "1.6.0-aaaaaa" "2.3.1" "4.1.3" "4.2.0" "4.11.6" "10.5.5" "11.3.0")]
+  (testing "basic semver sort"
+    (let [given ["1.2.3" "4.11.6" "4.2.0" "1.5.19"  "1.2.3-prerelease.2" "1.5.5" "1.2.3-prerelease.1" "4.1.3" "1.2" "2.3.1" "10.5.5" "1.6.0" "1.2.3" "11.3.0" "1.2.3.4" "1.6.0-unstable" "1.6.0-aaaaaa" "1.2.3.4.5"]
+          ;; fourth and fifth tokens are considered 'pre-release' and 'build' respectively
+          ;; and are sorted alpha-numerically, so '.4.5' is compared to '-prerelease.1' etc.
+          expected '("1.2" "1.2.3.4" "1.2.3.4.5" "1.2.3-prerelease.1" "1.2.3-prerelease.2" "1.2.3" "1.2.3" "1.5.5" "1.5.19" "1.6.0-aaaaaa" "1.6.0-unstable" "1.6.0" "2.3.1" "4.1.3" "4.2.0" "4.11.6" "10.5.5" "11.3.0")]
+      (is (= expected (utils/sort-semver-strings given))))))
+
+(deftest semver-sort-alpha-beta
+  (testing "semver sort when alphas and betas are involved"
+    (let [given ["0.1.0-beta", "0.1.0", "0.1.0-alpha"]
+          expected '("0.1.0-alpha", "0.1.0-beta", "0.1.0")]
       (is (= expected (utils/sort-semver-strings given))))))
 
 #_(deftest days-between-then-and-now

@@ -1459,6 +1459,7 @@
    (case latest-release
      nil true ;; we haven't looked yet, so yes, we're the latest :)
      :failed true ;; we've already looked and failed, so as far as we know we're the latest.
+     utils/semver-prerelease? true ;; we've looked and found a prerelease. don't consider prereleases. note: this might actually mask a newer non-prerelease
      (let [version-running (strongbox-version)
            sorted-asc (utils/sort-semver-strings [latest-release version-running])]
        (= version-running (last sorted-asc))))))
