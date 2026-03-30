@@ -9,7 +9,17 @@ It supports addons hosted by ~Curseforge,~ wowinterface.com, ~Tukui~, Github and
 
 ---
 
-***Notice***: The minimum required version of the JDK has been raised from `11` to `17` as of release **7.6.0**.
+***Notice***: Strongbox has been rewritten for release **8.0.0**
+
+The brave can find __alpha__ releases here: https://github.com/ogri-la/strongbox8
+
+Feel free to leave any feedback for 8 in that repository. I love hearing from users.
+
+Strongbox 7.x will continue to receive security and bug fixes until Strongbox 9 is released.
+
+---
+
+***Notice***: The minimum required version of the JDK has been raised from `11` to `17` as of release **7.6.0**
 
 This *only* affects those using the `.jar` file (Mac, ARM, and Flatback users).
 

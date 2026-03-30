@@ -131,7 +131,7 @@ Installed from curseforge
 
 Supports Retail
 
-Last updated 9 years ago (2016-09-08)"]
+Last updated 10 years ago (2016-09-08)"]
       (is (= expected (jfx/addon-as-text-for-installed given)))))
 
   (testing "with overrides"
@@ -167,7 +167,7 @@ Available from curseforge
 
 Supports 
 
-Last updated 9 years ago (2016-09-08)"]
+Last updated 10 years ago (2016-09-08)"]
       (is (= expected (jfx/addon-as-text-for-catalogue given)))))
 
   (testing "with overrides"
@@ -193,6 +193,7 @@ Last updated  ()"]
                [{:interface-version-list [10000]} "1.0.0"]
                [{:interface-version-list [10000, 100000]} "1.0.0 | 10.0.0"]
                [{:interface-version-list [10000, 100000 110000]} "1.0.0 | 10.0.0 | 11.0.0"]
+               [{:interface-version-list [10000, 100000 110000 120000]} "1.0.0 | 10.0.0 | 11.0.0 | 12.0.0"]
                  ;; duplicates are removed (11000 => 1.0.0)
                [{:interface-version-list [10000, 11000]} "1.0.0"]]]
     (doseq [[given expected] cases]

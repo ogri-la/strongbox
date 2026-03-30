@@ -3,9 +3,9 @@
 (def mascot "ᕙ[°▿°]ᕗ")
 
 (def release-of-previous-expansion
-  "'Dragonflight', released November 28th/29th 2022. Used to shorten the 'full' catalogue.
+  "'The War Within', released August 8th 2024. Used to shorten the 'full' catalogue.
   https://warcraft.wiki.gg/wiki/Expansion#World_of_Warcraft"
-  "2022-11-28T00:00:00Z")
+  "2024-08-08T00:00:00Z")
 
 (def release-of-wow-classic
   "the date wow classic went live (addon development may have started before that). Used to guess possible game tracks when it's ambiguous.
@@ -16,7 +16,7 @@
 ;; used as a placeholder for an addon's supported version when we're forced to guess.
 ;; don't fret too much about patch versions. These values don't affect much.
 ;; https://warcraft.wiki.gg/wiki/Public_client_builds
-(def latest-retail-game-version "11.1.0")
+(def latest-retail-game-version "12.0.0")
 (def latest-classic-game-version "1.15.7")
 (def latest-classic-tbc-game-version "2.5.4")
 (def latest-classic-wotlk-game-version "3.4.4")
@@ -26,7 +26,7 @@
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).
 ;; these values need to match the latest-* values above.
-(def default-interface-version 110107)
+(def default-interface-version 120000)
 (def default-interface-version-classic 11400) ;; 2025-07: not really used anymore
 
 ;; take all of the game tracks to the right of your position
@@ -91,7 +91,9 @@
 (def releases
   "https://warcraft.wiki.gg/wiki/Patch"
 
-  {"11.1.0" "The War Within: Undermine(d)"
+  {"12.0.0" "Midnight"
+
+   "11.1.0" "The War Within: Undermine(d)"
    "11.0.0" "The War Within"
 
    "10.2.7" "Dragonflight: Dark Heart"

@@ -45,6 +45,7 @@
            "100002" "10.0.2"
            "100102" "10.1.2" ;; just guessing
            "110000" "11.0.0"
+           "120000" "12.0.0" ;; Midnight
            "200102" "20.1.2"
            "300102" "30.1.2"
            ;; first three digits are now the major, second two minor and remaining is patch (I think ...)
@@ -322,6 +323,7 @@
                ["9.0.1" :retail]
                ["10.0.2" :retail]
                ["11.0.0" :retail]
+               ["12.0.0" :retail]
 
                [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
