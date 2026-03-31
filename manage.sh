@@ -101,11 +101,12 @@ elif test "$cmd" = "update-test-fixtures"; then
     dl "https://api.mmoui.com/v3/game/WOW/filedetails/24910.json" "wowinterface-api--addon-details-classic.json" # WeakAuras2
 
     # github api
+    dl "https://api.github.com/repos/ogri-la/strongbox/releases" "github-repo-releases--strongbox.json"
     dl "https://api.github.com/repos/Robert388/Necrosis-classic/releases" "github-repo-releases--no-assets.json"
     dl "https://api.github.com/repos/jsb/RingMenu/releases" "github-repo-releases--single-asset-classic.json"
     dl "https://api.github.com/repos/jsb/RingMenu/releases" "github-repo-releases--broken-assets.json"
-    dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--many-assets-many-gametracks.json" 
-    dl "https://api.github.com/repos/Ravendwyr/Chinchilla/contents" "github-repo-contents--many-assets-many-gametracks.json" 
+    #dl "https://api.github.com/repos/Ravendwyr/Chinchilla/releases" "github-repo-releases--many-assets-many-gametracks.json" 
+    #dl "https://api.github.com/repos/Ravendwyr/Chinchilla/contents" "github-repo-contents--many-assets-many-gametracks.json" 
 
     # gitlab api
     dl "https://gitlab.com/api/v4/projects/woblight%2Fnitro" "gitlab-repo--woblight-nitro.json"

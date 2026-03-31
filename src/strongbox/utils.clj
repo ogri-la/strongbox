@@ -428,6 +428,25 @@
     (compare (semver-key a)
              (semver-key b))))
 
+;; Parses a semver string per https://semver.org/
+;; Pattern breakdown:
+;;   ^                                          start of string
+;;   (\d+)\.(\d+)\.(\d+)                        capture groups 1-3: major, minor, patch (digits separated by dots)
+;;   (?:                                        optional pre-release block (non-capturing):
+;;     -                                          literal hyphen separator
+;;     (                                          capture group 4: pre-release identifier
+;;       [0-9A-Za-z-]+                              one or more alphanumeric-or-hyphen chars (first dot-separated segment)
+;;       (?:\.[0-9A-Za-z-]+)*                       zero or more additional dot-separated segments
+;;     )
+;;   )?
+;;   (?:                                        optional build-metadata block (non-capturing):
+;;     \+                                         literal plus separator
+;;     (                                          capture group 5: build identifier
+;;       [0-9A-Za-z-]+                              one or more alphanumeric-or-hyphen chars (first dot-separated segment)
+;;       (?:\.[0-9A-Za-z-]+)*                       zero or more additional dot-separated segments
+;;     )
+;;   )?
+;;   $                                          end of string
 (def semver-pattern #"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$")
 
 (defn semver-parse

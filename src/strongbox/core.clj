@@ -1438,17 +1438,19 @@
 
 (def download-version-lock (Object.))
 
-(defn-spec -download-strongbox-release (s/or :ok string?, :failed? keyword)
-  "returns the most recently released version of strongbox on github.
-  returns `:failed` if an error occurred while downloading/decoding/extracting the version name, rather than `nil`.
-  `nil` is used to mean 'not set (yet)' in the app state."
+(defn-spec -download-strongbox-release-list (s/or :ok ::sp/list-of-strings, :failed? ::sp/list-of-keywords)
+  "returns a list of (stable) strongbox releases from github, sorted oldest to newest.
+  returns `[:failed]` if an error occurred while downloading/decoding/extracting the version list rather than `nil`.
+  `nil` is used later to mean 'not set (yet)' in the app state."
   []
   (locking download-version-lock
     (binding [http/*cache* (cache)]
       (let [message "downloading strongbox version data"
-            url "https://api.github.com/repos/ogri-la/strongbox/releases/latest"]
-        (or (some-> url (http/download message) http/sink-error utils/from-json :tag_name)
-            :failed)))))
+            url "https://api.github.com/repos/ogri-la/strongbox/releases"
+            contents (some-> url (http/download message) http/sink-error utils/from-json)]
+        (if contents
+          (->> contents (map :tag_name) (remove utils/semver-prerelease) utils/sort-semver-strings vec)
+          [:failed])))))
 
 (defn-spec latest-strongbox-version? boolean?
   "returns `true` if the given `latest-release` is the *most recent known* version of strongbox.
@@ -1459,7 +1461,6 @@
    (case latest-release
      nil true ;; we haven't looked yet, so yes, we're the latest :)
      :failed true ;; we've already looked and failed, so as far as we know we're the latest.
-     utils/semver-prerelease? true ;; we've looked and found a prerelease. don't consider prereleases. note: this might actually mask a newer non-prerelease
      (let [version-running (strongbox-version)
            sorted-asc (utils/sort-semver-strings [latest-release version-running])]
        (= version-running (last sorted-asc))))))
@@ -1472,7 +1473,7 @@
     (when check-for-update?
       (case lsr
         ;; we haven't looked yet, so look.
-        nil (let [lsr (-download-strongbox-release)]
+        nil (let [lsr (last (-download-strongbox-release-list))]
               (swap! state assoc :latest-strongbox-release lsr)
               lsr)
         ;; we've already looked and failed, don't try again this session.

@@ -176,8 +176,8 @@
                      {:get (fn [req] {:status 200 :body "{}"})}
 
                      ;; latest strongbox version
-                     "https://api.github.com/repos/ogri-la/strongbox/releases/latest"
-                     {:get (fn [req] {:status 200 :body "{\"tag_name\": \"0.0.0\"}"})}
+                     "https://api.github.com/repos/ogri-la/strongbox/releases"
+                     {:get (fn [req] {:status 200 :body "[{\"tag_name\": \"0.0.0\"}]"})}
 
                      ;; github requests remaining
                      "https://api.github.com/rate_limit"
