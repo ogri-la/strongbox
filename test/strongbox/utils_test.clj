@@ -596,10 +596,15 @@
   (testing "two forms to execute that share a lock will see one executed first, then the second."
     (let [current-locks (atom #{})
 
+          ;; slinging promises around is a little contrived but the alternative is Thread/sleep,
+          ;; which isn't really deterministic and depends a lot on environment characteristics.
+          fn1-acquired (promise) ;; fn1 delivers this once it holds the lock
+          fn1-may-finish (promise) ;; main thread delivers this to release fn1
+
           fn1 #(future
                  (utils/with-lock current-locks #{:foo :fn1}
-                   ;; sleep longer than the wait-retry period (10ms) forcing fn2 to retry execution
-                   (Thread/sleep 10)
+                   (deliver fn1-acquired true)
+                   @fn1-may-finish
                    (debug "--fn1 executed--")))
 
           fn2 #(future
@@ -609,9 +614,11 @@
           log-messages (logging/buffered-log
                         :debug
                         (let [fn1-ref (fn1)
-                              ;; ensure fn1 is always executed first. it will always finish last.
+                              _ @fn1-acquired ;; wait until fn1 holds the lock before starting fn2
+                              fn2-ref (fn2)
+                              ;; fn2 needs time to attempt lock acquisition
                               _ (Thread/sleep 5)
-                              fn2-ref (fn2)]
+                              _ (deliver fn1-may-finish true)]
                           @fn1-ref
                           @fn2-ref))
 
