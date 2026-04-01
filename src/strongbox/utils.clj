@@ -459,10 +459,10 @@
      :pre-release pre-release
      :build build}))
 
-;; ---
+;; --- ends Apache licensed code
 
 (defn-spec semver-prerelease boolean?
-  "returns true if the given semver string `s` has a prerelease qualifier"
+  "returns `true` if the given semver string `s` has a pre-release qualifier"
   [s string?]
   (-> s semver-parse :pre-release nil? not))
 

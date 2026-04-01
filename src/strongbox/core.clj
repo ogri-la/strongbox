@@ -1449,7 +1449,7 @@
             url "https://api.github.com/repos/ogri-la/strongbox/releases"
             contents (some-> url (http/download message) http/sink-error utils/from-json)]
         (if contents
-          (->> contents (map :tag_name) (remove utils/semver-prerelease) utils/sort-semver-strings vec)
+          (->> contents (map :tag_name) (remove utils/semver-prerelease) utils/sort-semver-strings)
           [:failed])))))
 
 (defn-spec latest-strongbox-version? boolean?

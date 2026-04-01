@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 7.7.0 - 2026-03-31
+## Unreleased
 
 ### Added
 
@@ -12,7 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Semver sorting now considers pre-release and build tokens
+* Pre-release versions of Strongbox are now ignored when considering if Strongbox is updateable
+
 ### Fixed
+
+* Non-deterministic test `utils_test/with-lock--contention`
+    - had been bugging me for a while. 
+    - instead of a coordinating threads sleeping to block, we now acquire and realise promises
 
 ### Removed
 
