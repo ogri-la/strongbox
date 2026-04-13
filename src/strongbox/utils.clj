@@ -400,31 +400,76 @@
   [f c]
   [(filterv f c) (filterv (complement f) c)])
 
-(defn -semver-comp
-  [a-bits b-bits]
-  (let [find-int (fn [x]
-                   (or (some-> x first to-int)
-                       ;; try again, this time ignore everything after any hyphen.
-                       ;; if it's genuine bollocks we'll raise another exception
-                       (some-> x first (clojure.string/split #"-") first to-int)))
-        result (compare (find-int a-bits) (find-int b-bits))
-        more? (not (empty? (rest b-bits)))]
-    (if (= result 0)
-      (if more?
-        (-semver-comp (rest a-bits) (rest b-bits))
-        result)
-      result)))
+;; --- 2025-08-23: taken from https://github.com/grimradical/clj-semver/commit/368d04512f6206e06fa8e2597c16f57a23ad4698
+;; --- Apache licensed
 
-(defn semver-comp
-  [a-string b-string]
-  (let [a-bits (clojure.string/split a-string #"\.")
-        b-bits (clojure.string/split b-string #"\.")]
-    (-semver-comp a-bits b-bits)))
+(defn semver-try-parse-int
+  "Attempt to parse `o` to an int, returning `o` if that fails or the
+  parsed version of `o` if successful."
+  [o]
+  (try
+    (Integer/parseInt o)
+    (catch NumberFormatException e o)))
 
-(defn-spec sort-semver-strings (s/or :ok (s/coll-of string?) :empty empty?)
-  "sort a list of semver strings with support for '1.2.3-something' suffixes."
-  [semver-list (s/coll-of string?)]
-  (sort semver-comp semver-list))
+(defn semver-cmp
+  "Compares versions a and b, returning -1 if a is older than b, 0 if
+  they're the same version, and 1 if a is newer than b"
+  [a b]
+  (let [key-for-ident #(when %
+                         (into [] (map semver-try-parse-int (clojure.string/split % #"\."))))
+        semver-key (juxt :major
+                         :minor
+                         :patch
+                         ;; Because non-existent pre-release tags take
+                         ;; precedence over existing ones
+                         #(nil? (% :pre-release))
+                         #(key-for-ident (:pre-release %))
+                         #(key-for-ident (:build %)))]
+    (compare (semver-key a)
+             (semver-key b))))
+
+;; Parses a semver string per https://semver.org/
+;; Pattern breakdown:
+;;   ^                                          start of string
+;;   (\d+)\.(\d+)\.(\d+)                        capture groups 1-3: major, minor, patch (digits separated by dots)
+;;   (?:                                        optional pre-release block (non-capturing):
+;;     -                                          literal hyphen separator
+;;     (                                          capture group 4: pre-release identifier
+;;       [0-9A-Za-z-]+                              one or more alphanumeric-or-hyphen chars (first dot-separated segment)
+;;       (?:\.[0-9A-Za-z-]+)*                       zero or more additional dot-separated segments
+;;     )
+;;   )?
+;;   (?:                                        optional build-metadata block (non-capturing):
+;;     \+                                         literal plus separator
+;;     (                                          capture group 5: build identifier
+;;       [0-9A-Za-z-]+                              one or more alphanumeric-or-hyphen chars (first dot-separated segment)
+;;       (?:\.[0-9A-Za-z-]+)*                       zero or more additional dot-separated segments
+;;     )
+;;   )?
+;;   $                                          end of string
+(def semver-pattern #"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$")
+
+(defn semver-parse
+  "Parses string `s` into a version map"
+  [s]
+  (let [[[_ major minor patch pre-release build]] (re-seq semver-pattern s)]
+    {:major (semver-try-parse-int major)
+     :minor (semver-try-parse-int minor)
+     :patch (semver-try-parse-int patch)
+     :pre-release pre-release
+     :build build}))
+
+;; --- ends Apache licensed code
+
+(defn-spec semver-prerelease boolean?
+  "returns `true` if the given semver string `s` has a pre-release qualifier"
+  [s string?]
+  (-> s semver-parse :pre-release nil? not))
+
+(defn sort-semver-strings
+  "sort a list of semver strings with support for '1.2.3-prerelease.build' suffixes"
+  [semver-list]
+  (sort (fn [a b] (semver-cmp (semver-parse a) (semver-parse b))) semver-list))
 
 ;; https://stackoverflow.com/questions/25892277/clojure-regex-named-groups#answer-25892938
 (defn named-regex-groups

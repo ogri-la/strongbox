@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.7.0 - 2026-04-13
+
+### Added
+
+* Support for new retail release 'Midnight'
+
+### Changed
+
+* Semver sorting now considers pre-release and build tokens
+* Pre-release versions of Strongbox are now ignored when considering if Strongbox is updateable
+
+### Fixed
+
+* Non-deterministic test `utils_test/with-lock--contention`
+    - had been bugging me for a while. 
+    - instead of a coordinating threads sleeping to block, we now acquire and realise promises
+
 ## 7.6.0 - 2025-07-16
 
 ### Added
@@ -1530,7 +1547,7 @@ curseforge if an addon appears in multiple sources.
 - logic to do the occasional large curseforge.com update and smaller incremental updates more regularly
 - CI and releases with Travis-CI
 
-## [Unreleased]
+## 7.7.0 - 2026-04-13
 
 ### Added
 

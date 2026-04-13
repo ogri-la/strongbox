@@ -45,6 +45,7 @@
            "100002" "10.0.2"
            "100102" "10.1.2" ;; just guessing
            "110000" "11.0.0"
+           "120000" "12.0.0" ;; Midnight
            "200102" "20.1.2"
            "300102" "30.1.2"
            ;; first three digits are now the major, second two minor and remaining is patch (I think ...)
@@ -73,10 +74,17 @@
           (is (= expected (utils/interface-version-to-game-version case))))))))
 
 (deftest semver-sort
-  (testing "basic sort"
-    (let [given ["1.2.3" "4.11.6" "4.2.0" "1.5.19" "1.5.5" "4.1.3" "1.2" "2.3.1" "10.5.5" "1.6.0" "1.2.3" "11.3.0" "1.2.3.4" "1.6.0-unstable" "1.6.0-aaaaaa"]
-          ;; sort order for the '-something' cases are unspecified. depends entirely on input order
-          expected '("1.2" "1.2.3" "1.2.3" "1.2.3.4" "1.5.5" "1.5.19" "1.6.0" "1.6.0-unstable" "1.6.0-aaaaaa" "2.3.1" "4.1.3" "4.2.0" "4.11.6" "10.5.5" "11.3.0")]
+  (testing "basic semver sort"
+    (let [given ["1.2.3" "4.11.6" "4.2.0" "1.5.19"  "1.2.3-prerelease.2" "1.5.5" "1.2.3-prerelease.1" "4.1.3" "1.2" "2.3.1" "10.5.5" "1.6.0" "1.2.3" "11.3.0" "1.2.3.4" "1.6.0-unstable" "1.6.0-aaaaaa" "1.2.3.4.5"]
+          ;; fourth and fifth tokens are considered 'pre-release' and 'build' respectively
+          ;; and are sorted alpha-numerically, so '.4.5' is compared to '-prerelease.1' etc.
+          expected '("1.2" "1.2.3.4" "1.2.3.4.5" "1.2.3-prerelease.1" "1.2.3-prerelease.2" "1.2.3" "1.2.3" "1.5.5" "1.5.19" "1.6.0-aaaaaa" "1.6.0-unstable" "1.6.0" "2.3.1" "4.1.3" "4.2.0" "4.11.6" "10.5.5" "11.3.0")]
+      (is (= expected (utils/sort-semver-strings given))))))
+
+(deftest semver-sort-alpha-beta
+  (testing "semver sort when alphas and betas are involved"
+    (let [given ["0.1.0-beta", "0.1.0", "0.1.0-alpha"]
+          expected '("0.1.0-alpha", "0.1.0-beta", "0.1.0")]
       (is (= expected (utils/sort-semver-strings given))))))
 
 #_(deftest days-between-then-and-now
@@ -315,6 +323,7 @@
                ["9.0.1" :retail]
                ["10.0.2" :retail]
                ["11.0.0" :retail]
+               ["12.0.0" :retail]
 
                [constants/latest-retail-game-version :retail]]]
     (doseq [[given expected] cases]
@@ -587,10 +596,15 @@
   (testing "two forms to execute that share a lock will see one executed first, then the second."
     (let [current-locks (atom #{})
 
+          ;; slinging promises around is a little contrived but the alternative is Thread/sleep,
+          ;; which isn't really deterministic and depends a lot on environment characteristics.
+          fn1-acquired (promise) ;; fn1 delivers this once it holds the lock
+          fn1-may-finish (promise) ;; main thread delivers this to release fn1
+
           fn1 #(future
                  (utils/with-lock current-locks #{:foo :fn1}
-                   ;; sleep longer than the wait-retry period (10ms) forcing fn2 to retry execution
-                   (Thread/sleep 10)
+                   (deliver fn1-acquired true)
+                   @fn1-may-finish
                    (debug "--fn1 executed--")))
 
           fn2 #(future
@@ -600,9 +614,11 @@
           log-messages (logging/buffered-log
                         :debug
                         (let [fn1-ref (fn1)
-                              ;; ensure fn1 is always executed first. it will always finish last.
+                              _ @fn1-acquired ;; wait until fn1 holds the lock before starting fn2
+                              fn2-ref (fn2)
+                              ;; fn2 needs time to attempt lock acquisition
                               _ (Thread/sleep 5)
-                              fn2-ref (fn2)]
+                              _ (deliver fn1-may-finish true)]
                           @fn1-ref
                           @fn2-ref))
 
