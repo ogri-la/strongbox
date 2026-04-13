@@ -1549,7 +1549,7 @@ curseforge if an addon appears in multiple sources.
 - logic to do the occasional large curseforge.com update and smaller incremental updates more regularly
 - CI and releases with Travis-CI
 
-## [Unreleased]
+## 7.7.0 - 2026-04-13
 
 ### Added
 
