@@ -80,7 +80,7 @@
                     ;;main/*spec?* true
                     ;;cli/install-update-these-in-parallel cli/install-update-these-serially
                     ;;core/check-for-updates core/check-for-updates-serially
-                    ;; for testing purposes, no addon host is disabled
+                    ;; directory sizes vary by filesystem. fixed at zero so tests can assert on them.
                     utils/folder-size-bytes (constantly 0)
                     constants/max-user-catalogue-age 9999
                     config/env (constantly {:no-color false})
@@ -105,7 +105,6 @@
           (clojure.test/run-all-tests #"strongbox\..*-test"))
         (report-testing-problems)))
     (finally
-      ;; use case: we run the tests from the repl and afterwards we call `restart` to start the app.
-      ;; `stop` inside `restart` will be outside of `with-redefs` and still have logging `:min-level` set to `:debug`
-      ;; it will dump a file and yadda yadda.
+      ;; running the tests from the repl and then calling `restart` puts `stop` outside of `with-redefs`,
+      ;; where `:min-level` would still be `:debug` and a debug log file would be written.
       (core/reset-logging!))))

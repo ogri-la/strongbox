@@ -113,9 +113,7 @@
       ;; this is not perfect! there will be outliers!
       :else (->> grouped-entries rest flatten (map :path) (map strip-suffix) vec))))
 
-;;
-;;
-;;
+;; addon validity
 
 (defn-spec top-level-directories :zipfile/entry-list
   "returns a list of all zipfile entries that are directories and exist at the top level"
@@ -135,9 +133,8 @@
 (defn -top-level-non-addon-dirs?
   "returns true if there are top-level directories missing a toc file"
   [zipfile-entries]
-  (let [;; what is happening here?
-        ;; we create a set of all top-level directories, and a set of the parents of second-level toc files
-        ;; if there are any directories left after we diff them, that's an error
+  (let [;; the set of top-level directories, less the set of parents of second-level toc files.
+        ;; anything remaining is a top-level directory with no toc file.
         toplevel-dirs (->> zipfile-entries top-level-directories (map :path) set)
         toplevel-tocfiles (filter #(and (-> % :level (= 2))
                                         (-> % :path (ends-with? ".toc"))) zipfile-entries)
@@ -146,13 +143,11 @@
     (not (empty? diff))))
 
 (defn-spec valid-addon-zip-file? boolean?
-  "returns true if there are no apparent problems reading the given zip file AND the addon isn't smelly"
+  "returns `true` if the given zip file can be read and looks like an addon.
+  an addon has no files at the top level and every top-level directory holds a toc file."
   [^String zipfile-path ::sp/extant-archive-file]
   (if (valid-zip-file? zipfile-path)
     (let [entries (zipfile-normal-entries zipfile-path)]
-      ;; if either check fails, return false
-      ;; if neither check fails, return true
       (not (or (-top-level-files? entries)
                (-top-level-non-addon-dirs? entries))))
-    ;; couldn't get past the bad zip file
     false))

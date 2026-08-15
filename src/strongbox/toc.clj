@@ -3,9 +3,7 @@
   (:require
    [strongbox
     [constants :as constants]
-    ;; I want to keep higher level logging concerns out of toc.clj and nfo.clj.
-    ;; addon.clj and higher is ok.
-    ;;[logging :as logging] 
+    ;; `logging` is deliberately not required here. addon-level logging starts at `addon.clj`.
     [specs :as sp]
     [utils :as utils]]
    [clojure.spec.alpha :as s]
@@ -217,7 +215,6 @@
      (if (s/valid? :addon/toc addon)
        addon
        (do (warn (utils/reportable-error
-                  ;; "ignoring data in 'EveryAddon.toc', invalid values found."
                   (format "ignoring data in '%s', invalid values found." (:-filename keyvals))
                   "feel free to report this!"))
            (debug (s/explain :addon/toc addon)))))))
@@ -228,7 +225,8 @@
   (-> path fs/base-name (.startsWith "Blizzard_")))
 
 (defn-spec parse-addon-toc-guard (s/or :ok :addon/toc-list, :error nil?)
-  "wraps the `parse-addon-toc` function, attaching the list of `:supported-game-tracks` and sinking any errors."
+  "wraps the `parse-addon-toc` function, attaching the list of `:supported-game-tracks` and sinking any errors.
+  returns `nil` for Blizzard's own addons and when parsing raises an exception."
   [addon-dir ::sp/extant-dir]
   (when-not (blizzard-addon? addon-dir)
     (try
@@ -238,5 +236,4 @@
       (catch Exception e
         ;; this addon failed to parse somehow. don't propagate the exception, just report it and return `nil`.
         (error e (utils/reportable-error
-                  ;; "unexpected error parsing addon in directory '/path/to/addon': Some obscure exception message."
                   (format "unexpected error parsing addon in directory '%s': %s" addon-dir (.getMessage e))))))))

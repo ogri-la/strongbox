@@ -1,4 +1,8 @@
 (ns strongbox.nfo
+  "reads and writes the `.strongbox.json` (nfo) file written to an addon's directory on install and update.
+  the file records what the addon's own files cannot: where the addon came from, which game track it was
+  installed under and which directories belong together.
+  a user may delete the file safely, but addons may then become ungrouped and fail to match the catalogue."
   (:refer-clojure :rename {derive clj-derive})
   (:require
    [strongbox
@@ -8,11 +12,6 @@
    [orchestra.core :refer [defn-spec]]
    [taoensso.timbre :as log :refer [debug info warn error spy]]
    [me.raynes.fs :as fs]))
-
-(comment
-  "a '.strongbox.json' (nfo) file is written when an addon is installed or updated. 
-  It serves to fill in any blank spots in our knowledge of the addon.
-  The file can be safely deleted but some addons may become ungrouped and fail to find a catalogue match.")
 
 (def nfo-filename ".strongbox.json")
 
@@ -68,8 +67,8 @@
              ;; record the origin and it's ID so we can switch back to it later if other sources present themselves.
              :source-map-list [{:source (:source addon), :source-id (:source-id addon)}]}
 
-        ;; users can set this in the nfo file manually or
-        ;; it can be drived later in the process by examining the addon's toc file or subdirs, or
+        ;; users can set this in the nfo file manually, or
+        ;; it can be derived later by examining the addon's toc file or subdirs, or
         ;; it may be present when upgrading an existing nfo file and should be preserved
         ignore-flag (when-some [ignore? (:ignore? addon)]
                       {:ignore? ignore?})
@@ -194,14 +193,8 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, new-nfo-data :addon/nfo]
   (let [user-warning (fn [nfo-data-list]
                        (when-not (empty? nfo-data-list)
-                         ;; catalogue overwriting catalogue
-                         ;; '"Healbot Continued" (9.2.0.12) replaced dir 'HealBot/' of addon "Healbot Continued" (9.2.0.7)'
-
-                         ;; catalogue overwriting file install
-                         ;; '"Healbot Continued" (9.2.0.12) replaced dir 'HealBot/' of addon "healbot-continued-abcdef12345'
-
-                         ;; file install overwriting catalogue
-                         ;; '"healbot-continued-abcdef12345' replaced dir 'HealBot/' of addon "Healbot Continued" (9.2.0.12)'
+                         ;; covers a catalogue install and a from-file install overwriting each other in any combination.
+                         ;; `nom` falls back to the `group-id` and `version` to an empty string when either is absent.
                          (let [target (last nfo-data-list) ;; todo: when stacked N high, won't this report incorrectly?
                                nom #(or (:name %)
                                         (:group-id %))
@@ -225,7 +218,6 @@
   [install-dir ::sp/extant-dir, addon-dirname ::sp/dirname, addon ::sp/map-or-list-of-maps]
   (let [path (nfo-path install-dir addon-dirname)]
     (if-not (s/valid? :addon/nfo addon)
-      ;; 'new "HealBot_ExtraSkins/.strongbox.json" data is invalid and won't be written to disk. This is a program error, please report it.'
       (do (error (format "new \"./%s/%s\" data is invalid and won't be written to disk. This is a program error, please report it." addon-dirname nfo-filename))
           (debug (s/explain :addon/nfo addon)))
       (utils/dump-json-file path (prune addon)))))

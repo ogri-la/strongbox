@@ -57,6 +57,7 @@
   ((complement not-any?) identity lst))
 
 (defn nilable
+  "returns `nil` when `x` is `nil`, `false`, an empty collection or a blank string, otherwise returns `x`."
   [x]
   (cond
     (nil? x) nil
@@ -154,6 +155,9 @@
   (-> file fs/mod-time jt/instant str (older-than? threshold period)))
 
 (defn-spec published-before-classic? (s/or :ok boolean?, :error nil?)
+  "returns `true` if `dt-string` is before the release of wow classic.
+  returns `false` when `dt-string` is `nil`.
+  returns `nil` when `dt-string` cannot be read as a date."
   [dt-string (s/nilable ::sp/inst)]
   (try
     (boolean (some-> dt-string (dt-before? constants/release-of-wow-classic)))
@@ -203,6 +207,8 @@
     (subs x 0 (min (count x) (if (neg? maxval) 0 maxval)))))
 
 (defn in?
+  "returns `true` if `needle` is in `haystack`.
+  the single argument form takes `haystack` and returns a predicate for testing needles."
   ([needle haystack]
    (not (nil? (some #{needle} haystack))))
   ([haystack]
@@ -363,7 +369,7 @@
       (.substring line 1)
       line)))
 
-(defn de-bom-slurp ;; gurgle, fart, splat
+(defn de-bom-slurp
   [x]
   (debomify (slurp x)))
 
@@ -428,25 +434,9 @@
     (compare (semver-key a)
              (semver-key b))))
 
-;; Parses a semver string per https://semver.org/
-;; Pattern breakdown:
-;;   ^                                          start of string
-;;   (\d+)\.(\d+)\.(\d+)                        capture groups 1-3: major, minor, patch (digits separated by dots)
-;;   (?:                                        optional pre-release block (non-capturing):
-;;     -                                          literal hyphen separator
-;;     (                                          capture group 4: pre-release identifier
-;;       [0-9A-Za-z-]+                              one or more alphanumeric-or-hyphen chars (first dot-separated segment)
-;;       (?:\.[0-9A-Za-z-]+)*                       zero or more additional dot-separated segments
-;;     )
-;;   )?
-;;   (?:                                        optional build-metadata block (non-capturing):
-;;     \+                                         literal plus separator
-;;     (                                          capture group 5: build identifier
-;;       [0-9A-Za-z-]+                              one or more alphanumeric-or-hyphen chars (first dot-separated segment)
-;;       (?:\.[0-9A-Za-z-]+)*                       zero or more additional dot-separated segments
-;;     )
-;;   )?
-;;   $                                          end of string
+;; parses a semver string per https://semver.org/
+;; capture groups: 1 major, 2 minor, 3 patch, 4 pre-release (after '-'), 5 build metadata (after '+').
+;; pre-release and build are optional and each may hold dot-separated segments.
 (def semver-pattern #"^(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$")
 
 (defn semver-parse
@@ -501,11 +491,10 @@
         parsed (named-regex-groups regex groups uin)]
 
     (cond
-      ;; woo! we have something valid already, return as-is
+      ;; already a valid URL, return as-is
       (not (nil? url)) uin
 
-      ;; ...woo? we have something with a host that isn't total garbage
-      ;; try to recreate it, filling in a few blanks.
+      ;; has a usable host. rebuild it, filling in a missing scheme and path.
       (and (not (nil? uri))
            (.getHost uri)) (format "%s://%s%s"
                                    (or (.getScheme uri) "https")

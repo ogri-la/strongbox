@@ -1,4 +1,6 @@
 (ns strongbox.cli
+  "the actions a user can take, shared by the command line interface and the GUI, calling through to `core`.
+  intended as the single place both interfaces call into, though the GUI still calls `core` directly in places."
   (:require
    [clojure.string]
    [orchestra.core :refer [defn-spec]]
@@ -19,10 +21,6 @@
     [http :as http]
     [utils :as utils :refer [if-let* message-list]]
     [core :as core :refer [get-state paths]]]))
-
-(comment
-  "cli.clj and gui.clj pool their logic here, which calls core.clj.
-   or at least that's the idea.")
 
 (defn-spec toggle-split-pane nil?
   []
@@ -301,8 +299,8 @@
          set)))
 
 (defn-spec install-update-these-in-parallel nil?
-  "installs/updates a list of addons in parallel.
-  does a clever refresh check afterwards to try and prevent a full refresh from happening."
+  "installs/updates a list of addons in parallel, locking each addon's directories while it is written.
+  a full refresh happens afterwards only when an addon introduced a directory that wasn't known before."
   [updateable-addon-list :addon/installable-list]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
@@ -370,19 +368,19 @@
        :error-messages error-messages}))
 
 (defn-spec install-addons-from-file-in-parallel ::sp/list-of-maps
-  "installs/updates a list of addon zip files in parallel.
-  does a clever refresh check afterwards to try and prevent a full refresh from happening.
+  "installs/updates a list of addon zip files in parallel, locking each addon's directories while it is written.
+  a full refresh happens afterwards only when an addon introduced a directory that wasn't known before.
+  returns a list of `{:label, :error-messages}` maps, one per file.
   very similar code to `install-update-these-in-parallel`."
   [download-file-list (s/coll-of ::sp/extant-archive-file), opts ::sp/install-opts]
   (let [queue-atm (core/get-state :job-queue)
         install-dir (core/selected-addon-dir)
         current-locks (atom #{})
         new-dirs (atom #{})
-        job-fn (fn [downloaded-file] ;;[addon]
-                 (let [;;downloaded-file (core/download-addon-guard-affective addon install-dir)
-                       ;;existing-dirs (addon-locks addon) ;; zip file is untethered from addon data
-                       updated-dirs (zipfile-locks downloaded-file)
-                       ;;locks-needed (clojure.set/union existing-dirs updated-dirs)
+        job-fn (fn [downloaded-file]
+                 ;; unlike `install-update-these-in-parallel`, a zip file carries no addon data, so the
+                 ;; directories an addon already occupies are unknown. only the zip's own directories are locked.
+                 (let [updated-dirs (zipfile-locks downloaded-file)
                        locks-needed updated-dirs
                        addon {:group-id (unique-group-id-from-zip-file downloaded-file)}]
                    (swap! new-dirs into updated-dirs)
@@ -632,15 +630,15 @@
     (if-let* [dry-run? true
               addon-summary (core/find-addon addon-url dry-run?)
               addon (core/expand-summary-wrapper addon-summary)]
-             ;; success! add to user-catalogue and proceed to install
              (do (core/add-user-addon! addon-summary)
                  (core/write-user-catalogue!)
                  (core/install-addon-guard addon (core/selected-addon-dir))
-                 ;;(core/db-reload-catalogue) ;; db-reload-catalogue will call `refresh` which we want to trigger in the gui instead
-                 (swap! core/state assoc :db nil) ;; will force a reload of db in the gui
+                 ;; the db is unloaded rather than reloaded here. `core/db-reload-catalogue` would call
+                 ;; `refresh` directly, and the GUI needs to be the one to trigger that.
+                 (swap! core/state assoc :db nil)
                  nil)
 
-             ;; failed to find or expand summary, probably because of selected game track.
+             ;; addon could not be found or expanded. the selected game track is one reason for this.
              nil)))
 
 (defn refresh-user-catalogue
@@ -789,7 +787,9 @@
   "handles the following actions:
     :list - lists all installed addons
     :list-updates - lists all installed addons with updates available
-    :update-all - updates all installed addons with updates available"
+    :update-all - updates all installed addons with updates available
+    :print-config - writes the paths, versions and environment to the log
+  any other action prints the options it was given and does nothing."
   (fn [x]
     (cond
       (map? x) (:action x)

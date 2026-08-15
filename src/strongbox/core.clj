@@ -261,20 +261,15 @@
     (add-watch state wid
                (fn [_ _ old-state new-state] ;; key, atom, old-state, new-state
                  (when (has-changed old-state new-state)
-                   ;; ... now avoid infinite recursion
+                   ;; printed rather than logged. logging here would append to `:log-lines` in the state,
+                   ;; triggering this watch again, which would log again.
                    (when (and (= :debug (:min-level timbre/*config*))
                               (not (empty? path)))
-                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..."
-                     ;; this would update the :log-lines in the state
-                     ;; this would cause the gui to receive a :debug of "path [] triggered a ..." ...
-                     ;;(debug (format "path %s triggered %s" path wid)))
-                     ;; instead, if :debug is the log level, print this to stdout
                      (println (format "path %s triggered %s" path wid)))
                    (try
                      (callback new-state)
                      (catch Exception e
                        ;; todo: potential for infinite recursion here too?
-                       ;; can the stacktrace be formatted and printed to stdout instead?
                        (error e "error caught in watch! the callback *must* be catching these or the thread dies silently:" path))))))
     (add-cleanup-fn rmwatch)
     nil))
@@ -306,7 +301,7 @@
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
         ;; if '_classic_' is in given path, use the classic game track
         default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
-    (dosync ;; necessary? makes me feel better
+    (dosync
      (add-addon-dir! addon-dir default-game-track default-game-track-strictness)
      ;; todo: break this down into two actions? adding a new directory + selecting the new one.
      ;; selecting the new addon dir will clear/reset any state like the selected addon list and tab list etc.
@@ -449,8 +444,7 @@
   (let [final-config (config/load-settings cli-opts (paths :cfg-file) (paths :etag-db-file))]
     (swap! state merge final-config)
     (reset-logging!)
-    ;; erm, this is something I use while developing: (restart {:spec? false})
-    ;; spec checking slows everything down so turning it off gives me a feel for actual performance.
+    ;; `(restart {:spec? false})` disables spec checking, which otherwise dominates timings when profiling.
     (when (contains? cli-opts :spec?)
       (utils/instrument (:spec? cli-opts))))
   nil)
@@ -502,10 +496,9 @@
   see `download-addon-guard` for a version with checks."
   [addon :addon/installable, install-dir ::sp/writeable-dir]
   (when (expanded? addon)
-    ;; "downloading 'EveryAddon' version '1.2.3'"
     (info (format "downloading '%s' version '%s'" (:label addon) (:version addon)))
     (let [output-fname (addon/downloaded-addon-fname (:name addon) (:version addon)) ;; "everyaddon--1-2-3.zip"
-          output-path (join (fs/absolute install-dir) output-fname)] ;; "/path/to/addon/dir/everyaddon--1.2.3.zip"
+          output-path (join (fs/absolute install-dir) output-fname)]
       (binding [http/*cache* (cache)]
         (http/download-file (:download-url addon) output-path)))))
 
@@ -526,7 +519,7 @@
       (cond
         (map? downloaded-file) (error "failed to download addon.")
 
-        (nil? downloaded-file) (error "non-HTTP error downloading addon.") ;; I dunno. /shrug
+        (nil? downloaded-file) (error "non-HTTP error downloading addon.")
 
         (not (zip/valid-zip-file? downloaded-file))
         (do (error "failed to read addon zip file, possibly corrupt or not a zip file.")
@@ -756,9 +749,7 @@
     (merge installed-addon
            db-catalogue-addon
            {:matched? true}
-           ;; todo: I really want to disambiguate between where data is coming from.
-           ;; it would mean carrying around the toc, nfo, catalogue, source updates and a merged set data.
-           ;; all we have right now is the merged set (except this new `nfo/source` key)
+           ;; `:nfo/source` is the one key that records where its value came from. everything else is merged flat.
            (when source-mismatch?
              {:nfo/source (:source installed-addon)}))))
 
@@ -849,7 +840,8 @@
        ;; the values of the match: ["curseforge" "deadly-boss-mods"]
        :key arg-vals
        :installed-addon installed-addon
-       :matched? (not (nil? match)) ;; todo: still used?
+       ;; always `true` here. required by the `:db/addon-catalogue-match` spec.
+       :matched? (not (nil? match))
        :catalogue-match match})))
 
 (defn-spec -find-first-in-db (s/or :match map?, :no-match nil?)
@@ -919,8 +911,7 @@
 
 (defn db-search
   "returns a lazily fetched and paginated list of addon summaries.
-  results are constructed using a `seque` that (somehow) bypasses chunking behaviour so 
-  searching never takes more than `cap` results.
+  results are realised in the background with a `seque` so no more than `cap` results are searched for.
   matches on `uin` are case insensitive.
   if no user input, returns a list of randomly ordered ('sampled') results.
   `filter-by` filters are applied before searching for `uin`."
@@ -1013,20 +1004,17 @@
     (let [catalogue-path (catalogue-local-path (:name catalogue-location))
           catalogue-label (name (:name catalogue-location))
           catalogue-source (:source catalogue-location)
-          ;; "loading 'full' catalogue"
           _ (info (format "loading '%s' catalogue." catalogue-label))
 
           ;; download from remote and try again when json can't be read
           bad-json-file-handler
           (fn []
-            ;; "catalogue 'full' corrupted, attempting download again."
             (warn (format "catalogue '%s' corrupted, attempting download again." catalogue-label))
             (fs/delete catalogue-path)
             (download-current-catalogue) ;; todo: be explicit here
             (catalogue/read-catalogue
              catalogue-path
              {:bad-data? (fn []
-                           ;; "catalogue 'full' failed to load again, it might be corrupt at it's source: https://path/to/online/catalogue.json"
                            (let [msg (format "catalogue '%s' failed to load again, it might be corrupt at it's source: %s" catalogue-label catalogue-source)]
                              (error (utils/reportable-error msg))))}))
 
@@ -1038,7 +1026,6 @@
           ;; 2021-06-30: merge order changed. catalogue data is now merged over the top of the user-catalogue.
           ;; this is because the user-catalogue may now contain addons from all hosts and is likely to be out of date.
           final-catalogue (catalogue/merge-catalogues user-catalogue-data catalogue-data)]
-      ;; "1024 addons in final catalogue." ;; todo: is this just noise?
       (info (-> final-catalogue :addon-summary-list count (str " addons in final catalogue.")))
       final-catalogue)))
 
@@ -1090,8 +1077,7 @@
 
         expanded-installed-addon-list (into matched polyfilled)
 
-        ;; todo: metrics gathering is good, but this is a little adhoc. shift into parent wrapper somehow.
-        ;; some metrics we'll emit for the user.
+        ;; metrics emitted to the user below
         num-matched (count matched)
         ;; we don't match ignored addons, we shouldn't report we couldn't find them either
         unmatched-names (->> unmatched (remove :ignore?) (map :name) set)]
@@ -1102,9 +1088,7 @@
 
     (when (and (not (empty? unmatched-names))
                (> 1 (count installed-addon-list))) ;; this is *probably* a per-addon install/refresh, it gives us just the addon in question
-      (let [;; "failed to find 5 addons in the 'full' catalogue: foo, bar, baz, bup, boo"
-            ;; "you need to manually search for them and then re-install them."
-            msg (format "failed to find %s addons in the '%s' catalogue: %s"
+      (let [msg (format "failed to find %s addons in the '%s' catalogue: %s"
                         (count unmatched-names)
                         (name (get-state :cfg :selected-catalogue))
                         (clojure.string/join ", " unmatched-names))
@@ -1117,8 +1101,6 @@
                 (if (:ignore? addon)
                   (info "not matched to catalogue, addon is being ignored.")
                   (warn (utils/message-list
-                         ;; "failed to find a match in the 'full' catalogue."
-                         ;; "try searching for this addon name by or description in the search tab."
                          (format "failed to find a match in the '%s' catalogue." (name (get-state :cfg :selected-catalogue)))
                          ["try searching for this addon by name or description in the search tab."])))))
             unmatched))
@@ -1175,7 +1157,6 @@
           has-update? (addon/updateable? addon)]
       (joblib/tick 0.5)
       (when has-update?
-        ;; "update '1.2.3' available from github"
         (info (format "update '%s' available from %s" (:version addon) (:source addon)))
         (when-not (= (get-game-track) (:game-track addon))
           (warn (format "update is for '%s' and the addon directory is set to '%s'"
@@ -1184,7 +1165,6 @@
 
         (when (:nfo/source addon)
           (warn (utils/message-list
-                 ;; "update is from a different host (github) to the one it was installed from (wowinterface)"
                  (format "update is from a different host (%s) to the one it was installed from (%s)." (:source addon) (:nfo/source addon))
                  ["this happens when an exact match is not found in the selected catalogue."]))))
 
@@ -1293,10 +1273,9 @@
                   (or (install-addon-guard addon (selected-addon-dir) {:test-only? true})
                       (error "failed dry-run installation")))]
 
-             ;; if-let* was successful!
              addon-summary
 
-             ;; failed if-let* :(
+             ;; any step above returning nil means the addon can't be found or installed. give up.
              nil)))
 
 (defn-spec refresh-user-catalogue-item nil?
@@ -1370,7 +1349,6 @@
   ;; ensure all '-dir' suffixed paths exist, creating them if necessary.
   (doseq [[path val] (paths)]
     (when (-> path name (clojure.string/ends-with? "-dir"))
-      ;; "creating 'config-dir' directory: /path/to/config/dir"
       (debug (format "creating '%s' directory: %s" path val))
       (fs/mkdirs val)))
 
@@ -1459,8 +1437,8 @@
    (latest-strongbox-version? (get-state :latest-strongbox-release)))
   ([latest-release ::sp/latest-strongbox-release]
    (case latest-release
-     nil true ;; we haven't looked yet, so yes, we're the latest :)
-     :failed true ;; we've already looked and failed, so as far as we know we're the latest.
+     nil true ;; not looked yet. assume the latest rather than prompt the user to upgrade.
+     :failed true ;; looked and failed. as far as we know, we're the latest.
      (let [version-running (strongbox-version)
            sorted-asc (utils/sort-semver-strings [latest-release version-running])]
        (= version-running (last sorted-asc))))))
@@ -1691,9 +1669,9 @@
   "refreshes state of an individual addon using a filesystem path.
   note! an addon may change it's set of directories between updates, or be completely overwritten by the same addon being installed without the context of a catalogue.
   This means the `:dirname` of the *given* `addon-path` may not represent the *new* `:dirname` and that it's list of `:grouped-addons` are now stale.
-  We could reload the addons using the set of old and new directories acquired (see `refresh-check`), however that also leads to 'orphaned' addons,
-  where a grouped addon that used to belong but no longer does.
-  It's messy. A full refresh is best but that's noisy/ugly :("
+  reloading using the set of old and new directories (see `refresh-check`) leaves 'orphaned' addons behind,
+  where a grouped addon that used to belong no longer does.
+  a full refresh is correct but reloads everything."
   [addon-path ::sp/addon-dir]
   (some->> addon-path
            load-installed-addon
@@ -1711,31 +1689,20 @@
              refresh-addon*)))
 
 (defn-spec refresh nil?
+  "reloads installed addons, the catalogue and available updates, in that order."
   []
   (report "refresh")
 
-   ;; parse toc files in install-dir. do this first so we see *something* while catalogue downloads (next)
+  ;; installed addons are read first so the user sees something while the catalogue downloads
   (load-all-installed-addons)
 
-   ;; downloads the big long list of addon information stored on github
   (download-current-catalogue)
-
-  ;; load the user-catalogue. `db-load-catalogue` will incorporate this if it's found.
   (db-load-user-catalogue)
-
-  ;; load the contents of the selected catalogue and the user catalogue
   (db-load-catalogue)
-
-  ;; match installed addons to those in catalogue
   (match-all-installed-addons-with-catalogue)
-
-  ;; for those addons that have matches, download their details
   (check-for-updates)
 
-  ;; 2019-06-30, travis is failing with 403: Forbidden. Moved to gui init
-  ;;(latest-strongbox-release) ;; check for updates after everything else is done 
-
-  ;; seems like a good place to preserve the etag-db
+  ;; also preserves the etag-db
   (save-settings!)
 
   (scheduled-user-catalogue-refresh)
@@ -1753,7 +1720,6 @@
   (delete-http-cache!)
   (refresh))
 
-;; move to core.clj?
 (defn-spec half-refresh nil?
   "like `refresh` but excludes reloading catalogues, focusing on re-reading installed addons,
   matching them to the catalogue and reapplying host updates."

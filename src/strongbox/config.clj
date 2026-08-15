@@ -1,4 +1,7 @@
 (ns strongbox.config
+  "reads user configuration and migrates it forward from older versions of strongbox.
+  a set of changes that fails validation after migration is discarded entirely, falling back to what was
+  already valid. invalid configuration is never repaired in place."
   (:require
    [envvar.core]
    [clojure.spec.alpha :as s]
@@ -109,7 +112,7 @@
   [cfg]
   (if-let [csl (:catalogue-location-list cfg)]
     (if (not (vector? csl))
-      ;; we have something, but whatever we were given it wasn't a vector. non-starter.
+      ;; present but not a vector. discard the lot.
       (assoc cfg :catalogue-location-list [])
 
       ;; strip anything that isn't valid. warnings are emitted.
@@ -165,8 +168,7 @@
                             (some #{selected-addon-dir} (map :addon-dir (:addon-dir-list cfg))))]
     (assoc cfg :selected-addon-dir (or selected-addon-dir default-selected-addon-dir))))
 
-;; todo: rather than removing keys before validation (wtf?),
-;; create a different or sub-spec where these values are optional
+;; todo: use a sub-spec with optional values rather than removing keys before validation.
 (defn strip-unspecced-keys
   "removes any keys from the given configuration that are not in the spec"
   [cfg]
@@ -227,7 +229,7 @@
                               :selected-catalogue keyword
                               :gui-theme keyword
                               :game-track keyword
-                              ;; too general, not great :(
+                              ;; applies to every `:name` key in the file, not just catalogue names.
                               :name keyword
                               ;; convert list of strings to keywords
                               :ui-selected-columns #(mapv keyword %)}}

@@ -154,7 +154,7 @@
                    (assoc-in args [:options :ui] (if (:headless? options) :cli :gui))
                    args)
 
-            ;; force `:cli` for certain actions
+            ;; force `:cli` for certain actions. no action currently needs this.
             args (if (contains? #{} (:action options))
                    (assoc-in args [:options :ui] :cli)
                    args)
