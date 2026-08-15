@@ -1,12 +1,14 @@
 (ns strongbox.jfx
+  "the cljfx/JavaFX graphical interface.
+  avoid logging in here. log lines are held in application state, which the GUI watches, so a log line
+  emitted while rendering can trigger another render and loop."
   (:require
    [me.raynes.fs :as fs]
    [clojure.pprint]
    [clojure.java.io :as io]
    ;;[clojure.core.cache :as cache]
    [clojure.string :refer [lower-case join capitalize replace] :rename {replace str-replace}]
-   ;; logging in the gui should be avoided as it can lead to infinite loops
-   [taoensso.timbre :as timbre :refer [spy]] ;; info debug warn error]] 
+   [taoensso.timbre :as timbre :refer [spy]]
    [cljfx.ext.table-view :as fx.ext.table-view]
    [cljfx.ext.tree-table-view :as fx.ext.tree-table-view]
    [cljfx.lifecycle :as fx.lifecycle]
@@ -1019,20 +1021,16 @@
   "exit the application. if running while testing or within a repl, it just closes the window"
   [& [_]]
   (cond
-    ;; fresh repl => (restart) => (:in-repl? @state) => nil
-    ;; because the app hasn't been started and there is no state yet, the app will exit.
-    ;; when hitting ctrl-c while the gui is running, `(utils/in-repl?) => false` because it's running on the JavaFX thread,
-    ;; and so will exit again there :( the double-check here seems to work though.
+    ;; both checks are needed. `:in-repl?` is `nil` after `(restart)` in a fresh repl because state is not
+    ;; set up yet, and `utils/in-repl?` is `false` when this runs on the JavaFX thread. either alone exits the repl.
     (or (:in-repl? @core/state)
         (utils/in-repl?)) (swap! core/state assoc :gui-showing? false)
 
     ;; set with a `with-redef` in main.clj or cloverage.clj
     core/*testing?* (swap! core/state assoc :gui-showing? false)
 
-    ;; 2020-08-08: `ss/invoke-later` was keeping the old window around when running outside of repl.
-    ;; `ss/invoke-soon` seems to fix that.
-    ;;  - http://daveray.github.io/seesaw/seesaw.invoke-api.html
-    ;; 2020-09-27: similar issue in javafx
+    ;; exiting must be deferred to the JavaFX thread, otherwise the old window is left behind
+    ;; when running outside of a repl.
     :else (Platform/runLater (fn []
                                (Platform/exit)
                                (System/exit 0)))))
@@ -1346,7 +1344,8 @@
                      :cell-value-factory :created-date
                      :cell-factory {:fx/cell-type :tree-table-cell
                                     :describe (fn [dt]
-                                                ;; for some reason I'm getting the whole row here ... (:uber button column?)!
+                                                ;; `describe` is sometimes called with the whole row rather than
+                                                ;; the cell value. the `string?` test guards against that.
                                                 {:text (if-not (string? dt) "" (utils/format-dt dt))})}}
 
       :installed-version {:text "installed" :menu-label "installed version"
@@ -1383,9 +1382,9 @@
                     :cell-factory {:fx/cell-type :tree-table-cell
                                    :describe (fn [row]
                                                (if (not (map? row))
-                                                 ;; for some reason I'm getting the contents of the :created-date column here
+                                                 ;; `describe` is sometimes called with another column's cell value
+                                                 ;; rather than the row. render nothing in that case.
                                                  {:text ""}
-                                                 ;; else
                                                  (let [job-id (joblib/addon-id row)]
                                                    {:graphic (if (and (core/unsteady? (:name row))
                                                                       (joblib/has-job? queue job-id))
@@ -2137,8 +2136,9 @@
                 {:fx/type :text-field
                  :id "search-text-field"
                  :prompt-text "search"
-                 ;;:text (:term search-state) ;; don't do this, it can go spastic
-                 :text (core/get-state :search :term) ;; this seems ok, probably has it's own drawbacks
+                 ;; read from state directly. binding this to the subscribed `search-state` value
+                 ;; makes the field behave erratically as the user types.
+                 :text (core/get-state :search :term)
                  :on-text-changed cli/search}
 
                 (button (:star constants/glyph-map) (async-handler #(cli/search-toggle-filter :user-catalogue))
@@ -2635,12 +2635,11 @@
         ;; for example, an unmatched addon in the install dir is double clicked. we have a :dirname and that is all.
         ;; we can open the addon-detail pane but if we then delete the addon there is no longer any way to tie this addon detail pane
         ;; to addon data in the installed-addon-list (deleted) or the catalogue (no match).
-        ;; we're forced to commit harikiri and close ourselves.
+        ;; the pane has no choice but to close itself.
         ]
     (if (nil? addon)
-      ;; this dodgy logic can be pushed back up the stack but we ultimately need to check for an addon and remove/exclude a tab if it exists.
-      ;; deleting an addon doesn't affect the :tab-list, so we can't push this into #tabber, but perhaps we should re-check the open tabs when an addon is deleted?
-      ;; todo: more thought required. for now it doesn't crash.
+      ;; deleting an addon doesn't alter the `:tab-list`, so the check can't live in the tabber.
+      ;; todo: re-check open tabs when an addon is deleted instead.
       (do (cli/remove-tab-at-idx tab-idx)
           {:fx/type :label :text "goodbye"})
 
@@ -2912,8 +2911,6 @@
                   :middleware (comp
                                fx/wrap-context-desc
                                (fx/wrap-map-desc (fn [_] {:fx/type app})))
-
-                  ;; magic :(
 
                   :opts {:fx.opt/type->lifecycle #(or (fx/keyword->lifecycle %)
                                                       ;; For functions in `:fx/type` values, pass

@@ -173,7 +173,8 @@
          vec)))
 
 (defn-spec -parse-assets fn?
-  "convenience wrapper around `parse-assets` that returns a function that accepts a list of releases"
+  "convenience wrapper around `parse-assets` that returns a function accepting an index and a release.
+  the index marks which release is the latest, used when deciding whether to fetch a release.json."
   [game-track-list ::sp/game-track-list]
   (fn [idx release]
     (parse-assets (assoc release :-i idx) game-track-list)))
@@ -215,7 +216,8 @@
   [source-id string?]
   (if-let* [contents-listing (download-root-listing source-id)
             toc-file-list (filterv #(-> % :name fs/split-ext last (= ".toc")) contents-listing)
-            toc-file (first toc-file-list)] ;; assumes just one toc file :(
+            ;; only the first toc file is read. an addon with several is not handled.
+            toc-file (first toc-file-list)]
            (some-> toc-file :download_url http/download-with-backoff toc/parse-toc-file)
            (warn (format "failed to find/download/parse remote github '.toc' file for '%s'" source-id))))
 
@@ -259,12 +261,13 @@
              first
              :browser_download_url
              download-release-json
-             (map :metadata) ;; a list of maps `[{:metadata [...]}, ...]` becomes a list of lists `[[...], ...]`
-             flatten ;; single list of maps `[{...}, ...]`
-             (map :flavor) ;; list of strings
-             (map utils/guess-game-track) ;; list of keywords
-             (remove nil?) ;; unguessable game tracks removed. todo: issue warning?
-             set ;; distinct
+             ;; `[{:metadata [{:flavor "mainline", ...}, ...]}, ...]` becomes `[:retail, ...]`
+             (map :metadata)
+             flatten
+             (map :flavor)
+             (map utils/guess-game-track)
+             (remove nil?) ;; todo: issue a warning for unguessable game tracks?
+             set
              sort
              vec
              utils/nilable)))
@@ -272,7 +275,8 @@
 (def parse-user-string utils/github-url-to-source-id) ;; moved to utils to avoid coupling with `toc.clj`
 
 (defn-spec find-latest-release (s/or :release map?, :no-viable-release nil?)
-  "the literal latest release we can find may not be the best choice and should only be "
+  "returns the first release in `release-list` that is not a draft or prerelease and that has assets attached.
+  the first release in the list is skipped when it fails those tests. returns `nil` when none qualify."
   [release-list ::sp/list-of-maps]
   (->> release-list
        (remove :prerelease)
@@ -281,15 +285,17 @@
        first))
 
 (defn-spec find-addon (s/or :ok :addon/summary, :error nil?)
+  "builds a catalogue entry for the github repository at `source-id`.
+  returns `nil` when the repository has no usable release.
+  game tracks are looked for in the release assets, then a release.json, then a remote .toc file,
+  falling back to `:retail` with a warning when none are found."
   [source-id :addon/source-id]
   (if-let* [release-list (download-release-listing source-id) ;; releases must be used
 
             ;; must have something properly released, releases must be using uploaded assets
             latest-release (find-latest-release release-list)
 
-            ;; we have to to find at least one game track in either a release asset name, a release.json file or a .toc file.
-            ;; if we can't then refuse to guess.
-            ;; later on when we scan releases and we can't find an asset's game track, we'll use these to fill in the blanks.
+            ;; used later to fill in the blanks when an individual asset's game track can't be guessed.
             game-track-list (or (find-gametracks-release-list release-list)
                                 (find-gametracks-release-json release-list)
                                 (find-gametracks-toc-data source-id)
@@ -314,7 +320,7 @@
             ;;:category-list []
             :tag-list []}
 
-           ;; 'something' failed to parse :(
+           ;; any step above returning nil means the addon can't be described. give up.
            nil))
 
 ;;

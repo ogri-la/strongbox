@@ -29,14 +29,6 @@
 (def default-interface-version 120000)
 (def default-interface-version-classic 11400) ;; 2025-07: not really used anymore
 
-;; take all of the game tracks to the right of your position
-;; then all to the left.
-;; [1 2 3 4 5 6] => 6 => [6 5 4 3 2 1]
-;; [1 2 3 4 5 6] => 5 => [5 6 4 3 2 1]
-;; [1 2 3 4 5 6] => 4 => [4 5 6 3 2 1]
-;; [1 2 3 4 5 6] => 3 => [3 4 5 6 2 1]
-;; [1 2 3 4 5 6] => 2 => [2 3 4 5 6 1]
-;; [1 2 3 4 5 6] => 1 => [1 2 3 4 5 6]
 (def game-track-priority-map
   "when `strict?` is `false` and an addon fails to match against a given `game-track`, other game tracks will be checked.
   the strategy is to assume the next-best game tracks are the ones 'closest' to the given `game-track`, newest to oldest.

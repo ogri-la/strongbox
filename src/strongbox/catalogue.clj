@@ -71,9 +71,6 @@
                                 (utils/first-nn (partial -expand-summary addon) (get constants/game-track-priority-map game-track)))]
         source-updates
 
-        ;; "no 'Retail' release found on github"
-        ;; "no 'Classic' release found on wowinterface"
-        ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
         (let [single-template "no '%s' release found on %s."
               multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
               msg (if strict?
@@ -151,7 +148,8 @@
   (case key
     :game-track-list (mapv keyword val)
     :tag-list (mapv keyword val)
-    :description (utils/safe-subs val 255) ;; no database anymore, no hard failures on value length?
+    ;; descriptions are truncated to 255 characters. a hangover from the database that once stored them.
+    :description (utils/safe-subs val 255)
     val))
 
 (defn-spec read-catalogue (s/or :ok :catalogue/catalogue, :error nil?)
@@ -159,7 +157,7 @@
   ([catalogue-path (s/or :file ::sp/file, :bytes bytes?)]
    (read-catalogue catalogue-path {}))
   ([catalogue-path (s/or :file ::sp/file, :bytes bytes?), opts map?]
-   (let [value-fn -read-catalogue-value-fn ;; defined 'outside' so it can reference itself
+   (let [value-fn -read-catalogue-value-fn
          opts (merge opts {:key-fn keyword :value-fn value-fn})
          catalogue-data (utils/load-json-file-safely catalogue-path opts)]
      (when-not (empty? catalogue-data)
@@ -226,10 +224,11 @@
     (let [datestamp (last (sort [(:datestamp cat-a) (:datestamp cat-b)])) ;; latest wins
           addons-a (:addon-summary-list cat-a)
           addons-b (:addon-summary-list cat-b)
-          addon-summary-list (->> (concat addons-a addons-b) ;; join the two lists
-                                  (group-by (juxt :source-id :source)) ;; group by the key
-                                  vals ;; drop the keys. we now have a list of lists.
-                                  (map (partial apply merge)))] ;; merge the nested lists into single maps
+          ;; addons sharing a source+source-id are merged, so values in `cat-b` win.
+          addon-summary-list (->> (concat addons-a addons-b)
+                                  (group-by (juxt :source-id :source))
+                                  vals
+                                  (map (partial apply merge)))]
       (format-catalogue-data addon-summary-list datestamp))))
 
 ;; 

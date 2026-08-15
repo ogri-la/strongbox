@@ -24,22 +24,15 @@
 
 (defn- add-etag-or-not
   [etag-key req]
-  (if-let [;; for some reason this dynamic binding of *cache* to nil results in:
-           ;; (strongbox.http/*cache* nil) => NullPointerException
-           ;; but not this:
-           ;; (nil nil) => CompilerException java.lang.IllegalArgumentException: Can't call nil, form: (nil nil)
-           ;; I suspect the devil is in the difference between compilation-time and run-time
-           ;;stored-etag ((:get-etag *cache*) etag-key)
-           ;; this totally does work though :)
-           stored-etag (and *cache* ((:get-etag *cache*) etag-key))]
+  ;; `*cache*` must be tested before it is called. calling it while unbound throws a NullPointerException.
+  (if-let [stored-etag (and *cache* ((:get-etag *cache*) etag-key))]
     (assoc-in req [:headers :if-none-match] stored-etag)
     req))
 
 (defn- write-etag
   [etag-key resp]
   (when-let [etag (and etag-key (-> resp :headers (get "etag")))]
-    ;; curseforge/cloudflare are not adding etags to *all* responses, just binaries (I think)
-    ;;(debug "got headers" (-> resp :headers)) 
+    ;; not every response carries an etag. curseforge/cloudflare appear to add them to binaries only.
     ((:set-etag *cache*) etag-key etag))
   resp)
 
@@ -110,7 +103,10 @@
 
 (defn-spec -download (s/or :file ::sp/extant-file, :raw :http/resp, :error :http/error)
   "if writing to a file is possible then the output file is returned, else the raw http response.
-   writing response body to a file is possible when caching is available or `output-file` provided."
+   writing response body to a file is possible when caching is available or `output-file` provided.
+   connection and timeout failures return an error map with a synthetic `608` status rather than throwing.
+   an unknown host returns a `503`. any other exception carrying a status becomes an error map.
+   exceptions without a status are re-thrown."
   [^String url ::sp/url, output-file (s/nilable ::sp/file), message (s/nilable string?), extra-params map?]
   (let [cache? (not (nil? *cache*))
         encoded-path (url-to-filename url)
@@ -133,7 +129,7 @@
         (debug (format "cache hit for: %s (%s)" url output-file))
         output-file)
 
-      ;; ... otherwise, we must sing and dance
+      ;; ... otherwise, fetch it
       (try
         (when message (info message)) ;; always show the message that was explicitly passed in
         (debug (format "downloading %s to %s" (fs/base-name url) output-file))
@@ -333,9 +329,7 @@
   else return response."
   [http-resp]
   (if-not (http-error? http-resp)
-    ;; no error, pass response through
     http-resp
-    ;; otherwise, scream and yell and return nil
     (error (http-error http-resp))))
 
 (defn-spec download (s/or :ok-file ::sp/extant-file, :ok-body string?, :error :http/error)

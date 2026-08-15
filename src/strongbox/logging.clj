@@ -1,4 +1,7 @@
 (ns strongbox.logging
+  "configures timbre and adds the appenders the app and UI log through.
+  loading this namespace sets the minimum log level to `:info`. `core/debug-mode?` depends on that,
+  reading a `:debug` level as a deliberate downgrade by the user."
   (:require
    [taoensso.timbre :as timbre]
    [taoensso.timbre.appenders.core :refer [spit-appender]]
@@ -7,9 +10,7 @@
    [strongbox
     [specs :as sp]]))
 
-;; set the default log level to :info as soon as possible (default is `:debug`)
-;; `core/debug-mode?` relies on environment having been downgraded to `:debug`
-
+;; set as early as possible. timbre's own default is `:debug`.
 (timbre/merge-config! {:min-level :info})
 
 (def default-log-level :info)
@@ -74,7 +75,7 @@
 
 (defn-spec add-file-appender! nil?
   [output-file ::sp/file]
-  (let [;; timbre being a little too clever...
+  (let [;; `spit-appender` returns a full appender map. only the `:fn` is wanted.
         func (:fn (spit-appender {:fname output-file}))]
     (add-appender! :spit func))
   nil)
@@ -157,18 +158,18 @@
   (fn []
     (rm-appender! :atom)))
 
-;; => (logging/addon-log :info {...} "installed!")
 (defmacro addon-log
-  "once-off addon logging message"
+  "once-off addon logging message.
+  for example: `(addon-log addon :info \"installed!\")`"
   [addon level & form]
   `(timbre/with-context
      {:addon ~addon}
      (timbre/log ~level ~@form)))
 
-;; => (logging/with-addon {...} (info "installed!"))
 (defmacro with-addon
-  "all calls to debug/info/warn etc within enclosure become addon-level logging.
-  app-level logging will have to futz with the logging context"
+  "all calls to `debug`/`info`/`warn` within `form` become addon-level logging.
+  use `without-addon` for app-level logging inside the enclosure.
+  for example: `(with-addon addon (info \"installed!\"))`"
   [addon & form]
   `(timbre/with-context
      {:addon ~addon}
@@ -180,7 +181,8 @@
   `(with-addon nil ~@form))
 
 (defmacro with-label
-  "groups log messages using given `label` by hacking the `with-addon` macro"
+  "groups log messages under the given `label` rather than an addon.
+  for example: `(with-label \"catalogue\" (info \"updated\"))`"
   [label & form]
   `(with-addon {:name ~label}
      ~@form))

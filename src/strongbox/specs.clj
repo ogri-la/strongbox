@@ -8,7 +8,8 @@
   (:import
    [java.io File]))
 
-;; todo: explain
+;; unused. exists so `specs.clj` is retained by linting and the uberjar build,
+;; which qualified specs alone do not guarantee.
 (def placeholder "even qualified specs still require `specs.clj` to be included for linting and uberjar")
 
 ;; 刘鑫

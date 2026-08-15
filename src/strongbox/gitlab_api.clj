@@ -124,7 +124,8 @@
          vec)))
 
 (defn-spec -parse-release fn?
-  "convenience wrapper around `parse-assets` that returns a function that accepts a list of releases"
+  "convenience wrapper around `parse-release` that returns a function accepting an index and a release.
+  the index marks which release is the latest, used when deciding whether to fetch a release.json."
   [game-track-list ::sp/game-track-list]
   (fn [idx release]
     (parse-release (assoc release :-i idx) game-track-list)))
@@ -188,7 +189,7 @@
 
 (defn-spec -toc-game-track (s/or :ok ::sp/game-track-list, :error nil?)
   "attempts to guess the game track of a [filename blob-url] pair.
-  if the game track can't be guessed from the filename, it downlads the blob and inspects the interface version."
+  if the game track can't be guessed from the filename, it downloads the blob and inspects the interface version."
   [[filename blob-url] (s/coll-of string?)]
   (let [game-track (utils/guess-game-track filename)
         use-defaults false]
@@ -234,7 +235,7 @@
              :source-id (:path_with_namespace repo)
              :label (:name repo)
              :name (:path repo)
-             ;; not available to the public. must be present, must be >= 0 :(
+             ;; gitlab does not expose download counts publicly, but the field is required and must be >= 0.
              ;; - https://docs.gitlab.com/ee/api/project_statistics.html
              :download-count 0
              ;; needs more thought. authors are tagging the repo against other repos rather than the addon, so

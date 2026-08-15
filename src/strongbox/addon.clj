@@ -1,4 +1,6 @@
 (ns strongbox.addon
+  "ties the `nfo` and `toc` logic together, operating on addons installed on disk.
+  installing and removing addons here is unconditional. `core` decides whether an operation is safe."
   (:require
    [clojure.string :refer [lower-case starts-with?]]
    [taoensso.timbre :as timbre :refer [debug info warn error spy]]
@@ -14,8 +16,6 @@
     [nfo :as nfo]
     [zip :as zip]
     [specs :as sp]]))
-
-(comment "`addon` ties the `nfo` and `toc` logic together")
 
 (def dummy-dirname "not-the-addon-dir-you-are-looking-for")
 
@@ -123,9 +123,8 @@
 
                          addon
                          (if primary
-                           ;; best, easiest case
                            (merge primary new-data ignore-group?)
-                           ;; when we can't determine the primary addon, add a shitty synthetic one
+                           ;; no primary addon could be determined. synthesise one from the first addon.
                            (merge next-best new-data ignore-group?
                                   {:label (format "%s (group)" next-best-label)
                                    :description (format "group record for the %s addon" next-best-label)}))
@@ -199,7 +198,7 @@
           (-> group first (dissoc :-toc/game-track-list)))))))
 
 (defn-spec load-all-installed-addons :addon/toc-list
-  "reads and merges the toc data and the nfo data from *all* addons in the given `install-dir`, groups them and returns the grouped mooshed data."
+  "reads and merges the toc data and the nfo data from *all* addons in the given `install-dir`, returning them grouped."
   [install-dir ::sp/extant-dir, game-track ::sp/game-track]
   (->> install-dir
        fs/list-dir
@@ -210,9 +209,9 @@
        group-addons))
 
 (defn-spec load-installed-addon (s/or :ok-toc :addon/toc, :ok-nfo :addon/nfo, :error nil?)
-  "reads and merges the toc data and the nfo data for a specific addon at `addon-dir` (bad name) and all those in it's group,
-  groups them up (again) and returns the grouped mooshed data.
-  this was introduced much later than `load-all-installed-addons` as parallel installation and loading of addons was introduced."
+  "reads and merges the toc data and the nfo data for the addon at `addon-dir` and every addon in its group,
+  returning the merged group.
+  use this rather than `load-all-installed-addons` when loading a single addon, as during parallel installation."
   [addon-dir ::sp/addon-dir, game-track ::sp/game-track]
   (logging/with-addon {:dirname (-> addon-dir fs/base-name str)}
     (let [install-dir (str (fs/parent addon-dir))
@@ -289,7 +288,6 @@
   (let [nom (or (:label addon) (:name addon) (fs/base-name downloaded-file))
         version (:version addon)
 
-        ;; 'Installing "EveryAddon" version "1.2.3"'  or just  'Installing "EveryAddon"'
         _ (if version
             (info (format "installing \"%s\" version \"%s\"" nom version))
             (info (format "installing \"%s\"" nom)))
@@ -308,7 +306,6 @@
         primary-dirname (determine-primary-subdir toplevel-dirs)
 
         ;; let the user know if there are bundled addons and they don't share a common prefix
-        ;; "EveryAddon will also install these addons: Foo, Bar, Baz"
         suspicious-bundle-check (fn []
                                   (let [sus-addons (zip/inconsistently-prefixed zipfile-entries)
                                         msg "%s will also install these addons: %s"]
@@ -377,10 +374,9 @@
 
     (suspicious-bundle-check)
 
-    ;; todo: remove support for v1 addons in 2.0.0 ;; todo!
-    ;; when is it not valid?
-    ;; * when importing v1 addons. v2 addons need 'padding' as well :(
-    ;; * when installing from a file and we have nothing more than a generated ID value
+    ;; todo: remove support for v1 addons in 2.0.0
+    ;; `addon` is not a valid `:addon/toc` when importing a v1 addon, and when installing from a
+    ;; file where nothing more than a generated ID value is known.
     (when (s/valid? :addon/toc addon)
       (remove-addon! install-dir addon))
 
@@ -423,9 +419,8 @@
 
 ;; ignore
 
-;; todo: does this have tests? is it flawed like pinned-dir-list is? ;; todo: wtf?
 (defn-spec ignored-dir-list (s/coll-of ::sp/dirname)
-  "returns a list of unique addon directory names (including grouped addons) that are not being ignored"
+  "returns a set of unique addon directory names (including grouped addons) that are being ignored"
   [addon-list (s/nilable :addon/installed-list)]
   (->> addon-list (filter :ignore?) (map flatten-addon) flatten (map :dirname) (remove nil?) set))
 

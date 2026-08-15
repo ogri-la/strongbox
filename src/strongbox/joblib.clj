@@ -1,4 +1,6 @@
 (ns strongbox.joblib
+  "a queue manager running one job per thread.
+  deliberately uncoupled from `core` and the UI."
   (:require
    [lasync.core :as lasync]
    [clojure.set]
@@ -9,8 +11,6 @@
    [strongbox
     ;;[specs :as sp]
     [utils :as utils :refer [atom?]]]))
-
-(comment "Simple one job per thread queue manager. Keep module uncoupled from core and ui.")
 
 (def ^:dynamic *tick*
   "per-thread binding to a function that updates progress of running job"
@@ -84,7 +84,6 @@
   [queue-atm atom?, job-id :joblib/job-id]
   (fn [& [pct]]
     (when pct
-      ;;(println (format "thread %s goes tick! (%s)" (.getId (Thread/currentThread)) pct))
       (swap! queue-atm assoc-in [job-id :progress] pct))
     (:progress (get @queue-atm job-id))))
 
@@ -114,7 +113,8 @@
    (add-to-queue! queue-atm (job-info f job-id))))
 
 (defn-spec create-addon-job! :joblib/job-id
-  "convenience. takes a function `f` whose first argument should be an addon map, wraps it in a `job-info`, etc etc."
+  "convenience. wraps `f` in a `job-info` and adds it to the queue, calling `f` with `addon`.
+  the job ID is derived from the addon rather than generated, so a second job for the same addon is refused."
   [queue-atm atom?, addon :joblib/addon, f fn?]
   (add-to-queue! queue-atm (job-info #(f addon) (addon-id addon))))
 
@@ -136,7 +136,7 @@
        (not (future-done? job))))
 
 (defn-spec job-cancelled? boolean?
-  "returns `true` if job was found was has been cancelled, else `false`."
+  "returns `true` if the job was started and then cancelled, else `false`."
   [job :joblib/job]
   (and (future? job)
        (future-cancelled? job)))
@@ -223,8 +223,6 @@
 
 (defn-spec has-job? boolean?
   "returns `true` if the given `queue` contains one or more jobs whose job-id is a *superset* of the given `job-id`.
-  for example: 
-    (has-job? my-queue #{:download-addon})` 
-  would return all jobs whose `job-id` contains the `:download-addon` keyword."
+  for example, `(has-job? my-queue #{:download-addon})` is `true` when any job's `job-id` contains `:download-addon`."
   [queue :joblib/queue, job-id :joblib/job-id]
   (->> queue (filter (by-keyset job-id)) empty? not))
