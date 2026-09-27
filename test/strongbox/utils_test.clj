@@ -623,52 +623,73 @@
       (is (= expected log-messages))
       (is (empty? @current-locks)))))
 
-(deftest with-lock--contention
-  (testing "two forms to execute that share a lock will see one executed first, then the second."
-    (let [current-locks (atom #{})
+(defn with-lock-contention
+  "runs two forms that share a lock, fn1 then fn2, and returns the debug log and the locks remaining afterwards."
+  []
+  (let [current-locks (atom #{})
 
-          ;; slinging promises around is a little contrived but the alternative is Thread/sleep,
-          ;; which isn't really deterministic and depends a lot on environment characteristics.
-          fn1-acquired (promise) ;; fn1 delivers this once it holds the lock
-          fn1-may-finish (promise) ;; main thread delivers this to release fn1
+        ;; slinging promises around is a little contrived but the alternative is Thread/sleep,
+        ;; which isn't really deterministic and depends a lot on environment characteristics.
+        fn1-acquired (promise) ;; fn1 delivers this once it holds the lock
+        fn1-may-finish (promise) ;; main thread delivers this to release fn1
+        fn2-blocked (promise) ;; fn2 delivers this once it fails to acquire the lock
+        fn1-released (promise) ;; main thread delivers this once fn1 has released the lock, fn2 then retries
 
-          fn1 #(future
-                 (utils/with-lock current-locks #{:foo :fn1}
-                   (deliver fn1-acquired true)
-                   @fn1-may-finish
-                   (debug "--fn1 executed--")))
+        ;; replaces the retry wait in `with-lock`. only fn2 is ever blocked.
+        wait-for-fn1 (fn [_]
+                       (deliver fn2-blocked true)
+                       @fn1-released)
 
-          fn2 #(future
-                 (utils/with-lock current-locks #{:foo :fn2}
-                   (debug "--fn2 executed--")))
+        fn1 #(future
+               (utils/with-lock current-locks #{:foo :fn1}
+                 (deliver fn1-acquired true)
+                 @fn1-may-finish
+                 (debug "--fn1 executed--")))
 
-          log-messages (logging/buffered-log
+        fn2 #(future
+               (utils/with-lock current-locks #{:foo :fn2}
+                 (debug "--fn2 executed--")))
+
+        log-messages (with-redefs [utils/-with-lock-wait wait-for-fn1]
+                       (logging/buffered-log
                         :debug
                         (let [fn1-ref (fn1)
                               _ @fn1-acquired ;; wait until fn1 holds the lock before starting fn2
                               fn2-ref (fn2)
-                              ;; fn2 needs time to attempt lock acquisition
-                              _ (Thread/sleep 5)
+                              _ @fn2-blocked ;; wait until fn2 has failed to acquire the lock
                               _ (deliver fn1-may-finish true)]
-                          @fn1-ref
-                          @fn2-ref))
+                          @fn1-ref ;; fn1 has executed and released the lock
+                          (deliver fn1-released true)
+                          @fn2-ref)))]
+    {:log-messages log-messages
+     :current-locks @current-locks}))
 
-          expected ["current locks: #{}"
-                    "acquiring locks: #{:fn1 :foo}"
-                    "locks acquired: #{:fn1 :foo}"
-                    "current locks: #{:fn1 :foo}"
-                    "acquiring locks: #{:fn2 :foo}"
-                    "blocked!"
-                    "--fn1 executed--"
-                    "releasing locks: #{:fn1 :foo}"
-                    "recurring in 10 ms, have waited 0 ms"
-                    "current locks: #{}"
-                    "acquiring locks: #{:fn2 :foo}"
-                    "locks acquired: #{:fn2 :foo}"
-                    "--fn2 executed--"
-                    "releasing locks: #{:fn2 :foo}"]]
-      (is (= expected log-messages))
-      (is (empty? @current-locks)))))
+(deftest with-lock--contention
+  (testing "two forms to execute that share a lock will see one executed first, then the second."
+    (let [expected {:log-messages ["current locks: #{}"
+                                   "acquiring locks: #{:fn1 :foo}"
+                                   "locks acquired: #{:fn1 :foo}"
+                                   "current locks: #{:fn1 :foo}"
+                                   "acquiring locks: #{:fn2 :foo}"
+                                   "blocked!"
+                                   "--fn1 executed--"
+                                   "releasing locks: #{:fn1 :foo}"
+                                   "recurring in 10 ms, have waited 0 ms"
+                                   "current locks: #{}"
+                                   "acquiring locks: #{:fn2 :foo}"
+                                   "locks acquired: #{:fn2 :foo}"
+                                   "--fn2 executed--"
+                                   "releasing locks: #{:fn2 :foo}"]
+                    :current-locks #{}}
+
+          ;; this test was non-deterministic twice, run it many times to catch any recurrence.
+          ;; each distinct unexpected result is reported once.
+          num-runs 300
+          actual (->> (repeatedly num-runs with-lock-contention)
+                      (remove #{expected})
+                      distinct
+                      vec)]
+      (is (= [] actual)))))
 
 (deftest patch-name
   (let [cases [["" nil]

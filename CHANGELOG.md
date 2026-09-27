@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Linting no longer hangs after a run with no warnings
 * Tests and linting no longer conflict with an X display already in use
 * A partially drawn log pane no longer appears over the installed addons after resizing the window
+* Remaining non-determinism in test `utils_test/with-lock--contention`
+    - the test now runs its scenario 300 times to catch any recurrence
 
 ## 7.7.0 - 2026-04-13
 

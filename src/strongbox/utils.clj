@@ -844,6 +844,12 @@
 
 (def -with-lock-wait-retry-time 10) ;; ms
 
+(defn -with-lock-wait
+  "blocks the current thread for `ms` milliseconds before `with-lock` tries to acquire its locks again.
+  a separate function so tests can control when a blocked `with-lock` retries."
+  [ms]
+  (Thread/sleep (long ms)))
+
 (defmacro with-lock
   "executes `form` once all items in given `user-set` are available in `lock-set-atom`."
   [lock-set-atom user-set & form]
@@ -873,7 +879,7 @@
 
            ;; something else holds one or more of the desired locks! wait a duration and try again
          (do (debug "blocked!")
-             (Thread/sleep -with-lock-wait-retry-time)
+             (-with-lock-wait -with-lock-wait-retry-time)
              (debug (format "recurring in %s ms, have waited %s ms" -with-lock-wait-retry-time waited#))
              (recur (+ waited# -with-lock-wait-retry-time)))))))
 
