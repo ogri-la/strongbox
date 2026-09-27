@@ -376,6 +376,27 @@
                    (is (= expected (addon/load-all-installed-addons (helper/install-dir) game-track))))]
       (is (= expected-debug debug)))))
 
+(deftest load-installed-addon--multi-toc
+  (let [fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc.zip")
+        addon-dir (utils/join (helper/install-dir) "EveryAddon")]
+    (zip/unzip-file fixture (helper/install-dir))
+
+    (testing "all game tracks in the .toc files are supported"
+      (let [expected [:classic :classic-cata :classic-mists :classic-tbc :classic-wotlk :forever :retail]]
+        (is (= expected (:supported-game-tracks (addon/load-installed-addon addon-dir :retail))))))
+
+    (testing "the .toc data for the selected game track is used"
+      (let [cases [[:retail [70000]]
+                   [:classic [11307]]
+                   [:forever [16001]]]]
+        (doseq [[game-track expected] cases]
+          (is (= expected (:interface-version-list (addon/load-installed-addon addon-dir game-track)))))))
+
+    (testing "forever falls back to the retail .toc data when there is no Camelot .toc file"
+      (fs/delete (utils/join addon-dir "EveryAddon-Camelot.toc"))
+      (is (= [70000] (:interface-version-list (addon/load-installed-addon addon-dir :forever))))
+      (is (= ["EveryAddon"] (mapv :dirname (addon/load-all-installed-addons (helper/install-dir) :forever)))))))
+
 (deftest remove-addon--malign-addon-data
   (testing "uninstalling an addon whose `:dirname` value is corrupted (somehow) shouldn't affect data outside of the addon dir"
     (let [install-dir (helper/install-dir)

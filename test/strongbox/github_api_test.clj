@@ -528,6 +528,37 @@
       (with-fake-routes-in-isolation fake-routes
         (is (= expected (github-api/parse-assets release known-game-tracks)))))))
 
+(deftest parse-assets--release-json--forever
+  (testing "no game track in the asset names, a release.json file classifies one asset as mainline and the other as forever"
+    (let [expected [{:download-url "https://example.org/Foo-1.2.3-x.zip", :game-track :retail, :version "Release 1.2.3"}
+                    {:download-url "https://example.org/Foo-1.2.3-y.zip", :game-track :forever, :version "Release 1.2.3"}]
+          release-json {:releases [{:filename "Foo-1.2.3-x.zip",
+                                    :nolib false,
+                                    :metadata [{:flavor "mainline", :interface 120001}]}
+                                   {:filename "Foo-1.2.3-y.zip",
+                                    :nolib false,
+                                    :metadata [{:flavor "forever", :interface 16001}]}]}
+          release {:name "Release 1.2.3"
+                   :assets [{:browser_download_url "https://example.org/Foo-1.2.3-x.zip"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "Foo-1.2.3-x.zip"}
+
+                            {:browser_download_url "https://example.org/Foo-1.2.3-y.zip"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "Foo-1.2.3-y.zip"}
+
+                            {:browser_download_url "https://example.org/release.json"
+                             :content_type "application/json"
+                             :state "uploaded"
+                             :name "release.json"}]}
+          known-game-tracks []
+          fake-routes {"https://example.org/release.json"
+                       {:get (fn [_] {:status 200 :body (utils/to-json release-json)})}}]
+      (with-fake-routes-in-isolation fake-routes
+        (is (= expected (github-api/parse-assets release known-game-tracks)))))))
+
 (deftest rate-limit-exceeded
   (testing "403 while importing an addon is handled"
     (let [fake-routes {"https://api.github.com/repos/Aviana/HealComm/releases"
