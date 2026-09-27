@@ -38,7 +38,7 @@ elif test "$cmd" = "lint"; then
     lein cljfmt fix
     echo "eastwood lint"
     if command -v xvfb-run > /dev/null; then
-        xvfb-run -a lein with-profile +lint eastwood
+        xvfb-run --auto-servernum lein with-profile +lint eastwood
     else
         lein with-profile +lint eastwood
     fi
@@ -66,7 +66,7 @@ elif test "$cmd" = "test"; then
     trap finish EXIT
     if command -v xvfb-run > /dev/null; then
         # CI
-        xvfb-run -a lein cloverage --runner "strongbox"
+        xvfb-run --auto-servernum lein cloverage --runner "strongbox"
     else
         # dev
         lein cloverage --runner "strongbox" --fail-threshold "$fail_threshold" --html
