@@ -217,7 +217,7 @@ the same addon directory. If an addon is available for multiple addon systems it
 * `classic (WotLK)` will prefer `classic (WotLK)` addons, then `classic (Cata)`, then `classic (Mists)`, then `classic (TBC)`, then `classic` then `retail`
 * `classic (Cata)` will prefer `classic (Cata)` addons, then `classic (Mists)`, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
 * `classic (Mists)` will prefer `classic (Mists)` addons, then `classic (Cata)`, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
-* `forever` will only use `forever` addons. It is a fork of vanilla with no equivalent addon system to fall back to.
+* `forever` will prefer `forever` addons, then `retail`
 
 If uncertain which addon systems an installed addon supports, look at the `WoW` column values on the `installed` tab and 
 compare it to the `Version` value in the list of WoW [public client builds](https://warcraft.wiki.gg/wiki/Public_client_builds).

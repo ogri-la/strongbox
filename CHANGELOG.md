@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Support for WoW 'Forever'
     - detected from `release.json` files, `_Camelot.toc` files and interface versions `16000` to `19999`
-    - Forever has no fallback game tracks when 'Strict' is unchecked
+    - Forever falls back to Retail when 'Strict' is unchecked
 
 ### Changed
 

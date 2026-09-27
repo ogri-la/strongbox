@@ -321,11 +321,10 @@
   "'1.13.2' => ':classic', '1.60.1' => ':forever', '8.2.0' => 'retail'"
   [game-version string?]
   (let [prefix (safe-subs game-version 2)
-        minor (some-> game-version (clojure.string/split #"\.") second to-int)]
-    (if (and (= prefix "1.")
-             minor
-             (<= 60 minor 99))
-      ;; 1.60.x to 1.99.x == forever, a fork of vanilla. interface versions 16000 to 19999.
+        minor (some-> game-version (clojure.string/split #"\.") second to-int)
+        ;; 1.60.x to 1.99.x == forever, vanilla-era content on the modern client. interface versions 16000 to 19999.
+        forever? (and (= prefix "1.") minor (<= 60 minor 99))]
+    (if forever?
       :forever
       (case prefix
         ;; 1.x.x == classic (vanilla)

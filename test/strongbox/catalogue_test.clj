@@ -255,7 +255,7 @@
                        {:get (fn [req] {:status 200 :body "[]"})}}
           cases [[:retail true "no 'Retail' release found on github."]
                  [:forever true "no 'Forever' release found on github."]
-                 [:forever false "no 'Forever' release found on github."]
+                 [:forever false "no 'Forever' or 'Retail' release found on github."]
                  [:classic-tbc false (str "no 'Classic (TBC)', 'Classic (WotLK)', 'Classic (Cata)', 'Classic (Mists)', "
                                           "'Classic' or 'Retail' release found on github.")]]]
       (with-fake-routes-in-isolation fake-routes

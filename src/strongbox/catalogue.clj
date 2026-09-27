@@ -72,7 +72,6 @@
         source-updates
 
         ;; "no 'Retail' release found on github."
-        ;; "no 'Forever' release found on github."
         ;; "no 'Classic (TBC)', 'Classic (WotLK)', ... or 'Retail' release found on github."
         (let [game-track-list (if strict?
                                 [game-track]

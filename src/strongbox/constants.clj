@@ -43,14 +43,15 @@
   the strategy is to assume the next-best game tracks are the ones 'closest' to the given `game-track`, newest to oldest.
   for example, if a release for wotlk classic is not available and releases for cata, bcc and vanilla are, which to choose?
   this strategy prioritises cata, then bcc and finally vanilla.
-  `:forever` is a fork of vanilla with no equivalent game track so it has no fallback and is never a fallback."
+  `:forever` is vanilla-era content on the modern client. like the game client, it falls back to retail.
+  it is never a fallback for other game tracks."
   {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata :classic-mists]
    :classic [:classic :classic-tbc :classic-wotlk :classic-cata :classic-mists :retail]
    :classic-tbc [:classic-tbc :classic-wotlk :classic-cata :classic-mists :classic :retail]
    :classic-wotlk [:classic-wotlk :classic-cata :classic-mists :classic-tbc :classic :retail]
    :classic-cata [:classic-cata :classic-mists :classic-wotlk :classic-tbc :classic :retail]
    :classic-mists [:classic-mists :classic-cata :classic-wotlk :classic-tbc :classic :retail]
-   :forever [:forever]})
+   :forever [:forever :retail]})
 
 (def bullet "\u2022") ;; •
 
