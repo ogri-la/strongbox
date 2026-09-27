@@ -463,6 +463,49 @@
           known-game-tracks []]
       (is (= expected (github-api/parse-assets release known-game-tracks))))))
 
+(deftest parse-assets--odd-one-out--forever
+  (testing "sole remaining asset is never classified as `:forever` by elimination"
+    (let [release {:name "Release 1.2.3"
+                   :assets [{:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3"}
+                            {:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-Mainline"}
+                            {:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-Classic"}
+                            {:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-Classic-WotLK"}
+                            {:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-cata"}
+                            {:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-mists"}
+                            {:browser_download_url "https://example.org"
+                             :content_type "application/zip"
+                             :state "uploaded"
+                             :name "1.2.3-forever"}]}
+          expected [;; `:classic-tbc` is the sole remaining classification once `:forever` is excluded.
+                    {:download-url "https://example.org", :game-track :classic-tbc, :version "Release 1.2.3"}
+
+                    {:download-url "https://example.org", :game-track :retail, :version "Release 1.2.3"}
+                    {:download-url "https://example.org", :game-track :classic, :version "Release 1.2.3"}
+                    {:download-url "https://example.org", :game-track :classic-wotlk, :version "Release 1.2.3"}
+                    {:download-url "https://example.org", :game-track :classic-cata, :version "Release 1.2.3"}
+                    {:download-url "https://example.org", :game-track :classic-mists, :version "Release 1.2.3"}
+                    {:download-url "https://example.org", :game-track :forever, :version "Release 1.2.3"}]
+          known-game-tracks []]
+      (is (= expected (github-api/parse-assets release known-game-tracks))))))
+
 (deftest parse-assets--release-json
   (testing "no game track present in asset name or release name, no `:game-track-list`, no `release.json` file and no known game tracks."
     (let [expected [{:download-url "https://example.org", :game-track :classic-tbc, :version "Release 1.2.3"}]

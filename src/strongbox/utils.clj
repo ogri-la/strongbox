@@ -297,18 +297,15 @@
   (sluglib/slugify string))
 
 (defn-spec interface-version-to-game-version (s/or :ok string?, :no-match nil?)
-  "'10000' => 1.0.0, '100000' => 10.0.0, '102010' => 10.2.1"
+  "converts a 5 or 6 digit interface version to a game version.
+  interface versions are encoded as `major * 10000 + minor * 100 + patch`.
+  '10000' => 1.0.0, '11507' => 1.15.7, '16001' => 1.60.1, '100000' => 10.0.0, '120001' => 12.0.1"
   [iface-version (s/or :deprecated string?, :ok int?)]
-  (let [iface-version (if (int? iface-version)
-                        (str iface-version)
-                        iface-version)
-        iface-regex (if (= (.length iface-version) 5)
-                      #"(?<major>\d{1})\d(?<minor>\d{1})\d(?<patch>\d)"
-                      #"(?<major>\d{2})\d(?<minor>\d{1})\d(?<patch>\d)")
-        matcher (re-matcher iface-regex iface-version)
-        major-minor-patch (rest (re-find matcher))]
-    (when-not (empty? major-minor-patch)
-      (clojure.string/join "." major-minor-patch))))
+  (when-let [iface-version (some->> iface-version str (re-matches #"\d{5,6}") to-int)]
+    (let [major (quot iface-version 10000)
+          minor (rem (quot iface-version 100) 100)
+          patch (rem iface-version 100)]
+      (clojure.string/join "." [major minor patch]))))
 
 (defn-spec game-version-to-interface-version (s/or :ok ::sp/interface-version :error nil?)
   "'8.2.0' => '80200', '1.13.2' => '11300', '10.0.0' => '100000'"
@@ -321,21 +318,27 @@
       (+ (* 10000 major) (* 100 minor)))))
 
 (defn-spec game-version-to-game-track ::sp/game-track
-  "'1.13.2' => ':classic', '8.2.0' => 'retail'"
+  "'1.13.2' => ':classic', '1.60.1' => ':forever', '8.2.0' => 'retail'"
   [game-version string?]
-  (let [prefix (safe-subs game-version 2)]
-    (case prefix
-      ;; 1.x.x == classic (vanilla)
-      "1." :classic
-      ;; 2.x.x == classic (burning crusade)
-      "2." :classic-tbc
-      ;; 3.x.x == classic (wrath of the lich king)
-      "3." :classic-wotlk
-      ;; 4.x.x == classic (cataclysm)
-      "4." :classic-cata
-      ;; 5.x.x == classic (mists of panderia)
-      "5." :classic-mists
-      :retail)))
+  (let [prefix (safe-subs game-version 2)
+        minor (some-> game-version (clojure.string/split #"\.") second to-int)]
+    (if (and (= prefix "1.")
+             minor
+             (<= 60 minor 99))
+      ;; 1.60.x to 1.99.x == forever, a fork of vanilla. interface versions 16000 to 19999.
+      :forever
+      (case prefix
+        ;; 1.x.x == classic (vanilla)
+        "1." :classic
+        ;; 2.x.x == classic (burning crusade)
+        "2." :classic-tbc
+        ;; 3.x.x == classic (wrath of the lich king)
+        "3." :classic-wotlk
+        ;; 4.x.x == classic (cataclysm)
+        "4." :classic-cata
+        ;; 5.x.x == classic (mists of panderia)
+        "5." :classic-mists
+        :retail))))
 
 (defn-spec interface-version-to-game-track (s/or :ok ::sp/game-track, :err nil?)
   "converts an interface version like '80000' to a game track like ':retail'"
@@ -353,7 +356,8 @@
     :classic-tbc constants/latest-classic-tbc-game-version
     :classic-wotlk constants/latest-classic-wotlk-game-version
     :classic-cata constants/latest-classic-cata-game-version
-    :classic-mists constants/latest-classic-mists-game-version))
+    :classic-mists constants/latest-classic-mists-game-version
+    :forever constants/latest-forever-game-version))
 
 ;; https://stackoverflow.com/questions/13789092/length-of-the-first-line-in-an-utf-8-file-with-bom
 (defn debomify
@@ -685,7 +689,10 @@
   returns `nil` if no game track found."
   [string (s/nilable string?)]
   (when string
-    (let [;; matches 'mists'
+    (let [;; matches 'forever' and 'camelot' (the client's name for forever) as whole words.
+          ;; checked first as 'classic' may also appear in the string.
+          forever-regex #"(?i)(^|[\W_])(forever|camelot)([\W_]|$)"
+          ;; matches 'mists'
           classic-mists-regex #"(?i)[\W_]?mists([\W_]?|$)"
           ;; matches 'cata'. less variation this time around.
           classic-cata-regex #"(?i)[\W_]?cata([\W_]?|$)"
@@ -698,6 +705,7 @@
           classic-regex #"(?i)classic|vanilla"
           retail-regex #"(?i)standard|retail|mainline"]
       (cond
+        (re-find forever-regex string) :forever
         (re-find classic-mists-regex string) :classic-mists
         (re-find classic-cata-regex string) :classic-cata
         (re-find classic-wotlk-regex string) :classic-wotlk

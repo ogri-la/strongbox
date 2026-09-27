@@ -248,6 +248,21 @@
 
 ;;
 
+(deftest expand-summary--not-found-message
+  (testing "the 'no release found' message lists the game track, or all fallback game tracks when not strict"
+    (let [addon {:name "foo" :label "Foo" :source "github" :source-id "1"}
+          fake-routes {"https://api.github.com/repos/1/releases"
+                       {:get (fn [req] {:status 200 :body "[]"})}}
+          cases [[:retail true "no 'Retail' release found on github."]
+                 [:forever true "no 'Forever' release found on github."]
+                 [:forever false "no 'Forever' release found on github."]
+                 [:classic-tbc false (str "no 'Classic (TBC)', 'Classic (WotLK)', 'Classic (Cata)', 'Classic (Mists)', "
+                                          "'Classic' or 'Retail' release found on github.")]]]
+      (with-fake-routes-in-isolation fake-routes
+        (doseq [[game-track strict? expected-message] cases
+                :let [actual (logging/buffered-log :info (catalogue/expand-summary addon game-track strict?))]]
+          (is (= expected-message (last actual))))))))
+
 (deftest github-500-error
   (testing "a github 500 (internal server error) response gets a custom message"
     (let [addon {:name "foo" :label "Foo" :source "github" :source-id "1"}

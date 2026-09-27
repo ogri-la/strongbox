@@ -99,7 +99,8 @@
                           ;;  we couldn't guess the game track from the asset name and had nothing to fall back on.
                           unclassified-assets (->> asset-list (map :game-track) (filter nil?))
                           classified-assets (->> asset-list (map :game-track) (remove nil?) set)
-                          diff (clojure.set/difference sp/game-tracks classified-assets)] ;; #{:classic :classic-bc :retail} #{:classic :classic-bc} => #{:retail}
+                          ;; `:forever` is excluded, an unclassified asset is far more likely to belong to an established game track.
+                          diff (clojure.set/difference (disj sp/game-tracks :forever) classified-assets)] ;; #{:classic :classic-bc :retail} #{:classic :classic-bc} => #{:retail}
 
                       (if (or (= (count diff) 0) ;; addon covers all game tracks!
                               (> (count unclassified-assets) 1)) ;; too many unclassified for this logic

@@ -8,11 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+* Support for WoW 'Forever'
+    - detected from `release.json` files, `_Camelot.toc` files and interface versions `16000` to `19999`
+    - Forever has no fallback game tracks when 'Strict' is unchecked
+
 ### Changed
+
+* README game track priorities updated with Mists and Forever
 
 ### Fixed
 
-### Removed
+* Interface versions with a two digit minor or patch version are converted correctly
+    - for example, `11507` is now `1.15.7` rather than `1.5.7`
+* The 'no release found' warning now names the addon host correctly when 'Strict' is unchecked
 
 ## 7.7.0 - 2026-04-13
 

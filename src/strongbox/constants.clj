@@ -22,6 +22,7 @@
 (def latest-classic-wotlk-game-version "3.4.4")
 (def latest-classic-cata-game-version "4.4.2")
 (def latest-classic-mists-game-version "5.5.0")
+(def latest-forever-game-version "1.60.1")
 
 ;; interface version to use if .toc file is missing one.
 ;; assume addon is compatible with the most recent version of retail (see above).
@@ -41,13 +42,15 @@
   "when `strict?` is `false` and an addon fails to match against a given `game-track`, other game tracks will be checked.
   the strategy is to assume the next-best game tracks are the ones 'closest' to the given `game-track`, newest to oldest.
   for example, if a release for wotlk classic is not available and releases for cata, bcc and vanilla are, which to choose?
-  this strategy prioritises cata, then bcc and finally vanilla."
+  this strategy prioritises cata, then bcc and finally vanilla.
+  `:forever` is a fork of vanilla with no equivalent game track so it has no fallback and is never a fallback."
   {:retail [:retail :classic :classic-tbc :classic-wotlk :classic-cata :classic-mists]
    :classic [:classic :classic-tbc :classic-wotlk :classic-cata :classic-mists :retail]
    :classic-tbc [:classic-tbc :classic-wotlk :classic-cata :classic-mists :classic :retail]
    :classic-wotlk [:classic-wotlk :classic-cata :classic-mists :classic-tbc :classic :retail]
    :classic-cata [:classic-cata :classic-mists :classic-wotlk :classic-tbc :classic :retail]
-   :classic-mists [:classic-mists :classic-cata :classic-wotlk :classic-tbc :classic :retail]})
+   :classic-mists [:classic-mists :classic-cata :classic-wotlk :classic-tbc :classic :retail]
+   :forever [:forever]})
 
 (def bullet "\u2022") ;; •
 

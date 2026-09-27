@@ -50,13 +50,16 @@
            "300102" "30.1.2"
            ;; first three digits are now the major, second two minor and remaining is patch (I think ...)
            ;; so '101', '201' become '10.' and '20.', minor '01' becomes '00' and '0' is still '0'
-           "101010" "10.0.0"
+           "101010" "10.10.10"
 
-           ;; ambiguous/broken cases
-           "00010" "0.0.0"
-           "01000" "0.0.0"
-           "10100" "1.1.0" ;; ambiguous, also, 1.10.0, 10.1.0, 10.10.0
-           "10123" "1.1.3" ;; last patch of 1.x, should be 1.12.3
+           ;; two digit minor and patch versions
+           "00010" "0.0.10"
+           "01000" "0.10.0"
+           "10100" "1.1.0"
+           "10123" "1.1.23"
+           "11302" "1.13.2" ;; Classic
+           "11507" "1.15.7" ;; Classic Era
+           "16001" "1.60.1" ;; Forever
 
            ;; no match, return nil
            "" nil
@@ -67,7 +70,9 @@
            "a" nil
            "aaaaa" nil
            "!" nil
-           "!!!!!" nil]]
+           "!!!!!" nil
+           "1234" nil
+           "1234567" nil]]
 
       (doseq [[case expected] (partition 2 cases)]
         (testing (str "testing " case " expecting: " expected)
@@ -290,6 +295,8 @@
                ["1." :classic]
                ["1.13.0" :classic]
                ["1.100.100" :classic]
+               ["1.6.0" :classic] ;; vanilla patch 1.6, not forever
+               ["1.59.0" :classic]
                [constants/latest-classic-game-version :classic]
 
                ;; classic-tbc
@@ -315,6 +322,12 @@
                ["5.3.0" :classic-mists]
                ["5.foo.bar" :classic-mists]
                [constants/latest-classic-mists-game-version :classic-mists]
+
+               ;; forever
+               ["1.60.0" :forever]
+               ["1.60.1" :forever]
+               ["1.99.99" :forever]
+               [constants/latest-forever-game-version :forever]
 
                ;; everything else
                ["6.0.4" :retail]
@@ -424,6 +437,18 @@
                  ["retail.no-lib" :retail]
                  ["1.2.3_retail_no-lib" :retail]
 
+                 ;; forever
+                 ["forever" :forever]
+                 ["Forever" :forever]
+                 ["camelot" :forever]
+                 ["Camelot" :forever]
+                 ["1.2.3-forever" :forever]
+                 ["1.2.3_forever_no-lib" :forever]
+                 ["1.2.3.camelot.no-lib" :forever]
+                 ["classic-forever" :forever]
+                 ["foreverything" nil]
+                 ["camelots" nil]
+
                  ;; case insensitivity
                  ["Mainline" :retail]
                  ["Retail" :retail]
@@ -509,6 +534,10 @@
                [40123 :classic-cata]
                [50123 :classic-mists]
                [60123 :retail] ;; for now
+               [10600 :classic] ;; vanilla patch 1.6
+               [11507 :classic]
+               [16001 :forever]
+               [19999 :forever]
 
                ;; bad interface versions
                [0 nil]
