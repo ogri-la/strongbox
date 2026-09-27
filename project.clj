@@ -67,6 +67,16 @@
                                   [gui-diff "0.6.7" :exclusions [net.cgrant/parsley]] ;; pops up a graphical diff for test results
                                   ]}
 
+             ;; `lein with-profile +lint eastwood`
+             :lint {;; linting requires cljfx which starts the JavaFX application thread (see `check-combo-box`).
+                    ;; Eastwood only exits the JVM when there are warnings, otherwise the thread keeps the JVM alive.
+                    ;; exit the JavaFX platform once linting is done.
+                    :injections [(alter-var-root (requiring-resolve 'eastwood.versioncheck/run-eastwood)
+                                                 (fn [run-eastwood]
+                                                   (fn [opts]
+                                                     (run-eastwood opts)
+                                                     (javafx.application.Platform/exit))))]}
+
              :uberjar {:aot :all
                        ;; fixes hanging issue:
                        ;; - https://github.com/cljfx/cljfx/issues/17
@@ -98,6 +108,6 @@
                            ;;:unused-fn-args ;; prefer to keep for readability
                            ;;:keyword-typos ;; bugged with spec?
                            ]
-             :only-modified true
+             :only-modified false
              }
   )
