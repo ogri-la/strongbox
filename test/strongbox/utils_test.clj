@@ -817,3 +817,15 @@
 
     (doseq [[given expected] cases]
       (is (= expected (utils/group-by-coll :foo given))))))
+
+(deftest to-url
+  (let [cases [[nil nil]
+               ["" nil]
+               ["foo" nil] ;; not absolute
+               ["github.com/foo/bar" nil] ;; no scheme
+               ["foo://example.org" nil] ;; unknown protocol
+               ["https://example.org/foo bar" nil] ;; unescaped space
+               ["https://example.org" "https://example.org"]
+               ["https://example.org/foo%20bar?baz=1#bup" "https://example.org/foo%20bar?baz=1#bup"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (some-> given utils/to-url str))))))

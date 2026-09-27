@@ -1828,7 +1828,7 @@
             ;; replaces "tree-table-view" class and keeps all styling attached to table-view.
             :style-class ["table-view"]
             :show-root false
-            :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
+            :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
             :pref-height 999.0
             :placeholder (cond
                            (nil? selected-addon-dir)
@@ -1991,7 +1991,7 @@
                                                    (if (> remaining-seconds 1)
                                                      (timbre/warn (format "self destruction in T-minus %s seconds" remaining-seconds))
                                                      (timbre/error "fah-wooosh ... BOOOOOO ... /oh the humanity/ ... OOOOOOHHHMMM"))))))}))}
-              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
               :columns (mapv make-table-column column-list)
               :items (or log-message-list [])}}))
 
@@ -2092,7 +2092,7 @@
                                        :style-class ["table-row-cell"
                                                      (when (installed? addon)
                                                        "ignored")]})}
-            :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+            :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
             :pref-height 999.0
             :columns (mapv make-table-column column-list)
             :items addon-list}}))
@@ -2342,7 +2342,7 @@
                    :placeholder {:fx/type :text
                                  :style-class ["table-placeholder-text"]
                                  :text "(not installed)"}
-                   :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+                   :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
                    :columns (mapv make-table-column column-list)
                    :items (or row-list [])}}
 
@@ -2389,7 +2389,7 @@
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(not grouped)"}
-              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
               :columns (mapv make-table-column column-list)
               :items (or row-list [])
               :disable disabled?}}))
@@ -2417,7 +2417,7 @@
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
                             :text "(no releases)"}
-              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+              :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
               :columns (mapv make-table-column column-list)
               :items row-list
               :row-factory {:fx/cell-type :table-row
@@ -2477,7 +2477,7 @@
               :root root
               :style-class ["table-view"]
               :show-root false
-              :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY
+              :column-resize-policy javafx.scene.control.TreeTableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
               :disable disabled?
               :placeholder {:fx/type :text
                             :style-class ["table-placeholder-text"]
@@ -2773,7 +2773,7 @@
      :placeholder {:fx/type :text
                    :style-class ["table-placeholder-text"]
                    :text (or placeholder "")}
-     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY
+     :column-resize-policy javafx.scene.control.TableView/CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN
      :columns (mapv make-table-column column-list)
      :items row-list}))
 

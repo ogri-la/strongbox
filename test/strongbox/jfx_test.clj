@@ -24,7 +24,7 @@
           cases [[{} bad-text]
                  ;;[{:url ""} bad-text] ;; caught by spec
                  ;;[{:url "http"} bad-text] ;; caught by spec
-                 [{:url "http://"} bad-text]
+                 ;;[{:url "http://"} bad-text] ;; caught by spec, no host
                  [{:url "http://foo"} bad-text]
                  [{:url "http://foo.bar"} bad-text]
 

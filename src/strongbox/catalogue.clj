@@ -201,7 +201,7 @@
                       "wowin" wowinterface-api/parse-user-string
                       "curse" curseforge-api/parse-user-string
                       "tukui" tukui-api/parse-user-string}
-        url (some-> uin utils/unmangle-https-url java.net.URL. str)]
+        url (some-> uin utils/unmangle-https-url utils/to-url str)]
     (if-not url
       (error "bad url")
       (let [source (utils/url-to-addon-source url)]

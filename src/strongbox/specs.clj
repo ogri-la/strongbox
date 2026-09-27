@@ -62,9 +62,14 @@
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
+;; mirrors `utils/to-url`, which can't be used here as `utils` depends on `specs`.
 (s/def ::url (s/and string?
-                    #(try (instance? java.net.URL (java.net.URL. %))
-                          (catch java.net.MalformedURLException e
+                    #(try (instance? java.net.URL (.toURL (java.net.URI. %)))
+                          (catch java.net.URISyntaxException _
+                            false)
+                          (catch IllegalArgumentException _
+                            false)
+                          (catch java.net.MalformedURLException _
                             false))))
 
 (s/def ::file (s/and string?

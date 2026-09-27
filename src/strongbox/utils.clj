@@ -482,15 +482,26 @@
   [regex groups value]
   (zipmap groups (rest (re-find regex value))))
 
+(defn-spec to-url (s/or :ok #(instance? java.net.URL %), :error nil?)
+  "parses `url` as an absolute URL, returning `nil` if it can't be parsed.
+  replaces the `java.net.URL(String)` constructor, deprecated as of JDK 20."
+  [url (s/nilable string?)]
+  (when url
+    (try
+      (.toURL (java.net.URI. url))
+      (catch java.net.URISyntaxException _
+        nil)
+      (catch IllegalArgumentException _ ;; URI is not absolute
+        nil)
+      (catch java.net.MalformedURLException _
+        nil))))
+
 (defn-spec unmangle-https-url (s/or :ok ::sp/url, :error nil?)
   "given something that is supposed to be a valid http URL, try our hardest to return an actual URL without actually visiting anything.
   if we fail, return nil, otherwise return a string that can be converted to a URL"
   [uin string?]
   (let [;; pretty strict, try this first
-        url (try
-              (java.net.URL. uin)
-              (catch java.net.MalformedURLException _
-                nil))
+        url (to-url uin)
 
         ;; looser, but still better than a regex
         ^java.net.URI uri
@@ -716,7 +727,7 @@
 (defn-spec url-to-addon-source (s/or :known-source :addon/source, :unknown-source nil?)
   "returns the source of an addon for a given `url`"
   [url-str ::sp/url]
-  (let [url-obj (-> url-str java.net.URL.)
+  (let [url-obj (to-url url-str)
         host (.getHost url-obj)
         host-sans-www (if (clojure.string/starts-with? host "www.")
                         (subs host 4)
@@ -813,7 +824,7 @@
 (defn-spec github-url-to-source-id (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`."
   [url ::sp/url]
-  (->> url java.net.URL. .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
+  (some->> url to-url .getPath (re-matches #"^/([^/]+/[^/]+)[/]?.*") rest first))
 
 (defn-spec source-map (s/nilable map?)
   [addon (s/nilable map?)]

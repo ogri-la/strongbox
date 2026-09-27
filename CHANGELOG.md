@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* URLs are parsed more strictly, malformed URLs such as `http://` are no longer accepted
 * README game track priorities updated with Mists and Forever
 
 ### Fixed
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Interface versions with a two digit minor or patch version are converted correctly
     - for example, `11507` is now `1.15.7` rather than `1.5.7`
 * The 'no release found' warning now names the addon host correctly when 'Strict' is unchecked
+* Deprecation warnings from newer JDK and JavaFX versions
 
 ## 7.7.0 - 2026-04-13
 

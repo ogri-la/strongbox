@@ -12,7 +12,7 @@
 
         update-stateful-thing (fn []
                                 (joblib/*tick* 0.0)
-                                (swap! stateful-thing conj (.getId (Thread/currentThread)))
+                                (swap! stateful-thing conj (.getName (Thread/currentThread)))
                                 (joblib/*tick* 1.0))
         num 5
         pool (lasync/pool {:threads num})

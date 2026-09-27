@@ -257,7 +257,7 @@
   returns `nil` if an addon ID cannot be found."
   [url ::sp/url]
   (let [;; there will be 2-3 bits in a gitlab url after reaching the delimiter "/-/"
-        bits (take 3 (-> url java.net.URL. .getPath ;; "/group/owner/project/-/foo". "/owner/project/-/foo"
+        bits (take 3 (-> url utils/to-url .getPath ;; "/group/owner/project/-/foo". "/owner/project/-/foo"
                          (clojure.string/split #"/-") ;; ["/group/owner/project" "/foo"]
                          first
                          (utils/trim "/") ;; "group/owner/project", "owner/project"
