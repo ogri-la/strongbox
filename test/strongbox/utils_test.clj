@@ -2,7 +2,9 @@
   (:require
    [taoensso.timbre :refer [debug]] ;; info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
+   [clojure.spec.alpha :as s]
    [strongbox
+    [specs :as sp]
     [logging :as logging]
     [utils :as utils :refer [join]]
     [constants :as constants]]
@@ -829,3 +831,28 @@
                ["https://example.org/foo%20bar?baz=1#bup" "https://example.org/foo%20bar?baz=1#bup"]]]
     (doseq [[given expected] cases]
       (is (= expected (some-> given utils/to-url str))))))
+
+(deftest url-spec
+  (let [cases [["" false]
+               ["foo" false] ;; not absolute
+               ["http" false]
+               ["http://" false] ;; no host
+               ["github.com/foo/bar" false] ;; no scheme
+               ["foo://example.org" false] ;; unknown protocol
+               ["https://example.org/foo bar" false] ;; unescaped space
+               ["https://example.org" true]
+               ["http://foo" true]
+               ["https://example.org/foo%20bar?baz=1#bup" true]
+               ["https://github.com/teelolws/Altoholic-Classic" true]]]
+    (doseq [[given expected] cases]
+      (is (= expected (s/valid? ::sp/url given)) (format "failed case '%s'" given)))))
+
+(deftest to-url--agrees-with-url-spec
+  (testing "`utils/to-url` and the `::sp/url` spec accept and reject the same strings"
+    (let [given (for [scheme ["" "http" "https" "file" "foo"]
+                      separator ["" ":" "://"]
+                      host ["" "example.org" "exa mple.org" "user@example.org:8080"]
+                      path ["" "/" "/foo" "/foo bar" "/foo%20bar" "?baz=1" "#bup"]]
+                  (str scheme separator host path))]
+      (doseq [url given]
+        (is (= (s/valid? ::sp/url url) (some? (utils/to-url url))) (format "failed case '%s'" url))))))

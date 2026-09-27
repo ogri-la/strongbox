@@ -483,7 +483,8 @@
 
 (defn-spec to-url (s/or :ok #(instance? java.net.URL %), :error nil?)
   "parses `url` as an absolute URL, returning `nil` if it can't be parsed.
-  replaces the `java.net.URL(String)` constructor, deprecated as of JDK 20."
+  replaces the `java.net.URL(String)` constructor, deprecated as of JDK 20.
+  the `::sp/url` spec mirrors this logic and must be kept in step with it."
   [url (s/nilable string?)]
   (when url
     (try
