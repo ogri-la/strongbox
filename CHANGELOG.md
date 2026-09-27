@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Deprecation warnings from newer JDK and JavaFX versions
 * Linting no longer hangs after a run with no warnings
 * Tests and linting no longer conflict with an X display already in use
+* A partially drawn log pane no longer appears over the installed addons after resizing the window
 
 ## 7.7.0 - 2026-04-13
 

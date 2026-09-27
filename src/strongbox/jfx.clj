@@ -2877,11 +2877,14 @@
                     :top {:fx/type menu-bar}
                     :center {:fx/type :split-pane
                              :orientation :vertical
-                             :divider-positions (if split-pane-on? [0.6] [1])
-                             :items [{:fx/type tabber}
-                                     {:fx/type :v-box
-                                      :managed split-pane-on?
-                                      :children [(if (= sub-pane :notice-logger) -notice-logger -db-stats)]}]}
+                             :divider-positions (if split-pane-on? [0.6] [])
+                             ;; the sub-pane is only present when the split pane is on.
+                             ;; a hidden sub-pane is still drawn and still limits the divider when the window is resized.
+                             :items (if split-pane-on?
+                                      [{:fx/type tabber}
+                                       {:fx/type :v-box
+                                        :children [(if (= sub-pane :notice-logger) -notice-logger -db-stats)]}]
+                                      [{:fx/type tabber}])}
                     :bottom {:fx/type status-bar}}}}))
 
 (defn start
