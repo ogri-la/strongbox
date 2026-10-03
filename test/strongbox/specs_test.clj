@@ -10,5 +10,6 @@
                   "Classic (TBC)" :classic-tbc,
                   "Classic (WotLK)" :classic-wotlk,
                   "Classic (Mists)" :classic-mists,
+                  "Forever" :forever,
                   "Retail" :retail}]
     (is (= expected specs/game-track-labels-map-inv))))

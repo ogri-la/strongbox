@@ -16,7 +16,11 @@
                [[{:filename "Foo.zip" :metadata [{:flavor "bcc"}
                                                  {:flavor "mainline"}
                                                  {:flavor "vanilla"}]}]
-                {"Foo.zip" [:classic :classic-tbc :retail]}]]]
+                {"Foo.zip" [:classic :classic-tbc :retail]}]
+
+               [[{:filename "Foo.zip" :metadata [{:flavor "classic"}
+                                                 {:flavor "forever"}]}]
+                {"Foo.zip" [:classic :forever]}]]]
 
     (doseq [[given expected] cases]
       (is (= expected (release-json/release-json-game-tracks given))))))

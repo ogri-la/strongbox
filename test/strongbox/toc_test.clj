@@ -263,6 +263,7 @@ SomeAddon.lua")
 
 (deftest find-toc-files
   (let [expected [[:classic-tbc "EveryAddon-BCC.toc"]
+                  [:forever "EveryAddon-Camelot.toc"]
                   [:classic-cata "EveryAddon-Cata.toc"]
                   [:classic "EveryAddon-Classic.toc"]
                   [:retail "EveryAddon-Mainline.toc"]

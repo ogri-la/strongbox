@@ -49,7 +49,7 @@
 (defn-spec parse-user-string (s/or :ok :addon/source-id :error nil?)
   "extracts the addon ID from the given `url`"
   [url ::sp/url]
-  (some->> url java.net.URL. .getPath (re-find #"/(?:info|download){1}(\d+)") second utils/to-int))
+  (some->> url utils/to-url .getPath (re-find #"/(?:info|download){1}(\d+)") second utils/to-int))
 
 ;;
 

@@ -30,7 +30,7 @@
 (defn-spec parse-user-string (s/or :ok :addon/source-id, :error nil?)
   "extracts the addon ID from the given `url`, handling the edge cases of for retail tukui and elvui"
   [url ::sp/url]
-  (let [[numeral string] (some->> url java.net.URL. .getQuery (re-find #"(?i)(?:id=(\d+)|ui=(tukui|elvui))") rest)]
+  (let [[numeral string] (some->> url utils/to-url .getQuery (re-find #"(?i)(?:id=(\d+)|ui=(tukui|elvui))") rest)]
     (if numeral
       (utils/to-int numeral)
       (case (-> string (or "") lower-case)

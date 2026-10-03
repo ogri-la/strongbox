@@ -75,7 +75,8 @@
                           ;; guess the game track from the asset name and had nothing to fall back on.
                           unclassified-assets (->> asset-list (map :game-track) (filter nil?))
                           classified-assets (->> asset-list (map :game-track) (remove nil?) set)
-                          diff (clojure.set/difference sp/game-tracks classified-assets)]
+                          ;; `:forever` is excluded, an unclassified asset is far more likely to belong to an established game track.
+                          diff (clojure.set/difference (disj sp/game-tracks :forever) classified-assets)]
                       (if (and (= (count unclassified-assets) 1)
                                (= (count diff) 1))
                         (->> asset-list
@@ -256,7 +257,7 @@
   returns `nil` if an addon ID cannot be found."
   [url ::sp/url]
   (let [;; there will be 2-3 bits in a gitlab url after reaching the delimiter "/-/"
-        bits (take 3 (-> url java.net.URL. .getPath ;; "/group/owner/project/-/foo". "/owner/project/-/foo"
+        bits (take 3 (-> url utils/to-url .getPath ;; "/group/owner/project/-/foo". "/owner/project/-/foo"
                          (clojure.string/split #"/-") ;; ["/group/owner/project" "/foo"]
                          first
                          (utils/trim "/") ;; "group/owner/project", "owner/project"

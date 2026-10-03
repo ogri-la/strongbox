@@ -71,16 +71,16 @@
                                 (utils/first-nn (partial -expand-summary addon) (get constants/game-track-priority-map game-track)))]
         source-updates
 
-        ;; "no 'Retail' release found on github"
-        ;; "no 'Classic' release found on wowinterface"
-        ;; "no 'Classic (TBC)', 'Classic' or 'Retail' release found on github"
-        (let [single-template "no '%s' release found on %s."
-              multi-template "no '%s', '%s', '%s' or '%s' release found on %s."
-              msg (if strict?
-                    (format single-template (sp/game-track-labels-map game-track) (:source addon))
-                    (apply format multi-template (conj (mapv #(sp/game-track-labels-map %) (get constants/game-track-priority-map game-track))
-                                                       (:source addon))))]
-          (warn msg))))))
+        ;; "no 'Retail' release found on github."
+        ;; "no 'Classic (TBC)', 'Classic (WotLK)', ... or 'Retail' release found on github."
+        (let [game-track-list (if strict?
+                                [game-track]
+                                (get constants/game-track-priority-map game-track))
+              label-list (mapv #(format "'%s'" (sp/game-track-labels-map %)) game-track-list)
+              labels (if (= 1 (count label-list))
+                       (first label-list)
+                       (str (clojure.string/join ", " (butlast label-list)) " or " (last label-list)))]
+          (warn (format "no %s release found on %s." labels (:source addon))))))))
 
 ;;
 
@@ -200,7 +200,7 @@
                       "wowin" wowinterface-api/parse-user-string
                       "curse" curseforge-api/parse-user-string
                       "tukui" tukui-api/parse-user-string}
-        url (some-> uin utils/unmangle-https-url java.net.URL. str)]
+        url (some-> uin utils/unmangle-https-url utils/to-url str)]
     (if-not url
       (error "bad url")
       (let [source (utils/url-to-addon-source url)]
