@@ -2,7 +2,9 @@
   (:require
    [taoensso.timbre :refer [debug]] ;; info warn error spy]]
    [clojure.test :refer [deftest testing is use-fixtures]]
+   [clojure.spec.alpha :as s]
    [strongbox
+    [specs :as sp]
     [logging :as logging]
     [utils :as utils :refer [join]]
     [constants :as constants]]
@@ -50,13 +52,16 @@
            "300102" "30.1.2"
            ;; first three digits are now the major, second two minor and remaining is patch (I think ...)
            ;; so '101', '201' become '10.' and '20.', minor '01' becomes '00' and '0' is still '0'
-           "101010" "10.0.0"
+           "101010" "10.10.10"
 
-           ;; ambiguous/broken cases
-           "00010" "0.0.0"
-           "01000" "0.0.0"
-           "10100" "1.1.0" ;; ambiguous, also, 1.10.0, 10.1.0, 10.10.0
-           "10123" "1.1.3" ;; last patch of 1.x, should be 1.12.3
+           ;; two digit minor and patch versions
+           "00010" "0.0.10"
+           "01000" "0.10.0"
+           "10100" "1.1.0"
+           "10123" "1.1.23"
+           "11302" "1.13.2" ;; Classic
+           "11507" "1.15.7" ;; Classic Era
+           "16001" "1.60.1" ;; Forever
 
            ;; no match, return nil
            "" nil
@@ -67,7 +72,9 @@
            "a" nil
            "aaaaa" nil
            "!" nil
-           "!!!!!" nil]]
+           "!!!!!" nil
+           "1234" nil
+           "1234567" nil]]
 
       (doseq [[case expected] (partition 2 cases)]
         (testing (str "testing " case " expecting: " expected)
@@ -290,6 +297,8 @@
                ["1." :classic]
                ["1.13.0" :classic]
                ["1.100.100" :classic]
+               ["1.6.0" :classic] ;; vanilla patch 1.6, not forever
+               ["1.59.0" :classic]
                [constants/latest-classic-game-version :classic]
 
                ;; classic-tbc
@@ -315,6 +324,12 @@
                ["5.3.0" :classic-mists]
                ["5.foo.bar" :classic-mists]
                [constants/latest-classic-mists-game-version :classic-mists]
+
+               ;; forever
+               ["1.60.0" :forever]
+               ["1.60.1" :forever]
+               ["1.99.99" :forever]
+               [constants/latest-forever-game-version :forever]
 
                ;; everything else
                ["6.0.4" :retail]
@@ -424,6 +439,18 @@
                  ["retail.no-lib" :retail]
                  ["1.2.3_retail_no-lib" :retail]
 
+                 ;; forever
+                 ["forever" :forever]
+                 ["Forever" :forever]
+                 ["camelot" :forever]
+                 ["Camelot" :forever]
+                 ["1.2.3-forever" :forever]
+                 ["1.2.3_forever_no-lib" :forever]
+                 ["1.2.3.camelot.no-lib" :forever]
+                 ["classic-forever" :forever]
+                 ["foreverything" nil]
+                 ["camelots" nil]
+
                  ;; case insensitivity
                  ["Mainline" :retail]
                  ["Retail" :retail]
@@ -509,6 +536,10 @@
                [40123 :classic-cata]
                [50123 :classic-mists]
                [60123 :retail] ;; for now
+               [10600 :classic] ;; vanilla patch 1.6
+               [11507 :classic]
+               [16001 :forever]
+               [19999 :forever]
 
                ;; bad interface versions
                [0 nil]
@@ -592,52 +623,73 @@
       (is (= expected log-messages))
       (is (empty? @current-locks)))))
 
-(deftest with-lock--contention
-  (testing "two forms to execute that share a lock will see one executed first, then the second."
-    (let [current-locks (atom #{})
+(defn with-lock-contention
+  "runs two forms that share a lock, fn1 then fn2, and returns the debug log and the locks remaining afterwards."
+  []
+  (let [current-locks (atom #{})
 
-          ;; slinging promises around is a little contrived but the alternative is Thread/sleep,
-          ;; which isn't really deterministic and depends a lot on environment characteristics.
-          fn1-acquired (promise) ;; fn1 delivers this once it holds the lock
-          fn1-may-finish (promise) ;; main thread delivers this to release fn1
+        ;; slinging promises around is a little contrived but the alternative is Thread/sleep,
+        ;; which isn't really deterministic and depends a lot on environment characteristics.
+        fn1-acquired (promise) ;; fn1 delivers this once it holds the lock
+        fn1-may-finish (promise) ;; main thread delivers this to release fn1
+        fn2-blocked (promise) ;; fn2 delivers this once it fails to acquire the lock
+        fn1-released (promise) ;; main thread delivers this once fn1 has released the lock, fn2 then retries
 
-          fn1 #(future
-                 (utils/with-lock current-locks #{:foo :fn1}
-                   (deliver fn1-acquired true)
-                   @fn1-may-finish
-                   (debug "--fn1 executed--")))
+        ;; replaces the retry wait in `with-lock`. only fn2 is ever blocked.
+        wait-for-fn1 (fn [_]
+                       (deliver fn2-blocked true)
+                       @fn1-released)
 
-          fn2 #(future
-                 (utils/with-lock current-locks #{:foo :fn2}
-                   (debug "--fn2 executed--")))
+        fn1 #(future
+               (utils/with-lock current-locks #{:foo :fn1}
+                 (deliver fn1-acquired true)
+                 @fn1-may-finish
+                 (debug "--fn1 executed--")))
 
-          log-messages (logging/buffered-log
+        fn2 #(future
+               (utils/with-lock current-locks #{:foo :fn2}
+                 (debug "--fn2 executed--")))
+
+        log-messages (with-redefs [utils/-with-lock-wait wait-for-fn1]
+                       (logging/buffered-log
                         :debug
                         (let [fn1-ref (fn1)
                               _ @fn1-acquired ;; wait until fn1 holds the lock before starting fn2
                               fn2-ref (fn2)
-                              ;; fn2 needs time to attempt lock acquisition
-                              _ (Thread/sleep 5)
+                              _ @fn2-blocked ;; wait until fn2 has failed to acquire the lock
                               _ (deliver fn1-may-finish true)]
-                          @fn1-ref
-                          @fn2-ref))
+                          @fn1-ref ;; fn1 has executed and released the lock
+                          (deliver fn1-released true)
+                          @fn2-ref)))]
+    {:log-messages log-messages
+     :current-locks @current-locks}))
 
-          expected ["current locks: #{}"
-                    "acquiring locks: #{:fn1 :foo}"
-                    "locks acquired: #{:fn1 :foo}"
-                    "current locks: #{:fn1 :foo}"
-                    "acquiring locks: #{:fn2 :foo}"
-                    "blocked!"
-                    "--fn1 executed--"
-                    "releasing locks: #{:fn1 :foo}"
-                    "recurring in 10 ms, have waited 0 ms"
-                    "current locks: #{}"
-                    "acquiring locks: #{:fn2 :foo}"
-                    "locks acquired: #{:fn2 :foo}"
-                    "--fn2 executed--"
-                    "releasing locks: #{:fn2 :foo}"]]
-      (is (= expected log-messages))
-      (is (empty? @current-locks)))))
+(deftest with-lock--contention
+  (testing "two forms to execute that share a lock will see one executed first, then the second."
+    (let [expected {:log-messages ["current locks: #{}"
+                                   "acquiring locks: #{:fn1 :foo}"
+                                   "locks acquired: #{:fn1 :foo}"
+                                   "current locks: #{:fn1 :foo}"
+                                   "acquiring locks: #{:fn2 :foo}"
+                                   "blocked!"
+                                   "--fn1 executed--"
+                                   "releasing locks: #{:fn1 :foo}"
+                                   "recurring in 10 ms, have waited 0 ms"
+                                   "current locks: #{}"
+                                   "acquiring locks: #{:fn2 :foo}"
+                                   "locks acquired: #{:fn2 :foo}"
+                                   "--fn2 executed--"
+                                   "releasing locks: #{:fn2 :foo}"]
+                    :current-locks #{}}
+
+          ;; this test was non-deterministic twice, run it many times to catch any recurrence.
+          ;; each distinct unexpected result is reported once.
+          num-runs 300
+          actual (->> (repeatedly num-runs with-lock-contention)
+                      (remove #{expected})
+                      distinct
+                      vec)]
+      (is (= [] actual)))))
 
 (deftest patch-name
   (let [cases [["" nil]
@@ -788,3 +840,40 @@
 
     (doseq [[given expected] cases]
       (is (= expected (utils/group-by-coll :foo given))))))
+
+(deftest to-url
+  (let [cases [[nil nil]
+               ["" nil]
+               ["foo" nil] ;; not absolute
+               ["github.com/foo/bar" nil] ;; no scheme
+               ["foo://example.org" nil] ;; unknown protocol
+               ["https://example.org/foo bar" nil] ;; unescaped space
+               ["https://example.org" "https://example.org"]
+               ["https://example.org/foo%20bar?baz=1#bup" "https://example.org/foo%20bar?baz=1#bup"]]]
+    (doseq [[given expected] cases]
+      (is (= expected (some-> given utils/to-url str))))))
+
+(deftest url-spec
+  (let [cases [["" false]
+               ["foo" false] ;; not absolute
+               ["http" false]
+               ["http://" false] ;; no host
+               ["github.com/foo/bar" false] ;; no scheme
+               ["foo://example.org" false] ;; unknown protocol
+               ["https://example.org/foo bar" false] ;; unescaped space
+               ["https://example.org" true]
+               ["http://foo" true]
+               ["https://example.org/foo%20bar?baz=1#bup" true]
+               ["https://github.com/teelolws/Altoholic-Classic" true]]]
+    (doseq [[given expected] cases]
+      (is (= expected (s/valid? ::sp/url given)) (format "failed case '%s'" given)))))
+
+(deftest to-url--agrees-with-url-spec
+  (testing "`utils/to-url` and the `::sp/url` spec accept and reject the same strings"
+    (let [given (for [scheme ["" "http" "https" "file" "foo"]
+                      separator ["" ":" "://"]
+                      host ["" "example.org" "exa mple.org" "user@example.org:8080"]
+                      path ["" "/" "/foo" "/foo bar" "/foo%20bar" "?baz=1" "#bup"]]
+                  (str scheme separator host path))]
+      (doseq [url given]
+        (is (= (s/valid? ::sp/url url) (some? (utils/to-url url))) (format "failed case '%s'" url))))))

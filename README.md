@@ -204,18 +204,20 @@ distinct addon systems.
 Some addon authors support all systems in a single download, some support classic as an alternate build of the same addon, 
 some addons support classic only, some addons have been split up into separate addons. There is a lot of variation.
 
-Click the drop-down next to your addon directory and select either `retail`, `classic` or `classic (TBC)`.
+Click the drop-down next to your addon directory and select a game track such as `retail`, `classic` or `forever`.
 
 This will restrict the types of addons that can be installed in the current addon directory.
 
 The `Strict` checkbox allows you to enforce or relax restrictions and mix together addons meant for different systems in 
 the same addon directory. If an addon is available for multiple addon systems it will prefer one over another:
 
-* `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)` then `classic (WotLK)` then `classic (Cata)`
-* `classic` will prefer `classic` addons, then `classic (TBC)`, then `classic (WotLK)`, then `classic (Cata)` then `retail`
-* `classic (TBC)` will prefer `classic (TBC)` addons, then `classic (WotLK)`, then `classic (Cata)`, then `classic` then `retail`
-* `classic (WotLK)` will prefer `classic (WotLK)` addons, then `classic (Cata)`, then `classic (TBC)`, then `classic` then `retail`
-* `classic (Cata)` will prefer `classic (Cata)` addons, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
+* `retail` will prefer `retail` addons, then `classic`, then `classic (TBC)`, then `classic (WotLK)`, then `classic (Cata)` then `classic (Mists)`
+* `classic` will prefer `classic` addons, then `classic (TBC)`, then `classic (WotLK)`, then `classic (Cata)`, then `classic (Mists)` then `retail`
+* `classic (TBC)` will prefer `classic (TBC)` addons, then `classic (WotLK)`, then `classic (Cata)`, then `classic (Mists)`, then `classic` then `retail`
+* `classic (WotLK)` will prefer `classic (WotLK)` addons, then `classic (Cata)`, then `classic (Mists)`, then `classic (TBC)`, then `classic` then `retail`
+* `classic (Cata)` will prefer `classic (Cata)` addons, then `classic (Mists)`, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
+* `classic (Mists)` will prefer `classic (Mists)` addons, then `classic (Cata)`, then `classic (WotLK)`, then `classic (TBC)`, then `classic` then `retail`
+* `forever` will prefer `forever` addons, then `retail`
 
 If uncertain which addon systems an installed addon supports, look at the `WoW` column values on the `installed` tab and 
 compare it to the `Version` value in the list of WoW [public client builds](https://warcraft.wiki.gg/wiki/Public_client_builds).

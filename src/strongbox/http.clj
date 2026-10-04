@@ -96,7 +96,7 @@
   [url ::sp/url]
   (let [;; strip off any nasty parameters or anchors.
         ;; default to '.html' if there is no extension, it's just decorative
-        ext (-> url java.net.URL. .getPath (subs 1) fs/split-ext second (or ".html"))
+        ext (-> url utils/to-url .getPath (subs 1) fs/split-ext second (or ".html"))
         enc (java.util.Base64/getUrlEncoder)]
     (as-> url x
       (str x) (.getBytes x) (.encodeToString enc x) (str x ext))))
@@ -242,7 +242,7 @@
           (when streaming-response?
             (close-stream ste))
           ;; return a synthetic HTTP error
-          (let [request-obj (java.net.URL. url)
+          (let [request-obj (utils/to-url url)
                 http-error {:status 608 ;; 'Request Timeout'
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
@@ -254,7 +254,7 @@
         ;; - https://docs.oracle.com/javase/7/docs/api/java/net/ConnectException.html
         (catch java.net.ConnectException ce
           ;; return a synthetic HTTP error
-          (let [request-obj (java.net.URL. url)
+          (let [request-obj (utils/to-url url)
                 http-error {:status 608 ;; 'Request Timeout'
                             :host (.getHost request-obj)
                             :reason-phrase "Connection timed out"}]
@@ -265,7 +265,7 @@
           (when streaming-response?
             (close-stream uhe))
           ;; return a synthetic HTTP error
-          (let [request-obj (java.net.URL. url)
+          (let [request-obj (utils/to-url url)
                 http-error {:status 503 ;; 'Service Unavailable'
                             :host (.getHost request-obj)
                             :reason-phrase (str "Unknown host: " (.getHost request-obj))}]
@@ -277,7 +277,7 @@
             (close-stream ex))
           (if (-> ex ex-data :status)
             ;; http error (status >=400)
-            (let [request-obj (java.net.URL. url)
+            (let [request-obj (utils/to-url url)
                   http-error (merge (select-keys (ex-data ex) [:reason-phrase :status])
                                     {:host (.getHost request-obj)})]
               ;; "failed to fetch 'https://api.github.com/foo/bar/baz.json': connection timed out (HTTP 401)"

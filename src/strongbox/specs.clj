@@ -62,9 +62,14 @@
   [path string?, ext-list ::list-of-strings]
   (some #{(fs/extension path)} ext-list))
 
+;; mirrors `utils/to-url`, which can't be used here as `utils` depends on `specs`.
 (s/def ::url (s/and string?
-                    #(try (instance? java.net.URL (java.net.URL. %))
-                          (catch java.net.MalformedURLException e
+                    #(try (instance? java.net.URL (.toURL (java.net.URI. %)))
+                          (catch java.net.URISyntaxException _
+                            false)
+                          (catch IllegalArgumentException _
+                            false)
+                          (catch java.net.MalformedURLException _
                             false))))
 
 (s/def ::file (s/and string?
@@ -90,7 +95,8 @@
                         [:classic-tbc "Classic (TBC)"]
                         [:classic-wotlk "Classic (WotLK)"]
                         [:classic-cata "Classic (Cata)"]
-                        [:classic-mists "Classic (Mists)"]])
+                        [:classic-mists "Classic (Mists)"]
+                        [:forever "Forever"]])
 
 (def game-track-labels-map (into {} game-track-labels)) ;; {:retail "WoW Retail", ...}
 (def game-track-labels-map-inv (map-invert game-track-labels-map)) ;; {"WoW Retail" :retail, ...}
