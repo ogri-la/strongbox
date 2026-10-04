@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+### Changed
+
+### Fixed
+
+### Removed
+
+## 7.8.0 - 2026-10-04
+
+### Added
+
 * Support for WoW 'Forever'
     - detected from `release.json` files, `_Camelot.toc` files and interface versions `16000` to `19999`
     - Forever falls back to Retail when 'Strict' is unchecked
