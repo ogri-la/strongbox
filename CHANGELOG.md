@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* URLs are parsed more strictly, malformed URLs such as `http://` are no longer accepted
+* URLs are parsed more strictly, malformed URLs, such as a scheme with no host, are no longer accepted
 * Linting now covers the whole project on every run, not just recently modified files
 * README game track priorities updated with Mists and Forever
 
