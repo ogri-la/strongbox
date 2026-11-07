@@ -243,9 +243,10 @@
      :cache-dir (fs/tmpdir)})
 
 (defn-spec add-cleanup-fn nil?
-  "adds function `f` to a list of functions that are called without arguments when the application is stopped."
-  [f fn?]
-  (swap! state update-in [:cleanup] conj f)
+  "adds function `f` to a list of functions that are called without arguments when the application is stopped.
+  `label` describes what `f` does and is logged when `f` is called."
+  [label string?, f fn?]
+  (swap! state update-in [:cleanup] conj {:label label, :f f})
   nil)
 
 (defn-spec state-bind nil?
@@ -276,7 +277,7 @@
                        ;; todo: potential for infinite recursion here too?
                        ;; can the stacktrace be formatted and printed to stdout instead?
                        (error e "error caught in watch! the callback *must* be catching these or the thread dies silently:" path))))))
-    (add-cleanup-fn rmwatch)
+    (add-cleanup-fn (format "remove watch on state path %s" path) rmwatch)
     nil))
 
 ;; addon dirs
@@ -413,7 +414,7 @@
    (-debug-logging state-atm)
 
    ;; ensure we're storing log lines in app state
-   (add-cleanup-fn (logging/add-ui-appender! state-atm install-dir))
+   (add-cleanup-fn "remove UI log appender" (logging/add-ui-appender! state-atm install-dir))
 
    ;; and finally, if we're running tests, drop the logging level to :debug and ensure nothing is emitting to a file
    (when testing?
@@ -1880,8 +1881,8 @@
   [state]
   (debug "stopping app")
   ;; traverse cleanup list and call them
-  (doseq [f (:cleanup @state)]
-    (debug "calling" f)
+  (doseq [{:keys [label f]} (:cleanup @state)]
+    (debug "cleanup:" label)
     (f))
   (when (and @state (debug-mode?))
     (dump-useful-log-info)
