@@ -123,7 +123,7 @@
       (is (true? (core/get-game-track-strictness))))))
 
 (deftest catalogue
-  (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
+  (let [[short-catalogue full-catalogue] config/-default-catalogue-list]
     (with-running-app
       (testing "under regular circumstances we have at least two catalogues available to us (short and full)"
         (is (> (count (core/get-state :cfg :catalogue-location-list)) 2)))

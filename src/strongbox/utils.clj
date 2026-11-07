@@ -455,7 +455,7 @@
 (defn semver-parse
   "Parses string `s` into a version map"
   [s]
-  (let [[[_ major minor patch pre-release build]] (re-seq semver-pattern s)]
+  (let [[_ major minor patch pre-release build] (re-find semver-pattern s)]
     {:major (semver-try-parse-int major)
      :minor (semver-try-parse-int minor)
      :patch (semver-try-parse-int patch)

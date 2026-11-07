@@ -57,7 +57,7 @@
   (let [pattern (Pattern/compile "(?u)^(.+?)(?:[\\-_](Standard|Mainline|Classic|Vanilla|TBC|BCC|Wrath|Cata|Mists|Camelot))?\\.toc$")
         matching-toc-pattern (fn [filename]
                                (let [toc-bname (str (fs/base-name filename))
-                                     [toc-bname-match game-track-match] (rest (re-matches pattern toc-bname))]
+                                     [_ toc-bname-match game-track-match] (re-matches pattern toc-bname)]
                                  (when toc-bname-match
                                    [(utils/guess-game-track game-track-match) toc-bname])))
         result (->> addon-dir

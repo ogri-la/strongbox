@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* Linting issues detected by new version of Joker
+
 ### Removed
 
 ## 7.8.0 - 2026-10-04
