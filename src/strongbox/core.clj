@@ -305,8 +305,11 @@
   "convenience. adds a new addon directory to the list of addon directories (if it doesn't already exist) and marks it as selected."
   [addon-dir ::sp/addon-dir]
   (let [addon-dir (-> addon-dir fs/absolute fs/normalized str)
-        ;; if '_classic_' is in given path, use the classic game track
-        default-game-track (if (clojure.string/index-of addon-dir "_classic_") :classic :retail)]
+        ;; game client installs to '_retail_', '_classic_' and '_forever_' directories. use that as a hint.
+        default-game-track (cond
+                             (clojure.string/index-of addon-dir "_forever_") :forever
+                             (clojure.string/index-of addon-dir "_classic_") :classic
+                             :else :retail)]
     (dosync ;; necessary? makes me feel better
      (add-addon-dir! addon-dir default-game-track default-game-track-strictness)
      ;; todo: break this down into two actions? adding a new directory + selecting the new one.
@@ -1282,9 +1285,12 @@
                                   (error (format "couldn't find addon in catalogue '%s'"
                                                  (name (get-state :cfg :selected-catalogue))))))
 
-              ;; game track doesn't matter when adding it to the user catalogue.
-              ;; prefer retail though (it's the most common) and `strict` here is `false`
-              addon (or (catalogue/expand-summary addon-summary :retail false)
+              ;; game track doesn't matter when adding it to the user catalogue, but it decides which release the dry-run installs.
+              ;; use the game track of the selected addon directory, defaulting to retail (it's the most common).
+              ;; `strict?` is `false` so related game tracks are also checked.
+              ;; beware: this is an `if-let*`, binding a `false` value here short-circuits the whole form.
+              game-track (or (get-game-track) :retail)
+              addon (or (catalogue/expand-summary addon-summary game-track false)
                         (error "failed to fetch details of addon"))
 
               ;; a dry-run is good when importing an addon for the first time but
