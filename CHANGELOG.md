@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file. This change
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 7.8.1 - 2026-11-07
+
+### Added
+
+* New addon directories with `_forever_` in their path default to the Forever game track, like `_classic_` does for Classic
+
+### Changed
+
+* Debug log at shutdown now describes each cleanup step instead of printing function objects
+
+### Fixed
+
+* 'Import addon' failing for addons with only a Forever release. 
+    - the selected addon directory's game track is now used instead of always Retail.
+    - thanks to @msromike for reporting this
+* Installed addons with several `.toc` files but none for the addon dir's game track or its fallbacks were hidden. 
+    - only possible in a Forever addon directory because they only fall back to Retail.
+* Linting issues detected by new version of Joker
+
+### Removed
+
 ## 7.8.0 - 2026-10-04
 
 ### Added

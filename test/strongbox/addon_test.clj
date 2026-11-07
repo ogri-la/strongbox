@@ -693,6 +693,19 @@
       (spit (path "EveryAddon.toc") "## Title: Foo\n## Version: @project-version@")
       (is (true? (addon/implicitly-ignored? (helper/install-dir) nom))))))
 
+(deftest load-installed-addon--multi-toc-no-matching-game-track
+  (testing "an addon with multiple .toc files, none of which match the game track or its fallbacks, is still loaded"
+    (let [fixture (helper/fixture-path "everyaddon--1-2-3--multi-toc.zip")
+          addon-dir (utils/join (helper/install-dir) "EveryAddon")
+          ;; leave only the classic-era .toc files. 'forever' falls back to 'retail' only.
+          game-track :forever]
+      (zip/unzip-file fixture (helper/install-dir))
+      (doseq [toc ["EveryAddon.toc" "EveryAddon-Mainline.toc" "EveryAddon-Camelot.toc"]]
+        (fs/delete (utils/join addon-dir toc)))
+      (is (= "EveryAddon" (:dirname (addon/load-installed-addon addon-dir game-track))))
+      (is (= [11307] (:interface-version-list (addon/load-installed-addon addon-dir game-track))))
+      (is (= ["EveryAddon"] (mapv :dirname (addon/load-all-installed-addons (helper/install-dir) game-track)))))))
+
 (deftest implicitly-ignored?--multi-toc
   (testing "evidence of a template in *any* toc file, marks addon as implicitly ignored"
     (let [nom "EveryAddon"
