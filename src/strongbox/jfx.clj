@@ -2909,7 +2909,7 @@
                   :let [key (str rf)]]
             (add-watch rf key (fn [_ _ _ _]
                                 (swap! gui-state fx/swap-context assoc :style (style))))
-            (core/add-cleanup-fn #(remove-watch rf key)))
+            (core/add-cleanup-fn (str "remove css watch on " key) #(remove-watch rf key)))
 
         renderer (fx/create-renderer
                   :middleware (comp
@@ -2958,7 +2958,7 @@
                  (core/latest-strongbox-release!)
                  (set-icon) ;; 601ms :(
                  )]
-      (core/add-cleanup-fn #(future-cancel kick)))
+      (core/add-cleanup-fn "cancel startup future" #(future-cancel kick)))
 
     ;; calling the `renderer` will re-render the GUI.
     ;; useful apparently, but not being used.

@@ -28,10 +28,10 @@
                  (core/get-state :installed-addon-list)))))
 
 (deftest addon-dir-handling
-  (let [[dir1 dir2 dir3 dir4] (mapv (fn [path]
-                                      (let [path (utils/join fs/*cwd* path)]
-                                        (fs/mkdir path)
-                                        path)) ["foo" "bar" "baz" "_classic_"])]
+  (let [[dir1 dir2 dir3 dir4 dir5] (mapv (fn [path]
+                                           (let [path (utils/join fs/*cwd* path)]
+                                             (fs/mkdir path)
+                                             path)) ["foo" "bar" "baz" "_classic_" "_forever_"])]
     (with-running-app
 
       ;; big long stateful test
@@ -96,6 +96,10 @@
         (core/set-addon-dir! dir4)
         (is (= {:addon-dir dir4 :game-track :classic :strict? true} (core/addon-dir-map dir4))))
 
+      (testing "set-addon-dir! changes default game-track to 'forever' if '_forever_' detected in addon dir name"
+        (core/set-addon-dir! dir5)
+        (is (= {:addon-dir dir5 :game-track :forever :strict? true} (core/addon-dir-map dir5))))
+
       (testing "set-addon-dir! resets the list of selected addons"
         (swap! core/state update-in [:selected-addon-list] conj "foo!")
         (is (= (core/get-state :selected-addon-list) ["foo!"]))
@@ -123,7 +127,7 @@
       (is (true? (core/get-game-track-strictness))))))
 
 (deftest catalogue
-  (let [[short-catalogue full-catalogue] (take 2 config/-default-catalogue-list)]
+  (let [[short-catalogue full-catalogue] config/-default-catalogue-list]
     (with-running-app
       (testing "under regular circumstances we have at least two catalogues available to us (short and full)"
         (is (> (count (core/get-state :cfg :catalogue-location-list)) 2)))
@@ -1912,6 +1916,42 @@
     (is (nil? (core/db-addon-by-source-and-source-id db "wowinterface" "foo")))))
 
 ;; ---
+
+(deftest find-addon--forever-only-github-addon
+  (let [releases (slurp (fixture-path "github-repo-releases--forever-only.json"))
+        release-json (slurp (fixture-path "github-release-json--forever-only.json"))
+        dummy-catalogue (slurp (fixture-path "import-export--dummy-catalogue.json"))
+        fake-routes {"https://raw.githubusercontent.com/ogri-la/strongbox-catalogue/master/short-catalogue.json"
+                     {:get (fn [_] {:status 200 :body dummy-catalogue})}
+
+                     "https://api.github.com/repos/msromike/SoulShardForever/releases"
+                     {:get (fn [_] {:status 200 :body releases})}
+
+                     "https://github.com/msromike/SoulShardForever/releases/download/v1.11.0/release.json"
+                     {:get (fn [_] {:status 200 :body release-json})}}
+        given "https://github.com/msromike/SoulShardForever"
+        attempt-dry-run? false]
+
+    (testing "an addon with only a 'Forever' release is found when the selected addon directory's game track is 'Forever'."
+      (let [expected {:url "https://github.com/msromike/SoulShardForever"
+                      :updated-date "2026-11-06T23:15:09Z"
+                      :source "github"
+                      :source-id "msromike/SoulShardForever"
+                      :label "SoulShardForever"
+                      :name "soulshardforever"
+                      :download-count 3
+                      :game-track-list [:forever]
+                      :tag-list []}]
+        (with-global-fake-routes-in-isolation fake-routes
+          (with-running-app
+            (core/set-game-track! :forever (helper/install-dir))
+            (is (= expected (core/find-addon given attempt-dry-run?)))))))
+
+    (testing "an addon with only a 'Forever' release is not found when the selected addon directory's game track is 'Retail'. 'Forever' is never a fallback for other game tracks."
+      (with-global-fake-routes-in-isolation fake-routes
+        (with-running-app
+          (core/set-game-track! :retail (helper/install-dir))
+          (is (nil? (core/find-addon given attempt-dry-run?))))))))
 
 (deftest refresh-user-catalogue-item
   (testing "individual addons can be refreshed, writing the changes to disk afterwards."

@@ -187,7 +187,12 @@
         (let [grouped-toc-data (utils/group-by-coll :-toc/game-track-list toc-data-list)
               safe-fallback [game-track]
               priorities (get constants/game-track-priority-map game-track safe-fallback)
-              group (utils/first-nn #(get grouped-toc-data %) priorities)]
+              ;; every game track in a fixed order. an installed addon whose .toc files match neither the
+              ;; game track nor its fallbacks (possible for `:forever`) is loaded rather than hidden.
+              any-game-track (map first sp/game-track-labels)
+              group (or (utils/first-nn #(get grouped-toc-data %) priorities)
+                        (do (debug (format "no toc data found for %s or its fallbacks. using any game track." game-track))
+                            (utils/first-nn #(get grouped-toc-data %) any-game-track)))]
 
           ;; after grouping toc data by game-track we may have multiple `:retail` or `:classic` data sets.
           ;; we're going to use the first one in the list, but issue a warning anyway.

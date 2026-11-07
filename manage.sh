@@ -31,6 +31,7 @@ elif test "$cmd" = "clean"; then
 
 elif test "$cmd" = "lint"; then
     if which joker > /dev/null; then
+        # joker v1.10.0 at time of writing
         echo "joker lint"
         joker --lint --working-dir ./
     fi
